@@ -60,14 +60,27 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     }
 
     // Find the customer's loyalty card
-    const whereClause = phone
-      ? { tenantId: tenant.id, phone }
-      : { tenantId: tenant.id, email: email! };
+    // Normalize phone: strip spaces/dashes/parens, then try exact + +52 prefix variants
+    let user;
+    if (phone) {
+      const stripped = phone.replace(/[\s\-().]/g, '');
+      // Try the input as-is, with +52 prefix, and without country code
+      const variants = Array.from(new Set([
+        phone.trim(),
+        stripped,
+        stripped.startsWith('+52') ? stripped.slice(3) : `+52${stripped}`,
+      ]));
+      user = await prisma.user.findFirst({
+        where: { tenantId: tenant.id, phone: { in: variants } },
+        include: { card: true },
+      });
+    } else {
+      user = await prisma.user.findFirst({
+        where: { tenantId: tenant.id, email: email! },
+        include: { card: true },
+      });
+    }
 
-    const user = await prisma.user.findFirst({
-      where: whereClause,
-      include: { card: true },
-    });
 
     if (!user || !user.card) {
       return NextResponse.json({

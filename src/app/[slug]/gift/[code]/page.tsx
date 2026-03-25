@@ -163,13 +163,13 @@ export default function GiftRedeemPage() {
                 type={contactType === 'email' ? 'email' : 'tel'}
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                placeholder={contactType === 'email' ? 'tu@email.com' : '+52 55 1234 5678'}
+                placeholder={contactType === 'email' ? 'tu@email.com' : '55 1234 5678'}
                 className="input-field"
                 required
                 autoFocus
               />
               <p className="text-xs text-coffee-light mt-2">
-                Debe coincidir con el {contactType === 'email' ? 'email' : 'teléfono'} registrado en tu tarjeta de lealtad.
+                Ingresa el {contactType === 'email' ? 'email' : 'teléfono'} con el que te registraste (con o sin código de país).
               </p>
             </div>
 
