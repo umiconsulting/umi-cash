@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { formatMXN } from '@/lib/currency';
 import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 import { sendGiftCardEmail } from '@/lib/email';
+import { sendWhatsAppGiftCard } from '@/lib/whatsapp';
 
 const CreateSchema = z.object({
   amountCentavos: z.number().int().min(100, 'El monto mínimo es $1.00'),
@@ -64,19 +65,25 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       },
     });
 
-    // Send notification email if recipient has an email
+    // Send notification via email and/or WhatsApp
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${req.headers.get('host')}`;
+    const redeemUrl = `${appUrl}/${params.slug}/gift/${giftCard.code}`;
+    const notifyOpts = {
+      recipientName: data.recipientName ?? null,
+      senderName: data.senderName ?? null,
+      tenantName: tenant.name,
+      amountMXN: formatMXN(data.amountCentavos),
+      message: data.message ?? null,
+      redeemUrl,
+    };
+
     if (data.recipientEmail) {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `https://${req.headers.get('host')}`;
-      const redeemUrl = `${appUrl}/${params.slug}/gift/${giftCard.code}`;
-      sendGiftCardEmail({
-        to: data.recipientEmail,
-        recipientName: data.recipientName ?? null,
-        senderName: data.senderName ?? null,
-        tenantName: tenant.name,
-        amountMXN: formatMXN(data.amountCentavos),
-        message: data.message ?? null,
-        redeemUrl,
-      }).catch((err) => console.warn('[GiftCard:email]', err));
+      sendGiftCardEmail({ to: data.recipientEmail, ...notifyOpts })
+        .catch((err) => console.warn('[GiftCard:email]', err));
+    }
+    if (data.recipientPhone) {
+      sendWhatsAppGiftCard({ to: data.recipientPhone, ...notifyOpts })
+        .catch((err) => console.warn('[GiftCard:whatsapp]', err));
     }
 
     return NextResponse.json({
