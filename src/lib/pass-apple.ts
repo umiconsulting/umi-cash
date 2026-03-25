@@ -1,0 +1,153 @@
+/**
+ * Apple Wallet pass generation using passkit-generator.
+ *
+ * SETUP REQUIRED:
+ * 1. Apple Developer account ($99/year): https://developer.apple.com
+ * 2. Create a Pass Type ID in the Certificates section
+ * 3. Download the Pass Type ID certificate (.cer), convert to PEM:
+ *    openssl x509 -in certificate.cer -inform DER -out signerCert.pem -outform PEM
+ * 4. Export your private key as signerKey.pem
+ * 5. Download Apple WWDR intermediate certificate:
+ *    https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer
+ *    Convert: openssl x509 -in AppleWWDRCAG4.cer -inform DER -out wwdr.pem -outform PEM
+ * 6. Place all .pem files in passes/apple/certificates/
+ */
+
+import { PKPass } from 'passkit-generator';
+import fs from 'fs';
+import path from 'path';
+import { formatMXN } from './currency';
+import { generatePassSerial, generateRandomToken } from './auth';
+
+const PASSES_DIR = path.join(process.cwd(), 'passes', 'apple');
+const TEMPLATE_DIR = path.join(PASSES_DIR, 'template');
+const CERTS_DIR = path.join(PASSES_DIR, 'certificates');
+
+// Cached at module load — avoids disk I/O on every pass generation request
+const certCache = (() => {
+  try {
+    return {
+      wwdr: fs.readFileSync(path.join(CERTS_DIR, 'wwdr.pem')),
+      signerCert: fs.readFileSync(path.join(CERTS_DIR, 'signerCert.pem')),
+      signerKey: fs.readFileSync(path.join(CERTS_DIR, 'signerKey.pem')),
+    };
+  } catch {
+    return null;
+  }
+})();
+
+export function isAppleWalletConfigured(): boolean {
+  return certCache !== null && !!process.env.APPLE_PASS_TYPE_ID && !!process.env.APPLE_TEAM_ID;
+}
+
+export interface PassData {
+  cardId: string;
+  cardNumber: string;
+  customerName: string;
+  balanceCentavos: number;
+  visitsThisCycle: number;
+  visitsRequired: number;
+  pendingRewards: number;
+  rewardName: string;
+  totalVisits: number;
+  authToken?: string;
+  serial?: string;
+  // Tenant branding
+  tenantName?: string;
+  tenantSlug?: string;
+  primaryColor?: string; // hex, e.g. "#B5605A"
+}
+
+export async function generateApplePass(data: PassData): Promise<{
+  buffer: Buffer;
+  serial: string;
+  authToken: string;
+}> {
+  if (!isAppleWalletConfigured() || !certCache) {
+    throw new Error('Apple Wallet certificates not configured. See passes/apple/certificates/README.md');
+  }
+
+  const serial = data.serial || generatePassSerial();
+  const authToken = data.authToken || generateRandomToken();
+  const tenantName = data.tenantName || 'Umi Cash';
+  const tenantSlug = data.tenantSlug || 'app';
+
+  // Convert hex color to rgb() string for Apple Wallet
+  function hexToRgb(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  const bgColor = hexToRgb(data.primaryColor || '#B5605A');
+
+  const remaining = data.visitsRequired - data.visitsThisCycle;
+  const rewardText =
+    data.pendingRewards > 0
+      ? `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} pendiente${data.pendingRewards > 1 ? 's' : ''}`
+      : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`;
+
+  // Second arg cast to any — passkit-generator type defs vary between v3 patch versions
+  const pass = await PKPass.from(
+    {
+      model: TEMPLATE_DIR,
+      certificates: {
+        wwdr: certCache.wwdr,
+        signerCert: certCache.signerCert,
+        signerKey: {
+          keyFile: certCache.signerKey,
+          passphrase: process.env.APPLE_KEY_PASSPHRASE || '',
+        },
+      },
+    } as any,
+    {
+      serialNumber: serial,
+      authenticationToken: authToken,
+      backgroundColor: bgColor,
+      foregroundColor: 'rgb(255, 255, 255)',
+      labelColor: 'rgb(250, 235, 220)',
+      webServiceURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/${tenantSlug}/passes/apple`,
+      barcodes: [
+        {
+          message: data.cardNumber,
+          format: 'PKBarcodeFormatQR',
+          messageEncoding: 'iso-8859-1',
+        },
+      ],
+      storeCard: {
+        headerFields: [
+          {
+            key: 'balance',
+            label: 'SALDO',
+            value: formatMXN(data.balanceCentavos),
+            textAlignment: 'PKTextAlignmentRight',
+          },
+        ],
+        primaryFields: [
+          { key: 'tenantName', label: 'PROGRAMA', value: tenantName },
+          { key: 'memberName', label: 'MIEMBRO', value: data.customerName },
+        ],
+        secondaryFields: [
+          { key: 'visits', label: 'VISITAS', value: `${data.visitsThisCycle}/${data.visitsRequired}` },
+          { key: 'reward', label: 'PRÓXIMA RECOMPENSA', value: rewardText },
+        ],
+        auxiliaryFields: [
+          { key: 'rewardName', label: 'RECOMPENSA DEL CICLO', value: data.rewardName },
+        ],
+        backFields: [
+          { key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) },
+          { key: 'cardNumber', label: 'Número de tarjeta', value: data.cardNumber },
+          {
+            key: 'terms',
+            label: 'Términos y condiciones',
+            value: `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`,
+          },
+          { key: 'website', label: 'Consulta tu tarjeta', value: `${process.env.NEXT_PUBLIC_APP_URL}/${tenantSlug}/card` },
+        ],
+      },
+    } as any
+  );
+
+  const buffer = await pass.getAsBuffer();
+  return { buffer, serial, authToken };
+}

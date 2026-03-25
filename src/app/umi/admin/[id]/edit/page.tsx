@@ -1,0 +1,242 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+interface TenantEditData {
+  id: string;
+  slug: string;
+  name: string;
+  city: string | null;
+  primaryColor: string;
+  secondaryColor: string | null;
+  cardPrefix: string;
+  selfRegistration: boolean;
+  subscriptionStatus: string;
+  trialEndsAt: string | null;
+  rewardConfig: { visitsRequired: number; rewardName: string } | null;
+}
+
+export default function EditTenantPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [data, setData] = useState<TenantEditData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const [form, setForm] = useState({
+    name: '',
+    city: '',
+    primaryColor: '#B5605A',
+    secondaryColor: '',
+    selfRegistration: true,
+    subscriptionStatus: 'ACTIVE',
+    rewardName: '',
+    visitsRequired: 10,
+  });
+
+  useEffect(() => {
+    fetch(`/api/umi/tenants/${id}`)
+      .then((r) => r.json())
+      .then((d: TenantEditData) => {
+        setData(d);
+        setForm({
+          name: d.name,
+          city: d.city ?? '',
+          primaryColor: d.primaryColor,
+          secondaryColor: d.secondaryColor ?? '',
+          selfRegistration: d.selfRegistration,
+          subscriptionStatus: d.subscriptionStatus,
+          rewardName: d.rewardConfig?.rewardName ?? 'Bebida gratis',
+          visitsRequired: d.rewardConfig?.visitsRequired ?? 10,
+        });
+        setLoading(false);
+      })
+      .catch(() => { setError('Error al cargar datos'); setLoading(false); });
+  }, [id]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    const res = await fetch(`/api/umi/tenants/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name,
+        city: form.city,
+        primaryColor: form.primaryColor,
+        secondaryColor: form.secondaryColor || null,
+        selfRegistration: form.selfRegistration,
+        subscriptionStatus: form.subscriptionStatus,
+        rewardName: form.rewardName,
+        visitsRequired: form.visitsRequired,
+      }),
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      setSuccess('Guardado correctamente');
+      router.refresh();
+    } else {
+      setError(result.error ?? 'Error al guardar');
+    }
+    setSaving(false);
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-2xl mx-auto px-6 py-10 animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded-xl w-1/3" />
+          <div className="h-64 bg-gray-200 rounded-2xl" />
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <Link href="/umi/admin" className="text-gray-400 hover:text-gray-700 text-sm transition-colors">
+            ← Master Admin
+          </Link>
+          <span className="text-gray-200">/</span>
+          <p className="font-semibold text-gray-900">{data?.name}</p>
+        </div>
+      </header>
+
+      <div className="max-w-2xl mx-auto px-6 py-10">
+        <form onSubmit={handleSave} className="space-y-6">
+
+          {/* Business info */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Información del negocio</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre</label>
+                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required maxLength={100} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Ciudad</label>
+                <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" maxLength={100} placeholder="Culiacán, Sinaloa" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug</label>
+                <input type="text" value={data?.slug ?? ''} readOnly
+                  className="w-full border border-gray-100 rounded-xl px-3 py-2.5 text-sm font-mono bg-gray-50 text-gray-400 cursor-not-allowed" />
+                <p className="text-xs text-gray-400 mt-1">No se puede cambiar</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Prefijo de tarjeta</label>
+                <input type="text" value={data?.cardPrefix ?? ''} readOnly
+                  className="w-full border border-gray-100 rounded-xl px-3 py-2.5 text-sm font-mono bg-gray-50 text-gray-400 cursor-not-allowed" />
+              </div>
+            </div>
+          </div>
+
+          {/* Branding */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Apariencia</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Color principal</label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={form.primaryColor} onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
+                    className="w-10 h-9 rounded-lg border border-gray-200 cursor-pointer" />
+                  <input type="text" value={form.primaryColor} onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) setForm({ ...form, primaryColor: e.target.value }); }}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900" maxLength={7} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Color secundario <span className="text-gray-400 font-normal">(opcional)</span></label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={form.secondaryColor || form.primaryColor} onChange={(e) => setForm({ ...form, secondaryColor: e.target.value })}
+                    className="w-10 h-9 rounded-lg border border-gray-200 cursor-pointer" />
+                  <input type="text" value={form.secondaryColor} onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) setForm({ ...form, secondaryColor: e.target.value }); }}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="Sin degradado" maxLength={7} />
+                </div>
+              </div>
+            </div>
+
+            {/* Live preview */}
+            <div className="rounded-xl p-3 flex gap-1" style={{ background: form.primaryColor }}>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="h-2 flex-1 rounded-full" style={{ background: i < 4 ? (form.secondaryColor || 'rgba(255,255,255,0.9)') : 'rgba(255,255,255,0.2)' }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Loyalty program */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Programa de lealtad</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Visitas para recompensa</label>
+                <input type="number" value={form.visitsRequired} onChange={(e) => setForm({ ...form, visitsRequired: parseInt(e.target.value) || 1 })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" min={1} max={50} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre de la recompensa</label>
+                <input type="text" value={form.rewardName} onChange={(e) => setForm({ ...form, rewardName: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" maxLength={100} />
+              </div>
+            </div>
+          </div>
+
+          {/* Subscription & options */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <h2 className="font-semibold text-gray-900">Suscripción y opciones</h2>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Estado de suscripción</label>
+              <select value={form.subscriptionStatus} onChange={(e) => setForm({ ...form, subscriptionStatus: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+                <option value="ACTIVE">Activo</option>
+                <option value="TRIAL">Prueba</option>
+                <option value="SUSPENDED">Suspendido</option>
+              </select>
+            </div>
+
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Registro abierto</p>
+                <p className="text-xs text-gray-400 mt-0.5">Los clientes pueden registrarse en /{data?.slug}/register</p>
+              </div>
+              <button type="button" onClick={() => setForm({ ...form, selfRegistration: !form.selfRegistration })}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${form.selfRegistration ? 'bg-green-500' : 'bg-gray-300'}`}>
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${form.selfRegistration ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </label>
+          </div>
+
+          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          {success && <p className="text-sm text-green-600 text-center">{success}</p>}
+
+          <div className="flex gap-3">
+            <Link href="/umi/admin" className="flex-1 text-center border border-gray-200 text-gray-600 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors">
+              Cancelar
+            </Link>
+            <button type="submit" disabled={saving}
+              className="flex-1 bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50">
+              {saving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  );
+}

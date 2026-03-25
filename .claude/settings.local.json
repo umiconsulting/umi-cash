@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(customer\\\\\\)/card)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(auth\\\\\\)/register)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(auth\\\\\\)/login)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(auth\\\\\\)/admin-login)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(admin\\\\\\)/admin/scan)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/api/[slug]/auth/login)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/api/[slug]/auth/logout)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/api/[slug]/auth/refresh)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/api/[slug]/card/qr)",
+      "Bash(mkdir -p /Users/469096/Documents/umi/src/app/api/[slug]/admin/scan)",
+      "Bash(npx tsx:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(ls /Users/469096/Documents/umi/src/app/api/[slug]/auth/)",
+      "Bash(ls /Users/469096/Documents/umi/src/app/[slug]/)",
+      "Bash(find /Users/469096/Documents/umi/src/app/[slug] -name \"*.tsx\")",
+      "Bash(npx prisma:*)",
+      "Bash(python3 -c \"import sys,json; data=json.load\\(sys.stdin\\); print\\(data[0][''''text'''']\\)\")",
+      "Bash(grep -r \"setInterval\\\\|setTimeout\\\\|cron\\\\|schedule\\\\|bull\\\\|queue\" /Users/469096/Documents/umi/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -rn \"hardcoded\\\\|HARDCODE\\\\|hardcoded\\\\|mock\\\\|placeholder\\\\|TODO\\\\|FIXME\\\\|XXX\\\\|HACK\" /Users/469096/Documents/umi/src --include=*.ts --include=*.tsx)",
+      "Bash(npm install:*)",
+      "Bash(ls /Users/469096/Documents/umi/src/app/api/[slug]/admin/export/)",
+      "Bash(ls /Users/469096/Documents/umi/src/app/api/[slug]/admin/analytics/)",
+      "Bash(ls /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(admin\\\\\\)/admin/analytics/)",
+      "Bash(grep -rn loyalty-card /Users/469096/Documents/umi/src --include=*.css)",
+      "Bash(grep:*)",
+      "Bash(grep -n \"bg-white.*rounded-full\\\\|bg-white/20\\\\|visitsThisCycle\\\\|visit.*dot\\\\|progress\" /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(customer\\\\\\)/card/page.tsx)",
+      "Bash(grep -n \"LoyaltyProgressDots\\\\|visit-dot\\\\|bg-coffee-brand\\\\|bg-white.*flex-1\" /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(customer\\\\\\)/card/page.tsx)"
+    ]
+  }
+}

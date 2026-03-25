@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Tenant ───────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id             String   @id @default(cuid())
+  slug           String   @unique          // "elgranribera", "kalalacafe"
+  name           String                    // "El Gran Ribera"
+  city           String?                   // "Culiacán, Sin."
+  cardPrefix     String   @default("LYL")  // EGR, KAL — used in card numbers
+  primaryColor   String   @default("#B5605A")
+  secondaryColor String?
+  logoUrl        String?
+  selfRegistration   Boolean  @default(true)
+  subscriptionStatus String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
+  suspendedAt        DateTime?
+  trialEndsAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  users         User[]
+  cards         LoyaltyCard[]
+  rewardConfigs RewardConfig[]
+  locations     Location[]
+}
+
+model Location {
+  id       String  @id @default(cuid())
+  tenantId String
+  name     String            // "Matriz", "Plaza Fiesta"
+  address  String?
+  isActive Boolean @default(true)
+
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  phone        String?
+  email        String?
+  name         String?
+  role         String   @default("CUSTOMER") // CUSTOMER | STAFF | ADMIN
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  card         LoyaltyCard?
+  sessions     Session[]
+
+  @@unique([tenantId, phone])
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([tenantId, role])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+// ─── Loyalty Card ─────────────────────────────────────────────────────────────
+
+model LoyaltyCard {
+  id              String   @id @default(cuid())
+  tenantId        String
+  userId          String   @unique
+  cardNumber      String   @unique
+
+  // Gift card balance stored as centavos (integer) to avoid float issues
+  // $150.50 MXN = 15050 centavos
+  balanceCentavos Int      @default(0)
+
+  // Lifetime stats
+  totalVisits     Int      @default(0)
+
+  // Current loyalty cycle progress (resets on reward earned)
+  visitsThisCycle Int      @default(0)
+
+  // Earned but unredeemed rewards
+  pendingRewards  Int      @default(0)
+
+  // Apple Wallet
+  applePassSerial    String?  @unique
+  applePassAuthToken String?
+
+  // Google Wallet
+  googlePassObjectId String?  @unique
+
+  // QR security token (rotated on every scan to prevent replay)
+  qrToken    String   @unique
+  qrIssuedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant              Tenant            @relation(fields: [tenantId], references: [id])
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visits              Visit[]
+  transactions        Transaction[]
+  rewardRedemptions   RewardRedemption[]
+  applePushTokens     ApplePushToken[]
+
+  @@index([tenantId])
+}
+
+// ─── Visits ───────────────────────────────────────────────────────────────────
+
+model Visit {
+  id        String   @id @default(cuid())
+  cardId    String
+  staffId   String
+  scannedAt DateTime @default(now())
+  note      String?
+
+  card      LoyaltyCard @relation(fields: [cardId], references: [id])
+
+  @@index([cardId])
+  @@index([scannedAt])
+  @@index([cardId, scannedAt])
+}
+
+// ─── Transactions ─────────────────────────────────────────────────────────────
+
+model Transaction {
+  id             String   @id @default(cuid())
+  cardId         String
+  staffId        String?
+  type           String   // TOPUP | PURCHASE | ADJUSTMENT
+  amountCentavos Int      // positive = credit, negative = debit
+  description    String?
+  createdAt      DateTime @default(now())
+
+  card           LoyaltyCard @relation(fields: [cardId], references: [id])
+
+  @@index([cardId])
+  @@index([createdAt])
+}
+
+// ─── Reward Config ────────────────────────────────────────────────────────────
+
+model RewardConfig {
+  id                String   @id @default(cuid())
+  tenantId          String
+  visitsRequired    Int      @default(10)
+  rewardName        String   @default("Recompensa de temporada")
+  rewardDescription String?
+  isActive          Boolean  @default(true)
+  activatedAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id])
+  redemptions       RewardRedemption[]
+
+  @@index([tenantId, isActive, activatedAt])
+}
+
+model RewardRedemption {
+  id          String   @id @default(cuid())
+  cardId      String
+  configId    String
+  staffId     String
+  redeemedAt  DateTime @default(now())
+  note        String?
+
+  card        LoyaltyCard  @relation(fields: [cardId], references: [id])
+  config      RewardConfig @relation(fields: [configId], references: [id])
+
+  @@index([cardId])
+}
+
+// ─── Apple Wallet Push ────────────────────────────────────────────────────────
+
+model ApplePushToken {
+  id          String   @id @default(cuid())
+  cardId      String
+  deviceToken String
+  pushToken   String
+  createdAt   DateTime @default(now())
+
+  card        LoyaltyCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, deviceToken])
+}

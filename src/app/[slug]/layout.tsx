@@ -1,0 +1,73 @@
+import { notFound } from 'next/navigation';
+import { getTenant } from '@/lib/tenant';
+import { TenantProvider } from '@/context/TenantContext';
+
+export default async function TenantLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { slug: string };
+}) {
+  const tenant = await getTenant(params.slug);
+  if (!tenant) notFound();
+
+  const cssVars = `
+    :root {
+      --color-brand:        ${tenant.primaryColor};
+      --color-brand-dark:   ${darken(tenant.primaryColor)};
+      --color-ink:          ${tenant.primaryColor === '#81875D' ? '#2A2A20' : '#1F1410'};
+      --color-ink-light:    #C4A882;
+      --color-accent:       ${tenant.secondaryColor ?? tenant.primaryColor};
+      --color-surface:      ${lightSurface(tenant.primaryColor)};
+      --color-surface-dark: ${darkSurface(tenant.primaryColor)};
+    }
+  `;
+
+  const tenantValue = {
+    slug: params.slug,
+    name: tenant.name,
+    city: tenant.city,
+    primaryColor: tenant.primaryColor,
+    secondaryColor: tenant.secondaryColor,
+    cardPrefix: tenant.cardPrefix,
+  };
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: cssVars }} />
+      <TenantProvider value={tenantValue}>
+        {children}
+      </TenantProvider>
+    </>
+  );
+}
+
+// Simple color utilities — good enough for the brand palette we use
+function darken(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const factor = 0.75;
+  return `#${toHex(Math.round(r * factor))}${toHex(Math.round(g * factor))}${toHex(Math.round(b * factor))}`;
+}
+
+function lightSurface(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Blend toward white at 96%
+  return `#${toHex(Math.round(r * 0.04 + 255 * 0.96))}${toHex(Math.round(g * 0.04 + 255 * 0.96))}${toHex(Math.round(b * 0.04 + 255 * 0.96))}`;
+}
+
+function darkSurface(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Blend toward white at 88%
+  return `#${toHex(Math.round(r * 0.12 + 255 * 0.88))}${toHex(Math.round(g * 0.12 + 255 * 0.88))}${toHex(Math.round(b * 0.12 + 255 * 0.88))}`;
+}
+
+function toHex(n: number): string {
+  return Math.min(255, Math.max(0, n)).toString(16).padStart(2, '0');
+}
