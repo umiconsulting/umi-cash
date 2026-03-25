@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 import { timingSafeEqual } from 'crypto';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
@@ -53,7 +53,14 @@ export async function POST(req: NextRequest) {
   return res;
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  const token = req.cookies.get('umi_session')?.value;
+  if (!token) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  try {
+    await jwtVerify(token, getSecret());
+  } catch {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
   const res = NextResponse.json({ ok: true });
   res.cookies.set('umi_session', '', { maxAge: 0, path: '/', secure: true, httpOnly: true });
   return res;

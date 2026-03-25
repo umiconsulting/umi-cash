@@ -120,6 +120,12 @@ export default function RegisterPage() {
       return;
     }
 
+    if (form.phone && !/^\+?[0-9\s\-()]{7,15}$/.test(form.phone.replace(/\s/g, ''))) {
+      setError('Ingresa un número de teléfono válido, ej: +52 55 1234 5678');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/${slug}/customers`, {
         method: 'POST',
@@ -161,71 +167,40 @@ export default function RegisterPage() {
   if (success) {
     return (
       <main className="min-h-screen bg-coffee-cream flex flex-col">
-        <div className="loyalty-card text-white px-6 py-8 text-center">
+        <div className="loyalty-card text-white px-6 py-10 text-center">
           <div className="max-w-sm mx-auto relative z-10">
-            <h1 className="font-display text-2xl font-bold">¡Bienvenida, {success.name}!</h1>
-            <p className="text-coffee-light text-sm mt-1 mb-6">Tu tarjeta está lista.</p>
-
-            {/* Inline card preview */}
-            <div className="rounded-2xl overflow-hidden shadow-xl bg-white/10 backdrop-blur-sm border border-white/20 text-left mx-auto max-w-[280px]">
-              <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-                <span className="text-white text-[13px] font-semibold tracking-tight">{tenant.name}</span>
-                <div className="text-right">
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest">Saldo</p>
-                  <p className="text-white text-[14px] font-bold">$0.00</p>
-                </div>
-              </div>
-              <div className="mx-4 h-px bg-white/10" />
-              <div className="px-4 pt-2 pb-2">
-                <p className="text-white/40 text-[9px] uppercase tracking-widest">Miembro</p>
-                <p className="text-white text-[15px] font-semibold mt-0.5">{form.name}</p>
-              </div>
-              <div className="px-4 pb-3 flex justify-between">
-                <div>
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest">Visitas</p>
-                  <p className="text-white text-[12px] font-semibold mt-0.5">0 / —</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest">Estado</p>
-                  <p className="text-white text-[12px] font-semibold mt-0.5">Activa ✓</p>
-                </div>
-              </div>
+            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
             </div>
+            <h1 className="font-display text-2xl font-bold">¡Listo, {success.name}!</h1>
+            <p className="text-coffee-light text-sm mt-2">Tu tarjeta está activa. Agrégala a tu teléfono para tenerla siempre a la mano.</p>
           </div>
         </div>
 
-        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full space-y-6">
+        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full space-y-4">
           <div className="card-surface">
-            <h2 className="font-semibold text-coffee-dark text-center mb-1">Guarda tu tarjeta en el teléfono</h2>
-            <p className="text-xs text-coffee-medium text-center mb-5">
-              Así tendrás tu código siempre a la mano, sin abrir apps.
-            </p>
+            <p className="text-xs text-coffee-medium text-center mb-5 font-medium uppercase tracking-wide">Guarda tu tarjeta — un toque, listo</p>
             <WalletAddButtons token={success.token} slug={slug} />
           </div>
 
           <div className="card-surface space-y-3">
-            <h3 className="font-semibold text-coffee-dark text-sm">¿Y ahora qué?</h3>
             <div className="space-y-2 text-sm text-coffee-medium">
               <div className="flex gap-3 items-start">
-                <span className="font-bold text-coffee-dark flex-shrink-0">1.</span>
-                <p>Tu tarjeta vive en el teléfono. Ábrela, muestra el código al barista.</p>
+                <span className="text-coffee-brand font-bold flex-shrink-0">✓</span>
+                <p>Tu tarjeta ya está activa. Muéstrasela al barista en tu próxima visita.</p>
               </div>
               <div className="flex gap-3 items-start">
-                <span className="font-bold text-coffee-dark flex-shrink-0">2.</span>
-                <p>Después de cada visita, tu tarjeta se actualiza automáticamente.</p>
+                <span className="text-coffee-brand font-bold flex-shrink-0">✓</span>
+                <p>Después de cada escaneo, la tarjeta se actualiza sola.</p>
               </div>
               <div className="flex gap-3 items-start">
-                <span className="font-bold text-coffee-dark flex-shrink-0">3.</span>
-                <p>A las 10 visitas, ganas la recompensa del mes.</p>
+                <span className="text-coffee-brand font-bold flex-shrink-0">✓</span>
+                <p>Al completar tus visitas, ganas la recompensa del mes.</p>
               </div>
             </div>
           </div>
-
-          <Link href={`/${slug}/card`} className="btn-primary w-full text-center block">
-            Ver mi tarjeta →
-          </Link>
-
-          <Link href={`/${slug}`} className="text-center text-xs text-coffee-light block">← Volver al inicio</Link>
         </div>
       </main>
     );
