@@ -60,6 +60,18 @@ function IconSettings({ active }: { active: boolean }) {
   );
 }
 
+function IconGift({ active }: { active: boolean }) {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 12 20 22 4 22 4 12" />
+      <rect x="2" y="7" width="20" height="5" />
+      <line x1="12" y1="22" x2="12" y2="7" />
+      <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+      <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+    </svg>
+  );
+}
+
 function IconChart({ active }: { active: boolean }) {
   return (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -83,6 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: `/${slug}/admin/scan`, label: 'Escanear', exact: false, Icon: IconCamera, roles: ['STAFF', 'ADMIN'] },
     { href: `/${slug}/admin/topup`, label: 'Recargar', exact: false, Icon: IconCard, roles: ['STAFF', 'ADMIN'] },
     { href: `/${slug}/admin/customers`, label: 'Clientes', exact: false, Icon: IconUsers, roles: ['STAFF', 'ADMIN'] },
+    { href: `/${slug}/admin/gift-cards`, label: 'Regalos', exact: false, Icon: IconGift, roles: ['STAFF', 'ADMIN'] },
     { href: `/${slug}/admin/rewards`, label: 'Recompensas', exact: false, Icon: IconStar, roles: ['ADMIN'] },
     { href: `/${slug}/admin/analytics`, label: 'Analíticas', exact: false, Icon: IconChart, roles: ['ADMIN'] },
     { href: `/${slug}/admin/settings`, label: 'Config', exact: false, Icon: IconSettings, roles: ['ADMIN'] },

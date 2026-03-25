@@ -29,7 +29,11 @@
       "Bash(grep -rn loyalty-card /Users/469096/Documents/umi/src --include=*.css)",
       "Bash(grep:*)",
       "Bash(grep -n \"bg-white.*rounded-full\\\\|bg-white/20\\\\|visitsThisCycle\\\\|visit.*dot\\\\|progress\" /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(customer\\\\\\)/card/page.tsx)",
-      "Bash(grep -n \"LoyaltyProgressDots\\\\|visit-dot\\\\|bg-coffee-brand\\\\|bg-white.*flex-1\" /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(customer\\\\\\)/card/page.tsx)"
+      "Bash(grep -n \"LoyaltyProgressDots\\\\|visit-dot\\\\|bg-coffee-brand\\\\|bg-white.*flex-1\" /Users/469096/Documents/umi/src/app/[slug]/\\\\\\(customer\\\\\\)/card/page.tsx)",
+      "WebFetch(domain:github.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

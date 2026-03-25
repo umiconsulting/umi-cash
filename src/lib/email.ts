@@ -37,6 +37,39 @@ export async function sendWelcomeEmail(opts: {
   }).catch((err) => console.warn('[Email:welcome]', err));
 }
 
+export async function sendGiftCardEmail(opts: {
+  to: string;
+  recipientName: string | null;
+  senderName: string | null;
+  tenantName: string;
+  amountMXN: string;
+  message: string | null;
+  redeemUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend || !opts.to.includes('@')) return;
+  const greeting = opts.recipientName ? `¡Hola, ${escapeHtml(opts.recipientName)}!` : '¡Hola!';
+  const from = opts.senderName ? `<strong>${escapeHtml(opts.senderName)}</strong>` : 'alguien especial';
+  await resend.emails.send({
+    from: FROM,
+    to: opts.to,
+    subject: `🎁 ¡Tienes una tarjeta de regalo de ${opts.tenantName}!`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+        <h2 style="color:#B5605A">${greeting}</h2>
+        <p>${from} te ha enviado una tarjeta de regalo de <strong>${escapeHtml(opts.tenantName)}</strong> por <strong style="font-size:1.2em">${escapeHtml(opts.amountMXN)}</strong>.</p>
+        ${opts.message ? `<blockquote style="border-left:4px solid #B5605A;margin:16px 0;padding:8px 16px;background:#fdf8f5;color:#555;font-style:italic">${escapeHtml(opts.message)}</blockquote>` : ''}
+        <div style="margin:24px 0;text-align:center">
+          <a href="${opts.redeemUrl}" style="display:inline-block;background:#B5605A;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:1rem">
+            Canjear mi regalo
+          </a>
+        </div>
+        <p style="color:#999;font-size:12px;margin-top:24px">El saldo se agregará directamente a tu tarjeta de lealtad. Si no esperabas este regalo, puedes ignorar este correo.</p>
+      </div>
+    `,
+  }).catch((err) => console.warn('[Email:giftcard]', err));
+}
+
 export async function sendRewardEarnedEmail(opts: {
   to: string;
   customerName: string;

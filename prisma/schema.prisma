@@ -29,6 +29,7 @@ model Tenant {
   cards         LoyaltyCard[]
   rewardConfigs RewardConfig[]
   locations     Location[]
+  giftCards     GiftCard[]
 }
 
 model Location {
@@ -119,6 +120,7 @@ model LoyaltyCard {
   transactions        Transaction[]
   rewardRedemptions   RewardRedemption[]
   applePushTokens     ApplePushToken[]
+  redeemedGiftCards   GiftCard[]
 
   @@index([tenantId])
 }
@@ -186,6 +188,41 @@ model RewardRedemption {
   config      RewardConfig @relation(fields: [configId], references: [id])
 
   @@index([cardId])
+}
+
+// ─── Gift Cards ───────────────────────────────────────────────────────────────
+
+model GiftCard {
+  id               String    @id @default(cuid())
+  tenantId         String
+  code             String    @unique  // "A3F2-9C1D" — public redemption code
+
+  amountCentavos   Int
+
+  // Created by staff
+  createdByStaffId String
+  senderName       String?   // optional "De parte de: Juan"
+  message          String?   // optional personal message
+
+  // Recipient contact (for email/SMS notification)
+  recipientEmail   String?
+  recipientPhone   String?
+  recipientName    String?
+
+  // Redemption state
+  isRedeemed       Boolean   @default(false)
+  redeemedAt       DateTime?
+  redeemedCardId   String?   // which LoyaltyCard redeemed it
+
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  tenant           Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  redeemedCard     LoyaltyCard? @relation(fields: [redeemedCardId], references: [id])
+
+  @@index([tenantId])
+  @@index([code])
+  @@index([tenantId, isRedeemed])
 }
 
 // ─── Apple Wallet Push ────────────────────────────────────────────────────────
