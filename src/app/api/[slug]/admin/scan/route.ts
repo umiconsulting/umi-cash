@@ -73,16 +73,17 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       return NextResponse.json({ error: 'No puedes escanear tu propia tarjeta' }, { status: 403 });
     }
 
-    // Max 3 visits per card per calendar day (abuse prevention)
-    const dayStart = new Date();
-    dayStart.setHours(0, 0, 0, 0);
-    const visitsToday = await prisma.visit.count({
-      where: { cardId: card.id, scannedAt: { gte: dayStart } },
-    });
-    if (action === SCAN_ACTIONS.VISIT && visitsToday >= 3) {
-      return NextResponse.json({
-        error: 'Límite de visitas del día alcanzado (máx. 3 por día)',
-      }, { status: 429 });
+    // 1 visit per card per rolling 24-hour window (abuse prevention)
+    if (action === SCAN_ACTIONS.VISIT) {
+      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentVisit = await prisma.visit.findFirst({
+        where: { cardId: card.id, scannedAt: { gte: since24h } },
+      });
+      if (recentVisit) {
+        return NextResponse.json({
+          error: 'Ya se registró una visita en las últimas 24 horas',
+        }, { status: 429 });
+      }
     }
 
     const rewardConfig = await getActiveRewardConfig(tenant.id);

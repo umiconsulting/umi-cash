@@ -54,11 +54,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const rewardConfig = await getActiveRewardConfig(tenant.id);
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
-    // Check daily visit limit
-    const dayStart = new Date();
-    dayStart.setHours(0, 0, 0, 0);
-    const visitsToday = await prisma.visit.count({
-      where: { cardId: card.id, scannedAt: { gte: dayStart } },
+    // Check 24-hour rolling visit limit
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentVisit = await prisma.visit.findFirst({
+      where: { cardId: card.id, scannedAt: { gte: since24h } },
+      orderBy: { scannedAt: 'desc' },
     });
 
     return NextResponse.json({
@@ -73,7 +73,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         balanceMXN: formatMXN(card.balanceCentavos),
         balanceCentavos: card.balanceCentavos,
         rewardName,
-        visitLimitReached: visitsToday >= 3,
+        visitLimitReached: !!recentVisit,
+        lastVisitAt: recentVisit?.scannedAt ?? null,
       },
     });
   } catch (err) {

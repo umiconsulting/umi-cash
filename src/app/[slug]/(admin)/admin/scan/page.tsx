@@ -17,6 +17,7 @@ interface CardPreview {
     balanceCentavos: number;
     rewardName: string;
     visitLimitReached: boolean;
+        lastVisitAt: string | null;
   };
 }
 
@@ -544,7 +545,15 @@ export default function ScanPage() {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
                 <span className="flex-1 text-left">
-                  {preview.card.visitLimitReached ? 'Límite de visitas alcanzado hoy' : 'Registrar visita'}
+                  {preview.card.visitLimitReached
+                    ? (() => {
+                        if (!preview.card.lastVisitAt) return 'Visita ya registrada hoy';
+                        const minsLeft = Math.ceil((new Date(preview.card.lastVisitAt).getTime() + 24 * 60 * 60 * 1000 - Date.now()) / 60000);
+                        const hrsLeft = Math.floor(minsLeft / 60);
+                        const remaining = hrsLeft > 0 ? `${hrsLeft}h ${minsLeft % 60}m` : `${minsLeft}m`;
+                        return `Disponible en ${remaining}`;
+                      })()
+                    : 'Registrar visita'}
                 </span>
                 {!preview.card.visitLimitReached && (
                   <span className="text-white/50 text-xs">
