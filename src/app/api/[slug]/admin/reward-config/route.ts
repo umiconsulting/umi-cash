@@ -69,6 +69,8 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
     return NextResponse.json({ newConfig });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: err.errors[0].message }, { status: 400 });
-    return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 });
+    console.error('[reward-config PUT]', err);
+    const message = err instanceof Error ? err.message : 'Error al actualizar';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
