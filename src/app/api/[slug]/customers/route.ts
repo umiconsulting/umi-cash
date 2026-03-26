@@ -4,14 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { generateCardNumber } from '@/lib/qr';
 import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 import { randomBytes } from 'crypto';
-import { sendWelcomeEmail } from '@/lib/email';
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
-  phone: z.string().optional(),
-  email: z.string().email().optional(),
-}).refine(d => d.phone || d.email, {
-  message: 'Se requiere teléfono o correo electrónico',
+  phone: z.string().min(7).max(20),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -29,14 +25,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const body = await req.json();
     const data = RegisterSchema.parse(body);
 
-    if (data.phone) {
-      const existing = await prisma.user.findUnique({ where: { tenantId_phone: { tenantId: tenant.id, phone: data.phone } } });
-      if (existing) return NextResponse.json({ error: 'Este teléfono ya está registrado' }, { status: 409 });
-    }
-    if (data.email) {
-      const existing = await prisma.user.findUnique({ where: { tenantId_email: { tenantId: tenant.id, email: data.email } } });
-      if (existing) return NextResponse.json({ error: 'Este correo ya está registrado' }, { status: 409 });
-    }
+    const existing = await prisma.user.findUnique({ where: { tenantId_phone: { tenantId: tenant.id, phone: data.phone } } });
+    if (existing) return NextResponse.json({ error: 'Este teléfono ya está registrado' }, { status: 409 });
 
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -44,7 +34,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           tenantId: tenant.id,
           name: data.name,
           phone: data.phone,
-          email: data.email,
           role: 'CUSTOMER',
         },
       });
@@ -60,17 +49,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
       return { user, card };
     });
-
-    if (data.email) {
-      sendWelcomeEmail({
-        to: data.email,
-        customerName: data.name,
-        tenantName: tenant.name,
-        cardNumber: result.card.cardNumber,
-        slug: params.slug,
-        appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://cash.umiconsulting.co',
-      }).catch(() => {});
-    }
 
     return NextResponse.json({
       userId: result.user.id,

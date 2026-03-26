@@ -100,10 +100,34 @@ interface SuccessState {
   token: string;
 }
 
+const COUNTRY_CODES = [
+  { dial: '52',  flag: '🇲🇽', name: 'México' },
+  { dial: '1',   flag: '🇺🇸', name: 'EE. UU. / Canadá' },
+  { dial: '34',  flag: '🇪🇸', name: 'España' },
+  { dial: '54',  flag: '🇦🇷', name: 'Argentina' },
+  { dial: '57',  flag: '🇨🇴', name: 'Colombia' },
+  { dial: '56',  flag: '🇨🇱', name: 'Chile' },
+  { dial: '51',  flag: '🇵🇪', name: 'Perú' },
+  { dial: '58',  flag: '🇻🇪', name: 'Venezuela' },
+  { dial: '593', flag: '🇪🇨', name: 'Ecuador' },
+  { dial: '502', flag: '🇬🇹', name: 'Guatemala' },
+  { dial: '503', flag: '🇸🇻', name: 'El Salvador' },
+  { dial: '504', flag: '🇭🇳', name: 'Honduras' },
+  { dial: '505', flag: '🇳🇮', name: 'Nicaragua' },
+  { dial: '506', flag: '🇨🇷', name: 'Costa Rica' },
+  { dial: '507', flag: '🇵🇦', name: 'Panamá' },
+  { dial: '591', flag: '🇧🇴', name: 'Bolivia' },
+  { dial: '595', flag: '🇵🇾', name: 'Paraguay' },
+  { dial: '598', flag: '🇺🇾', name: 'Uruguay' },
+  { dial: '1',   flag: '🇩🇴', name: 'Rep. Dominicana' },
+];
+
 export default function RegisterPage() {
   const { slug } = useParams<{ slug: string }>();
   const tenant = useTenant();
-  const [form, setForm] = useState({ name: '', phone: '', email: '' });
+  const [name, setName] = useState('');
+  const [dialCode, setDialCode] = useState('52');
+  const [localPhone, setLocalPhone] = useState('');
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -114,27 +138,20 @@ export default function RegisterPage() {
     setLoading(true);
     setError('');
 
-    if (!form.phone && !form.email) {
-      setError('Ingresa tu teléfono o correo electrónico');
+    const digits = localPhone.replace(/\D/g, '');
+    if (digits.length < 6) {
+      setError('Ingresa un número de teléfono válido');
       setLoading(false);
       return;
     }
 
-    if (form.phone && !/^\+?[0-9\s\-()]{7,15}$/.test(form.phone.replace(/\s/g, ''))) {
-      setError('Ingresa un número de teléfono válido, ej: +52 55 1234 5678');
-      setLoading(false);
-      return;
-    }
+    const fullPhone = `+${dialCode}${digits}`;
 
     try {
       const res = await fetch(`/api/${slug}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          ...(form.phone ? { phone: form.phone } : {}),
-          ...(form.email ? { email: form.email } : {}),
-        }),
+        body: JSON.stringify({ name, phone: fullPhone }),
       });
 
       const data = await res.json();
@@ -146,14 +163,14 @@ export default function RegisterPage() {
       const loginRes = await fetch(`/api/${slug}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: form.phone || form.email, role: 'CUSTOMER' }),
+        body: JSON.stringify({ identifier: fullPhone, role: 'CUSTOMER' }),
       });
 
       const loginData = await loginRes.json();
       if (loginRes.ok) {
         localStorage.setItem('accessToken', loginData.accessToken);
         localStorage.setItem('userRole', loginData.user.role);
-        setSuccess({ name: form.name.split(' ')[0], token: loginData.accessToken });
+        setSuccess({ name: name.split(' ')[0], token: loginData.accessToken });
       } else {
         setError('Cuenta creada. Escanea tu QR en tienda o contacta al personal.');
       }
@@ -220,23 +237,40 @@ export default function RegisterPage() {
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Nombre completo</label>
-            <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="María García" className="input-field" required autoComplete="name" />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="María García" className="input-field" required autoComplete="name" />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Teléfono</label>
-            <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+52 55 1234 5678" className="input-field" autoComplete="tel" />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-coffee-pale" />
-            <span className="text-xs text-coffee-light">o usa tu correo</span>
-            <div className="flex-1 h-px bg-coffee-pale" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Correo electrónico</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="correo@ejemplo.com" className="input-field" autoComplete="email" />
+            <div className="flex gap-2">
+              <div className="relative flex-shrink-0">
+                <select
+                  value={dialCode}
+                  onChange={(e) => setDialCode(e.target.value)}
+                  className="appearance-none h-full pl-3 pr-7 rounded-xl border border-coffee-pale bg-white text-coffee-dark text-sm focus:outline-none focus:ring-1 focus:ring-coffee-medium cursor-pointer"
+                  aria-label="Código de país"
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={`${c.dial}-${c.name}`} value={c.dial}>
+                      {c.flag} +{c.dial}
+                    </option>
+                  ))}
+                </select>
+                <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-coffee-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+              <input
+                type="tel"
+                value={localPhone}
+                onChange={(e) => setLocalPhone(e.target.value)}
+                placeholder="55 1234 5678"
+                className="input-field flex-1"
+                autoComplete="tel-national"
+                required
+                inputMode="numeric"
+              />
+            </div>
           </div>
 
           <label className="flex items-start gap-3 cursor-pointer">
@@ -254,7 +288,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button type="submit" disabled={loading || !form.name || !privacyAccepted} className="btn-primary w-full">
+          <button type="submit" disabled={loading || !name || !localPhone || !privacyAccepted} className="btn-primary w-full">
             {loading ? 'Creando tu tarjeta...' : 'Crear mi tarjeta gratis'}
           </button>
         </form>

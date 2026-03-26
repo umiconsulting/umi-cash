@@ -50,6 +50,11 @@ export default function ScanPage() {
   const [chargeNote, setChargeNote] = useState('');
   const [showCharge, setShowCharge] = useState(false);
 
+  // Recargar saldo flow
+  const [topupAmount, setTopupAmount] = useState('');
+  const [topupNote, setTopupNote] = useState('');
+  const [showTopup, setShowTopup] = useState(false);
+
   // ── Camera ──────────────────────────────────────────────────────────────
 
   async function startCamera() {
@@ -114,6 +119,8 @@ export default function ScanPage() {
     setResult(null);
     setShowCharge(false);
     setChargeAmount('');
+    setShowTopup(false);
+    setTopupAmount('');
 
     const token = localStorage.getItem('accessToken');
     if (!token) { setProcessing(false); return; }
@@ -232,12 +239,53 @@ export default function ScanPage() {
     }
   }
 
+  async function doTopup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!preview) return;
+    setProcessing(true);
+    setResult(null);
+    const token = localStorage.getItem('accessToken');
+    if (!token) { setProcessing(false); return; }
+
+    let amountCentavos: number;
+    try { amountCentavos = centavosFromPesos(topupAmount); } catch {
+      setResult({ success: false, message: 'Monto inválido' });
+      setProcessing(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/${slug}/admin/topup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cardId: preview.cardId, amountCentavos, note: topupNote }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult({ success: true, message: `Recarga exitosa: ${data.amountMXN}`, detail: `Nuevo saldo: ${data.newBalanceMXN}` });
+        setPreview(null);
+        setShowTopup(false);
+        setTopupAmount('');
+        setTopupNote('');
+      } else {
+        setResult({ success: false, message: data.error ?? 'Error al recargar' });
+      }
+    } catch {
+      setResult({ success: false, message: 'Error de conexión' });
+    } finally {
+      setProcessing(false);
+    }
+  }
+
   function reset() {
     setPreview(null);
     setResult(null);
     setShowCharge(false);
     setChargeAmount('');
     setChargeNote('');
+    setShowTopup(false);
+    setTopupAmount('');
+    setTopupNote('');
     setManualInput('');
   }
 
@@ -370,7 +418,7 @@ export default function ScanPage() {
             </p>
           </div>
 
-          {/* Charge balance form (inline) */}
+          {/* Cobrar saldo form (inline) */}
           {showCharge ? (
             <div className="card-surface border-2 border-coffee-brand/20 bg-coffee-brand/5">
               <p className="text-sm font-semibold text-coffee-dark mb-3">Cobrar saldo</p>
@@ -426,6 +474,63 @@ export default function ScanPage() {
                 </div>
               </form>
             </div>
+
+          /* Recargar saldo form (inline) */
+          ) : showTopup ? (
+            <div className="card-surface border-2 border-green-200 bg-green-50/50">
+              <p className="text-sm font-semibold text-coffee-dark mb-3">Recargar saldo</p>
+              <form onSubmit={doTopup} className="space-y-3">
+                <div className="grid grid-cols-4 gap-2">
+                  {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => (
+                    <button
+                      key={centavos}
+                      type="button"
+                      onClick={() => setTopupAmount(String(centavos / 100))}
+                      className={`py-2 rounded-xl text-sm font-medium transition-colors ${
+                        topupAmount === String(centavos / 100) ? 'bg-coffee-dark text-white' : 'bg-white text-coffee-medium hover:bg-coffee-pale'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  value={topupAmount}
+                  onChange={(e) => setTopupAmount(e.target.value)}
+                  placeholder="Otro monto"
+                  className="input-field"
+                  min="1"
+                  max="10000"
+                  step="0.50"
+                  autoFocus
+                />
+                {topupAmount && !isNaN(parseFloat(topupAmount)) && (
+                  <p className="text-sm text-coffee-medium -mt-1">= {formatMXN(Math.round(parseFloat(topupAmount) * 100))}</p>
+                )}
+                <input
+                  type="text"
+                  value={topupNote}
+                  onChange={(e) => setTopupNote(e.target.value)}
+                  placeholder="Nota (opcional)"
+                  className="input-field"
+                  maxLength={200}
+                />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => { setShowTopup(false); setTopupAmount(''); }} className="btn-secondary flex-1">
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!topupAmount || processing || parseFloat(topupAmount) <= 0}
+                    className="w-full flex-1 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors active:scale-95 transform disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {processing ? 'Procesando...' : 'Confirmar recarga'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
           ) : (
             /* Action buttons */
             <div className="space-y-2">
@@ -446,6 +551,20 @@ export default function ScanPage() {
                     {preview.card.visitsThisCycle + 1}/{preview.card.visitsRequired}
                   </span>
                 )}
+              </button>
+
+              {/* Top up balance */}
+              <button
+                onClick={() => setShowTopup(true)}
+                disabled={processing}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-green-600 text-white font-semibold text-sm disabled:opacity-40 hover:bg-green-700 transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span className="flex-1 text-left">Recargar saldo</span>
+                <span className="text-white/70 text-xs">{preview.card.balanceMXN} actual</span>
               </button>
 
               {/* Charge balance */}

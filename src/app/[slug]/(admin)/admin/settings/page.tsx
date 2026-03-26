@@ -34,9 +34,9 @@ export default function SettingsPage() {
 
   async function loadSettings() {
     const token = localStorage.getItem('accessToken');
-    if (!token) return;
+    if (!token) { setLoading(false); return; }
     const res = await fetch(`/api/${slug}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) return;
+    if (!res.ok) { setLoading(false); return; }
     const data: TenantSettings = await res.json();
     setSettings(data);
     setForm({

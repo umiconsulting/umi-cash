@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useTenant } from '@/context/TenantContext';
@@ -23,14 +23,6 @@ function IconCamera({ active }: { active: boolean }) {
   );
 }
 
-function IconCard({ active }: { active: boolean }) {
-  return (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-      <line x1="1" y1="10" x2="23" y2="10" />
-    </svg>
-  );
-}
 
 function IconUsers({ active }: { active: boolean }) {
   return (
@@ -83,23 +75,42 @@ function IconChart({ active }: { active: boolean }) {
   );
 }
 
+function IconMore({ active }: { active: boolean }) {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <circle cx="5"  cy="12" r={active ? 2 : 1.5} />
+      <circle cx="12" cy="12" r={active ? 2 : 1.5} />
+      <circle cx="19" cy="12" r={active ? 2 : 1.5} />
+    </svg>
+  );
+}
+
+const ALL_ITEMS = (slug: string) => [
+  { href: `/${slug}/admin`,            label: 'Inicio',      exact: true,  Icon: IconHome,     roles: ['STAFF', 'ADMIN'] },
+  { href: `/${slug}/admin/scan`,       label: 'Escanear',    exact: false, Icon: IconCamera,   roles: ['STAFF', 'ADMIN'] },
+  { href: `/${slug}/admin/customers`,  label: 'Clientes',    exact: false, Icon: IconUsers,    roles: ['STAFF', 'ADMIN'] },
+  { href: `/${slug}/admin/gift-cards`, label: 'Regalos',     exact: false, Icon: IconGift,     roles: ['STAFF', 'ADMIN'] },
+  { href: `/${slug}/admin/rewards`,    label: 'Recompensas', exact: false, Icon: IconStar,     roles: ['ADMIN'] },
+  { href: `/${slug}/admin/analytics`,  label: 'Analíticas',  exact: false, Icon: IconChart,    roles: ['ADMIN'] },
+  { href: `/${slug}/admin/settings`,   label: 'Config',      exact: false, Icon: IconSettings, roles: ['ADMIN'] },
+];
+
+// Primary items always visible for ADMIN — the rest go into "More"
+const ADMIN_PRIMARY = (slug: string) => new Set([
+  `/${slug}/admin`,
+  `/${slug}/admin/scan`,
+  `/${slug}/admin/customers`,
+  `/${slug}/admin/analytics`,
+]);
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { slug } = useParams<{ slug: string }>();
   const pathname = usePathname();
   const tenant = useTenant();
   const [role, setRole] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
-
-  const NAV_ITEMS = [
-    { href: `/${slug}/admin`, label: 'Inicio', exact: true, Icon: IconHome, roles: ['STAFF', 'ADMIN'] },
-    { href: `/${slug}/admin/scan`, label: 'Escanear', exact: false, Icon: IconCamera, roles: ['STAFF', 'ADMIN'] },
-    { href: `/${slug}/admin/topup`, label: 'Recargar', exact: false, Icon: IconCard, roles: ['STAFF', 'ADMIN'] },
-    { href: `/${slug}/admin/customers`, label: 'Clientes', exact: false, Icon: IconUsers, roles: ['STAFF', 'ADMIN'] },
-    { href: `/${slug}/admin/gift-cards`, label: 'Regalos', exact: false, Icon: IconGift, roles: ['STAFF', 'ADMIN'] },
-    { href: `/${slug}/admin/rewards`, label: 'Recompensas', exact: false, Icon: IconStar, roles: ['ADMIN'] },
-    { href: `/${slug}/admin/analytics`, label: 'Analíticas', exact: false, Icon: IconChart, roles: ['ADMIN'] },
-    { href: `/${slug}/admin/settings`, label: 'Config', exact: false, Icon: IconSettings, roles: ['ADMIN'] },
-  ].filter((item) => item.roles.includes(role ?? ''));
+  const [moreOpen, setMoreOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -114,6 +125,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }).then(r => { if (r.status === 402) setSuspended(true); }).catch(() => {});
   }, [slug]);
 
+  // Close sheet on route change
+  useEffect(() => { setMoreOpen(false); }, [pathname]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [moreOpen]);
+
   function handleLogout() {
     fetch(`/api/${slug}/auth/logout`, { method: 'POST' }).finally(() => {
       localStorage.removeItem('accessToken');
@@ -121,6 +143,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       window.location.href = `/${slug}/admin-login`;
     });
   }
+
+  const isItemActive = useCallback((item: ReturnType<typeof ALL_ITEMS>[number]) => {
+    if (item.exact) return pathname === item.href;
+    return pathname.startsWith(item.href) && item.href !== `/${slug}/admin`;
+  }, [pathname, slug]);
+
+  const allItems = ALL_ITEMS(slug).filter(i => i.roles.includes(role ?? ''));
+
+  // STAFF gets all 5 items flat — no overflow needed
+  // ADMIN gets 4 primary + "More" sheet with the rest
+  const primarySet = ADMIN_PRIMARY(slug);
+  const visibleItems = role === 'ADMIN'
+    ? allItems.filter(i => primarySet.has(i.href))
+    : allItems;
+  const moreItems = role === 'ADMIN'
+    ? allItems.filter(i => !primarySet.has(i.href))
+    : [];
+
+  const isMoreActive = moreItems.some(isItemActive);
 
   if (!role) {
     return (
@@ -152,28 +193,99 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <main className="pb-20 min-h-[calc(100vh-120px)]">{children}</main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-pale z-50">
+      {/* Bottom nav */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-pale z-50"
+        aria-label="Navegación principal"
+      >
         <div className="flex">
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.exact
-              ? pathname === item.href
-              : pathname.startsWith(item.href) && item.href !== `/${slug}/admin`;
-
+          {visibleItems.map((item) => {
+            const isActive = isItemActive(item);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex-1 flex flex-col items-center py-2.5 px-1 text-xs transition-colors ${
+                className={`flex-1 flex flex-col items-center py-2.5 px-1 text-xs transition-colors active:scale-95 touch-manipulation ${
                   isActive ? 'nav-active font-semibold' : 'text-coffee-light hover:text-coffee-medium'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <item.Icon active={isActive} />
                 <span className="mt-1">{item.label}</span>
               </Link>
             );
           })}
+
+          {moreItems.length > 0 && (
+            <button
+              onClick={() => setMoreOpen(o => !o)}
+              className={`flex-1 flex flex-col items-center py-2.5 px-1 text-xs transition-colors active:scale-95 touch-manipulation ${
+                isMoreActive || moreOpen ? 'nav-active font-semibold' : 'text-coffee-light hover:text-coffee-medium'
+              }`}
+              aria-label="Más opciones"
+              aria-expanded={moreOpen}
+              aria-haspopup="dialog"
+            >
+              <IconMore active={isMoreActive || moreOpen} />
+              <span className="mt-1">Más</span>
+            </button>
+          )}
         </div>
       </nav>
+
+      {/* Backdrop */}
+      {moreOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 animate-fade-in"
+          onClick={() => setMoreOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* More sheet */}
+      {moreOpen && (
+        <div
+          ref={sheetRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navegación adicional"
+          className="fixed bottom-[56px] left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl animate-sheet-up"
+        >
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1" aria-hidden="true">
+            <div className="w-10 h-1 rounded-full bg-coffee-pale" />
+          </div>
+
+          <div className="px-2 pb-6 pt-2">
+            {moreItems.map((item) => {
+              const isActive = isItemActive(item);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMoreOpen(false)}
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-xl min-h-[56px] transition-colors active:scale-[0.98] touch-manipulation ${
+                    isActive
+                      ? 'nav-active font-semibold bg-coffee-cream'
+                      : 'text-coffee-dark hover:bg-coffee-cream'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <item.Icon active={isActive} />
+                  <span className="text-base">{item.label}</span>
+                  {isActive && (
+                    <span
+                      className="ml-auto w-2 h-2 rounded-full"
+                      style={{ background: 'var(--color-accent)' }}
+                      aria-hidden="true"
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
