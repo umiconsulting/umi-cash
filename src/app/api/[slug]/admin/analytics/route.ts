@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getTenant } from '@/lib/tenant';
 import { formatMXN } from '@/lib/currency';
+import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   const staff = await requireAuth(['STAFF', 'ADMIN'])(req);
@@ -39,6 +40,9 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     rewardsThisMonth,
     activeCustomersLast30,
     totalCustomers,
+    totalPurchasesAgg,
+    totalVisitsAgg,
+    activeRewardConfig,
   ] = await Promise.all([
     // All visits in last 30 days
     prisma.visit.findMany({
@@ -105,6 +109,21 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     prisma.user.count({
       where: { tenantId: tenant.id, role: 'CUSTOMER' },
     }),
+
+    // Total PURCHASE amount (all time) for LTV / avg ticket
+    prisma.transaction.aggregate({
+      where: { card: { tenantId: tenant.id }, type: 'PURCHASE' },
+      _sum: { amountCentavos: true },
+    }),
+
+    // Total visits (all time) for avg ticket calculation
+    prisma.loyaltyCard.aggregate({
+      where: { tenantId: tenant.id },
+      _sum: { totalVisits: true },
+    }),
+
+    // Active reward config for cost
+    getActiveRewardConfig(tenant.id),
   ]);
 
   // --- visitsByDay: group by date string ---
@@ -185,6 +204,16 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       ? Math.round((activeCustomersLast30.length / totalCustomers) * 100)
       : 0;
 
+  // --- profitability ---
+  const totalRevenueCentavos = Math.abs(totalPurchasesAgg._sum.amountCentavos ?? 0);
+  const totalAllTimeVisits = totalVisitsAgg._sum.totalVisits ?? 0;
+  const avgTicketCentavos = totalAllTimeVisits > 0 ? Math.round(totalRevenueCentavos / totalAllTimeVisits) : 0;
+  const { visitsRequired } = rewardConfigDefaults(activeRewardConfig);
+  const rewardCostCentavos = activeRewardConfig?.rewardCostCentavos ?? 0;
+  const revenuePerCycleCentavos = avgTicketCentavos * visitsRequired;
+  const marginPerCycleCentavos = revenuePerCycleCentavos - rewardCostCentavos;
+  const marginPercent = revenuePerCycleCentavos > 0 ? Math.round((marginPerCycleCentavos / revenuePerCycleCentavos) * 100) : null;
+
   return NextResponse.json({
     visitsByDay,
     topCustomers,
@@ -194,5 +223,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     rewardsRedeemedThisMonth: rewardsThisMonth,
     avgVisitsPerCustomer: trueAvg,
     retentionRate,
+    profitability: {
+      avgTicketMXN: formatMXN(avgTicketCentavos),
+      revenuePerCycleMXN: formatMXN(revenuePerCycleCentavos),
+      rewardCostMXN: formatMXN(rewardCostCentavos),
+      marginPerCycleMXN: formatMXN(marginPerCycleCentavos),
+      marginPercent,
+      visitsRequired,
+      rewardCostConfigured: rewardCostCentavos > 0,
+    },
   });
 }

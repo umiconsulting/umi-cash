@@ -65,6 +65,7 @@ export interface RewardConfig {
   visitsRequired: number;
   rewardName: string;
   rewardDescription: string | null;
+  rewardCostCentavos: number;
   isActive: boolean;
   activatedAt: string;
 }

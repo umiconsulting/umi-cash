@@ -11,7 +11,7 @@ export default function RewardsPage() {
   const [history, setHistory] = useState<RewardConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ visitsRequired: 10, rewardName: '', rewardDescription: '' });
+  const [form, setForm] = useState({ visitsRequired: 10, rewardName: '', rewardDescription: '', rewardCostMXN: '' });
   const [message, setMessage] = useState('');
   const [messageIsSuccess, setMessageIsSuccess] = useState(false);
   const [role, setRole] = useState<string | null>(null);
@@ -25,7 +25,12 @@ export default function RewardsPage() {
     const data = await res.json();
     setActive(data.active);
     setHistory(data.history || []);
-    if (data.active) setForm({ visitsRequired: data.active.visitsRequired, rewardName: data.active.rewardName, rewardDescription: data.active.rewardDescription || '' });
+    if (data.active) setForm({
+      visitsRequired: data.active.visitsRequired,
+      rewardName: data.active.rewardName,
+      rewardDescription: data.active.rewardDescription || '',
+      rewardCostMXN: data.active.rewardCostCentavos > 0 ? String(data.active.rewardCostCentavos / 100) : '',
+    });
     setLoading(false);
   }
 
@@ -40,7 +45,10 @@ export default function RewardsPage() {
     const res = await fetch(`/api/${slug}/admin/reward-config`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        rewardCostCentavos: form.rewardCostMXN ? Math.round(parseFloat(form.rewardCostMXN) * 100) : 0,
+      }),
     });
     const data = await res.json();
     if (res.ok) { setMessage('Recompensa actualizada'); setMessageIsSuccess(true); await loadConfig(); }
@@ -93,6 +101,21 @@ export default function RewardsPage() {
               ))}
             </div>
             <input type="text" value={form.rewardName} onChange={(e) => setForm({ ...form, rewardName: e.target.value })} placeholder="Cookie de temporada" className="input-field" required maxLength={100} />
+          </div>
+
+          <div className="card-surface">
+            <label className="block text-sm font-semibold text-coffee-dark mb-1">Costo del regalo (MXN)</label>
+            <p className="text-xs text-coffee-medium mb-2">Usado para calcular la rentabilidad del programa</p>
+            <input
+              type="number"
+              value={form.rewardCostMXN}
+              onChange={(e) => setForm({ ...form, rewardCostMXN: e.target.value })}
+              placeholder="Ej. 85"
+              className="input-field"
+              min="0"
+              max="10000"
+              step="0.01"
+            />
           </div>
 
           <div className="card-surface">

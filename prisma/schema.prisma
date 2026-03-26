@@ -166,6 +166,7 @@ model RewardConfig {
   visitsRequired    Int      @default(10)
   rewardName        String   @default("Recompensa de temporada")
   rewardDescription String?
+  rewardCostCentavos Int     @default(0)
   isActive          Boolean  @default(true)
   activatedAt       DateTime @default(now())
   createdAt         DateTime @default(now())

@@ -22,6 +22,16 @@ interface TopCustomer {
   balanceMXN: string;
 }
 
+interface Profitability {
+  avgTicketMXN: string;
+  revenuePerCycleMXN: string;
+  rewardCostMXN: string;
+  marginPerCycleMXN: string;
+  marginPercent: number | null;
+  visitsRequired: number;
+  rewardCostConfigured: boolean;
+}
+
 interface AnalyticsData {
   visitsByDay: VisitDay[];
   topCustomers: TopCustomer[];
@@ -31,6 +41,7 @@ interface AnalyticsData {
   rewardsRedeemedThisMonth: number;
   avgVisitsPerCustomer: number;
   retentionRate: number;
+  profitability: Profitability;
 }
 
 function SkeletonBar() {
@@ -214,6 +225,53 @@ export default function AnalyticsPage() {
             color={brandColor}
             showEvery={1}
           />
+        )}
+      </div>
+
+      {/* Rentabilidad del programa */}
+      <div className="card-surface mb-4">
+        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-3">
+          Rentabilidad del programa
+        </p>
+        {loading ? (
+          <div className="space-y-2">
+            <SkeletonBar />
+            <SkeletonBar />
+            <SkeletonBar />
+          </div>
+        ) : !data?.profitability.rewardCostConfigured ? (
+          <div className="text-center py-3">
+            <p className="text-sm text-coffee-medium">Configura el costo del regalo en</p>
+            <a href={`/${slug}/admin/rewards`} className="text-sm font-medium text-coffee-brand underline">Recompensas → Costo del regalo</a>
+            <p className="text-sm text-coffee-medium mt-1">para ver la rentabilidad por ciclo.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-coffee-medium">Ticket promedio</span>
+              <span className="font-semibold text-coffee-dark">{data.profitability.avgTicketMXN}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-coffee-medium">Ingresos por ciclo ({data.profitability.visitsRequired} vis.)</span>
+              <span className="font-semibold text-coffee-dark">{data.profitability.revenuePerCycleMXN}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-coffee-medium">Costo del regalo</span>
+              <span className="font-semibold text-red-600">−{data.profitability.rewardCostMXN}</span>
+            </div>
+            <div className="h-px bg-coffee-pale my-1" />
+            <div className="flex justify-between text-sm items-center">
+              <span className="font-semibold text-coffee-dark">Margen por ciclo</span>
+              <div className="text-right">
+                <span className={`font-bold text-base ${(data.profitability.marginPercent ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {data.profitability.marginPerCycleMXN}
+                </span>
+                {data.profitability.marginPercent !== null && (
+                  <p className="text-xs text-coffee-medium">{data.profitability.marginPercent}% del ciclo</p>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

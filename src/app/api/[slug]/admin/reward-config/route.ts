@@ -8,6 +8,7 @@ const UpdateRewardSchema = z.object({
   visitsRequired: z.number().int().min(1).max(100),
   rewardName: z.string().min(2).max(100),
   rewardDescription: z.string().max(300).optional(),
+  rewardCostCentavos: z.number().int().min(0).max(1000000).optional(),
 });
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -59,6 +60,7 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
           visitsRequired: data.visitsRequired,
           rewardName: data.rewardName,
           rewardDescription: data.rewardDescription,
+          rewardCostCentavos: data.rewardCostCentavos ?? 0,
           isActive: true,
         },
       });
