@@ -33,29 +33,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       }
     : { tenantId: tenant.id, role: 'CUSTOMER' };
 
-  // For inactive sort we fetch all and sort in application code (no DB column for last visit)
-  if (sort === 'inactive') {
-    const [allUsers, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        include: { card: { include: { visits: { orderBy: { scannedAt: 'desc' }, take: 1 } } } },
-      }),
-      prisma.user.count({ where }),
-    ]);
+  const purchaseInclude = {
+    visits: { orderBy: { scannedAt: 'desc' as const }, take: 1 },
+    transactions: { where: { type: 'PURCHASE' as const }, select: { amountCentavos: true } },
+  };
 
-    // Sort: null lastVisit first (never visited), then oldest visit first
-    allUsers.sort((a, b) => {
-      const aDate = a.card?.visits[0]?.scannedAt ?? null;
-      const bDate = b.card?.visits[0]?.scannedAt ?? null;
-      if (!aDate && !bDate) return 0;
-      if (!aDate) return -1;
-      if (!bDate) return 1;
-      return aDate.getTime() - bDate.getTime();
-    });
-
-    const paged = allUsers.slice(skip, skip + limit);
-
-    const customers = paged.map((u) => ({
+  function toCustomer(u: { id: string; name: string | null; phone: string | null; email: string | null; createdAt: Date; card: { id: string; cardNumber: string; balanceCentavos: number; totalVisits: number; visitsThisCycle: number; pendingRewards: number; visits: { scannedAt: Date }[]; transactions: { amountCentavos: number }[] } | null }) {
+    const ltvCentavos = (u.card?.transactions ?? []).reduce((sum, t) => sum + Math.abs(t.amountCentavos), 0);
+    return {
       id: u.id, name: u.name, phone: u.phone, email: u.email,
       cardNumber: u.card?.cardNumber ?? '',
       cardId: u.card?.id ?? '',
@@ -66,8 +51,40 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       pendingRewards: u.card?.pendingRewards ?? 0,
       lastVisit: u.card?.visits[0]?.scannedAt?.toISOString() ?? null,
       createdAt: u.createdAt.toISOString(),
-    }));
+      ltvCentavos,
+      ltvMXN: formatMXN(ltvCentavos),
+    };
+  }
 
+  // Sorts that require fetching all records and sorting in JS
+  if (sort === 'inactive' || sort === 'ltv') {
+    const [allUsers, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: { card: { include: purchaseInclude } },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    if (sort === 'inactive') {
+      allUsers.sort((a, b) => {
+        const aDate = a.card?.visits[0]?.scannedAt ?? null;
+        const bDate = b.card?.visits[0]?.scannedAt ?? null;
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return -1;
+        if (!bDate) return 1;
+        return aDate.getTime() - bDate.getTime();
+      });
+    } else {
+      // ltv: highest spenders first
+      allUsers.sort((a, b) => {
+        const aLtv = (a.card?.transactions ?? []).reduce((s, t) => s + Math.abs(t.amountCentavos), 0);
+        const bLtv = (b.card?.transactions ?? []).reduce((s, t) => s + Math.abs(t.amountCentavos), 0);
+        return bLtv - aLtv;
+      });
+    }
+
+    const customers = allUsers.slice(skip, skip + limit).map(toCustomer);
     return NextResponse.json({ customers, total, page, totalPages: Math.ceil(total / limit) });
   }
 
@@ -79,7 +96,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const [users, total] = await Promise.all([
     prisma.user.findMany({
       where,
-      include: { card: { include: { visits: { orderBy: { scannedAt: 'desc' }, take: 1 } } } },
+      include: { card: { include: purchaseInclude } },
       orderBy,
       skip,
       take: limit,
@@ -87,18 +104,5 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     prisma.user.count({ where }),
   ]);
 
-  const customers = users.map((u) => ({
-    id: u.id, name: u.name, phone: u.phone, email: u.email,
-    cardNumber: u.card?.cardNumber ?? '',
-    cardId: u.card?.id ?? '',
-    balanceMXN: formatMXN(u.card?.balanceCentavos ?? 0),
-    balanceCentavos: u.card?.balanceCentavos ?? 0,
-    totalVisits: u.card?.totalVisits ?? 0,
-    visitsThisCycle: u.card?.visitsThisCycle ?? 0,
-    pendingRewards: u.card?.pendingRewards ?? 0,
-    lastVisit: u.card?.visits[0]?.scannedAt?.toISOString() ?? null,
-    createdAt: u.createdAt.toISOString(),
-  }));
-
-  return NextResponse.json({ customers, total, page, totalPages: Math.ceil(total / limit) });
+  return NextResponse.json({ customers: users.map(toCustomer), total, page, totalPages: Math.ceil(total / limit) });
 }

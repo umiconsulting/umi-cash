@@ -48,6 +48,7 @@ export interface AdminCustomer {
   phone: string | null;
   email: string | null;
   cardNumber: string;
+  cardId: string;
   balanceMXN: string;
   balanceCentavos: number;
   totalVisits: number;
@@ -55,6 +56,8 @@ export interface AdminCustomer {
   pendingRewards: number;
   lastVisit: string | null;
   createdAt: string;
+  ltvCentavos: number;
+  ltvMXN: string;
 }
 
 export interface RewardConfig {

@@ -87,6 +87,7 @@ export default function CustomersPage() {
           { value: 'recent', label: 'Recientes' },
           { value: 'visits', label: 'Más visitas' },
           { value: 'balance', label: 'Mayor saldo' },
+          { value: 'ltv', label: 'Mayor LTV' },
           { value: 'inactive', label: 'Sin visitas 30d' },
         ].map((s) => (
           <button key={s.value} onClick={() => { setSort(s.value); loadCustomers(1, search, s.value); }}
@@ -122,6 +123,9 @@ export default function CustomersPage() {
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs text-coffee-light">{c.totalVisits} visitas</span>
                   <span className="text-xs text-coffee-light">Saldo: {c.balanceMXN}</span>
+                  {c.ltvCentavos > 0 && (
+                    <span className="text-xs font-medium text-coffee-brand">LTV {c.ltvMXN}</span>
+                  )}
                   {c.pendingRewards > 0 && (
                     <span className="badge-gold text-xs">{c.pendingRewards} recompensa{c.pendingRewards > 1 ? 's' : ''}</span>
                   )}

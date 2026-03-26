@@ -39,6 +39,20 @@ export async function GET(
   const { visitsRequired } = rewardConfigDefaults(rewardConfig);
   const card = targetUser.card;
 
+  // LTV = sum of all PURCHASE transactions (negative amounts = money spent at the store)
+  const ltvAgg = await prisma.transaction.aggregate({
+    where: { cardId: card.id, type: 'PURCHASE' },
+    _sum: { amountCentavos: true },
+  });
+  const ltvCentavos = Math.abs(ltvAgg._sum.amountCentavos ?? 0);
+
+  // Total topped up = sum of all TOPUP transactions
+  const topupAgg = await prisma.transaction.aggregate({
+    where: { cardId: card.id, type: 'TOPUP' },
+    _sum: { amountCentavos: true },
+  });
+  const totalTopupCentavos = topupAgg._sum.amountCentavos ?? 0;
+
   return NextResponse.json({
     id: targetUser.id, name: targetUser.name, phone: targetUser.phone, email: targetUser.email,
     cardNumber: card.cardNumber, cardId: card.id,
@@ -47,6 +61,8 @@ export async function GET(
     visitsRequired, pendingRewards: card.pendingRewards,
     lastVisit: card.visits[0]?.scannedAt?.toISOString() ?? null,
     createdAt: targetUser.createdAt.toISOString(),
+    ltvCentavos, ltvMXN: formatMXN(ltvCentavos),
+    totalTopupCentavos, totalTopupMXN: formatMXN(totalTopupCentavos),
     recentVisits: card.visits.map((v) => ({ id: v.id, scannedAt: v.scannedAt.toISOString() })),
     recentTransactions: card.transactions.map((t) => ({
       id: t.id, type: t.type, amountCentavos: t.amountCentavos,
