@@ -446,7 +446,7 @@ export default function ScanPage() {
                   className="input-field"
                   min="0.01"
                   max={preview.card.balanceCentavos / 100}
-                  step="0.50"
+                  step="0.01"
                   autoFocus
                 />
                 {chargeAmount && !isNaN(parseFloat(chargeAmount)) && (
@@ -502,7 +502,7 @@ export default function ScanPage() {
                   className="input-field"
                   min="1"
                   max="10000"
-                  step="0.50"
+                  step="0.01"
                   autoFocus
                 />
                 {topupAmount && !isNaN(parseFloat(topupAmount)) && (

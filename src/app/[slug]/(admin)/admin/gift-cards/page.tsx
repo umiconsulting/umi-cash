@@ -153,7 +153,7 @@ export default function GiftCardsPage() {
             <input
               type="number" value={amount} onChange={(e) => setAmount(e.target.value)}
               placeholder="Otro monto, ej: 350" className="input-field"
-              min="1" max="10000" step="0.50" required
+              min="1" max="10000" step="0.01" required
             />
             {amount && !isNaN(parseFloat(amount)) && (
               <p className="text-sm text-coffee-medium mt-2">= {formatMXN(Math.round(parseFloat(amount) * 100))}</p>
