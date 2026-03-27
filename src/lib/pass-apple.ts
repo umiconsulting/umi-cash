@@ -20,7 +20,7 @@ import { formatMXN } from './currency';
 import { generatePassSerial, generateRandomToken } from './auth';
 
 const PASSES_DIR = path.join(process.cwd(), 'passes', 'apple');
-const TEMPLATE_DIR = path.join(PASSES_DIR, 'template');
+const TEMPLATE_DIR = path.join(PASSES_DIR, 'template.pass');
 const CERTS_DIR = path.join(PASSES_DIR, 'certificates');
 
 // Cached at module load — reads from env vars (production) or filesystem (local dev)
