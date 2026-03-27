@@ -81,17 +81,19 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
         <div className="flex justify-center">
           <div className="w-full max-w-[320px]">
             <div className="rounded-[18px] overflow-hidden shadow-2xl relative" style={{ backgroundColor: tenant.primaryColor }}>
-              {/* Header: logo + saldo */}
+              {/* Header: logo + saldo (saldo only for default style) */}
               <div className="px-4 pt-4 pb-2 flex items-start justify-between">
                 {tenant.logoUrl ? (
                   <img src={tenant.logoUrl} alt={tenant.name} className="h-10 w-auto object-contain" />
                 ) : (
                   <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
                 )}
-                <div className="text-right flex-shrink-0 ml-3">
-                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
-                  <p className="text-white text-xl font-bold leading-tight">$150.00</p>
-                </div>
+                {tenant.passStyle !== 'stamps' && (
+                  <div className="text-right flex-shrink-0 ml-3">
+                    <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
+                    <p className="text-white text-xl font-bold leading-tight">$150.00</p>
+                  </div>
+                )}
               </div>
 
               {/* Strip image or solid color */}
@@ -101,16 +103,27 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                 <div className="h-4" />
               )}
 
-              {/* Fields: miembro + reward/stamps */}
+              {/* Fields — style depends on tenant passStyle */}
               <div className="px-4 pt-1 pb-3 flex gap-3">
-                <div className="min-w-0" style={{ flex: '0 0 40%' }}>
-                  <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Miembro</p>
-                  <p className="text-white text-[13px] font-semibold mt-0.5 truncate">María García</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>{rewardName.toUpperCase()}</p>
-                  <p className="text-white text-[13px] font-semibold mt-0.5 whitespace-nowrap">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
-                </div>
+                {tenant.passStyle === 'stamps' ? (<>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Sellos faltantes</p>
+                    <p className="text-white text-lg font-semibold mt-0.5">{visitsRequired - exampleVisits} sellos</p>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Nº de recompensas</p>
+                    <p className="text-white text-lg font-semibold mt-0.5">0 premios</p>
+                  </div>
+                </>) : (<>
+                  <div className="min-w-0" style={{ flex: '0 0 40%' }}>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Miembro</p>
+                    <p className="text-white text-[13px] font-semibold mt-0.5 truncate">María García</p>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>{rewardName.toUpperCase()}</p>
+                    <p className="text-white text-[13px] font-semibold mt-0.5 whitespace-nowrap">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
+                  </div>
+                </>)}
               </div>
 
               {/* Spacer matching wallet gap */}

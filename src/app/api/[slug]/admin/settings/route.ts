@@ -11,6 +11,7 @@ const SettingsSchema = z.object({
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color inválido').optional().or(z.literal('')),
   logoUrl: z.string().url().max(500).optional().or(z.literal('')),
   stripImageUrl: z.string().url().max(500).optional().or(z.literal('')),
+  passStyle: z.enum(['default', 'stamps']).optional(),
   selfRegistration: z.boolean().optional(),
 });
 
@@ -30,6 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     secondaryColor: tenant.secondaryColor,
     logoUrl: tenant.logoUrl,
     stripImageUrl: tenant.stripImageUrl,
+    passStyle: tenant.passStyle,
     selfRegistration: tenant.selfRegistration,
     cardPrefix: tenant.cardPrefix,
     slug: tenant.slug,
@@ -58,6 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
         ...(data.secondaryColor !== undefined && { secondaryColor: data.secondaryColor || null }),
         ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl || null }),
         ...(data.stripImageUrl !== undefined && { stripImageUrl: data.stripImageUrl || null }),
+        ...(data.passStyle !== undefined && { passStyle: data.passStyle }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
       },
     });

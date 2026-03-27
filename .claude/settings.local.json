@@ -67,7 +67,9 @@
       "Bash(source /Users/469096/Documents/umi/umi-cash/.env.local)",
       "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma db execute --stdin << 'SQL':*)",
       "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma migrate dev --name add-strip-image-url)",
-      "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma db push)"
+      "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma db push)",
+      "Bash(npx vercel:*)",
+      "Bash(DATABASE_URL=\"$DIRECT_DATABASE_URL\" psql -c \"SELECT id, slug, name, \"\"primaryColor\"\" FROM \"\"Tenant\"\";\")"
     ]
   }
 }

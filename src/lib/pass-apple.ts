@@ -66,6 +66,7 @@ export interface PassData {
   tenantSlug?: string;
   primaryColor?: string; // hex, e.g. "#B5605A"
   stripImageUrl?: string | null; // URL to custom strip image
+  passStyle?: string; // "default" or "stamps"
 }
 
 export async function generateApplePass(data: PassData): Promise<{
@@ -151,14 +152,28 @@ export async function generateApplePass(data: PassData): Promise<{
     altText: data.cardNumber,
   });
 
-  // Header: SALDO on the right (tenant name shown via logoText)
-  pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
+  const remaining = data.visitsRequired - data.visitsThisCycle;
 
-  // Secondary: member name + stamp card with reward as label
-  const filled = '●'.repeat(data.visitsThisCycle);
-  const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
-  pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
-  pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})` });
+  if (data.passStyle === 'stamps') {
+    // Stamps style (Kalala): remaining stamps + pending rewards, no balance header
+    pass.secondaryFields.push({
+      key: 'remaining',
+      label: 'SELLOS FALTANTES',
+      value: `${remaining} sello${remaining !== 1 ? 's' : ''}`,
+    });
+    pass.secondaryFields.push({
+      key: 'rewards',
+      label: 'Nº DE RECOMPENSAS',
+      value: `${data.pendingRewards} premio${data.pendingRewards !== 1 ? 's' : ''}`,
+    });
+  } else {
+    // Default style (Ribera): balance header + member name + stamp dots
+    pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
+    const filled = '●'.repeat(data.visitsThisCycle);
+    const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
+    pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
+    pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})` });
+  }
 
   // Back fields
   pass.backFields.push({ key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) });
