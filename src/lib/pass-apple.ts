@@ -96,8 +96,7 @@ export async function generateApplePass(data: PassData): Promise<{
       ? `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} pendiente${data.pendingRewards > 1 ? 's' : ''}`
       : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`;
 
-  // PKPass.from(source, bufferData, overrides) — 3 args in v3
-  const pass = await PKPass.from(
+  const pass = await (PKPass.from as Function)(
     {
       model: TEMPLATE_DIR,
       certificates: {
@@ -106,8 +105,8 @@ export async function generateApplePass(data: PassData): Promise<{
         signerKey: certCache.signerKey,
         signerKeyPassphrase: process.env.APPLE_KEY_PASSPHRASE || undefined,
       },
-    } as any,
-    {} as any, // no additional buffer files
+    },
+    {},
     {
       serialNumber: serial,
       authenticationToken: authToken,
@@ -117,8 +116,8 @@ export async function generateApplePass(data: PassData): Promise<{
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
       webServiceURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/${tenantSlug}/passes/apple`,
-    } as any
-  );
+    }
+  ) as PKPass;
 
   // Set pass type
   pass.type = 'storeCard';
