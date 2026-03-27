@@ -23,8 +23,17 @@ const PASSES_DIR = path.join(process.cwd(), 'passes', 'apple');
 const TEMPLATE_DIR = path.join(PASSES_DIR, 'template');
 const CERTS_DIR = path.join(PASSES_DIR, 'certificates');
 
-// Cached at module load — avoids disk I/O on every pass generation request
+// Cached at module load — reads from env vars (production) or filesystem (local dev)
 const certCache = (() => {
+  // Prefer env vars — certificates stored as base64 strings
+  if (process.env.APPLE_SIGNER_CERT && process.env.APPLE_SIGNER_KEY && process.env.APPLE_WWDR_CERT) {
+    return {
+      wwdr: Buffer.from(process.env.APPLE_WWDR_CERT, 'base64'),
+      signerCert: Buffer.from(process.env.APPLE_SIGNER_CERT, 'base64'),
+      signerKey: Buffer.from(process.env.APPLE_SIGNER_KEY, 'base64'),
+    };
+  }
+  // Fallback to filesystem for local development
   try {
     return {
       wwdr: fs.readFileSync(path.join(CERTS_DIR, 'wwdr.pem')),
