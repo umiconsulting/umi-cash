@@ -92,12 +92,6 @@ export async function generateApplePass(data: PassData): Promise<{
   }
   const bgColor = hexToRgb(data.primaryColor || '#B5605A');
 
-  const remaining = data.visitsRequired - data.visitsThisCycle;
-  const rewardText =
-    data.pendingRewards > 0
-      ? `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} pendiente${data.pendingRewards > 1 ? 's' : ''}`
-      : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`;
-
   const pass = await PKPass.from(
     {
       model: TEMPLATE_DIR,
