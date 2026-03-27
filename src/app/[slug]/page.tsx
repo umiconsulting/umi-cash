@@ -48,7 +48,7 @@ function CheckeredStrip({ color }: { color: string }) {
   const rows = 2;
 
   return (
-    <div className="flex flex-wrap">
+    <div className="grid grid-cols-6 gap-[2px] px-[2px]" style={{ backgroundColor: color }}>
       {Array.from({ length: rows * cols }).map((_, i) => {
         const row = Math.floor(i / cols);
         const col = i % cols;
@@ -56,11 +56,8 @@ function CheckeredStrip({ color }: { color: string }) {
         return (
           <div
             key={i}
-            style={{
-              width: `${100 / cols}%`,
-              paddingBottom: `${100 / cols}%`,
-              backgroundColor: isLight ? light : dark,
-            }}
+            className="aspect-square"
+            style={{ backgroundColor: isLight ? light : dark }}
           />
         );
       })}
@@ -134,22 +131,22 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
 
               {/* Fields: miembro + reward/stamps */}
               <div className="px-4 pt-1 pb-3 flex gap-3">
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0" style={{ flex: '0 0 40%' }}>
                   <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Miembro</p>
-                  <p className="text-white text-[15px] font-semibold mt-0.5 truncate">María García</p>
+                  <p className="text-white text-[13px] font-semibold mt-0.5 truncate">María García</p>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>{rewardName.toUpperCase()}</p>
-                  <p className="text-white text-[15px] font-semibold mt-0.5">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
+                  <p className="text-white text-[13px] font-semibold mt-0.5 whitespace-nowrap">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
                 </div>
               </div>
 
               {/* Spacer matching wallet gap */}
-              <div className="h-8" />
+              <div className="h-10" />
 
               {/* QR code + card number */}
-              <div className="bg-white mx-auto mb-5 rounded-2xl px-4 py-3 flex flex-col items-center gap-1.5 w-fit">
-                <QRCodeMock size={110} />
+              <div className="bg-white mx-auto mb-5 rounded-xl p-3 flex flex-col items-center gap-1 w-fit">
+                <QRCodeMock size={120} />
                 <p className="text-[10px] font-mono text-gray-400 tracking-wider">{cardNumberExample}</p>
               </div>
             </div>
