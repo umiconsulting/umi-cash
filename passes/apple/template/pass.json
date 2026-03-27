@@ -1,15 +1,13 @@
 {
   "formatVersion": 1,
-  "passTypeIdentifier": "pass.mx.elgranribera.loyalty",
-  "teamIdentifier": "XXXXXXXXXX",
-  "organizationName": "El Gran Ribera",
-  "description": "Tarjeta de lealtad El Gran Ribera",
-  "logoText": "El Gran Ribera",
-
+  "passTypeIdentifier": "pass.co.umicash.loyalty",
+  "teamIdentifier": "PLACEHOLDER",
+  "organizationName": "Umi Cash",
+  "description": "Tarjeta de lealtad",
+  "logoText": "",
   "backgroundColor": "rgb(181, 96, 90)",
   "foregroundColor": "rgb(255, 255, 255)",
   "labelColor": "rgb(250, 235, 220)",
-
   "storeCard": {
     "headerFields": [
       {
@@ -68,14 +66,12 @@
       }
     ]
   },
-
   "barcode": {
     "message": "PLACEHOLDER",
     "format": "PKBarcodeFormatQR",
     "messageEncoding": "iso-8859-1",
     "altText": "Tarjeta de lealtad El Gran Ribera"
   },
-
   "barcodes": [
     {
       "message": "PLACEHOLDER",
@@ -83,9 +79,7 @@
       "messageEncoding": "iso-8859-1"
     }
   ],
-
   "webServiceURL": "https://your-domain.com/api/passes/apple",
   "authenticationToken": "PLACEHOLDER",
-
   "sharingProhibited": false
 }

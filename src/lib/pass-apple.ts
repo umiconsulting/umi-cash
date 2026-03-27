@@ -103,6 +103,8 @@ export async function generateApplePass(data: PassData): Promise<{
     {
       serialNumber: serial,
       authenticationToken: authToken,
+      passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.co.umicash.loyalty',
+      teamIdentifier: process.env.APPLE_TEAM_ID || '',
       backgroundColor: bgColor,
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
