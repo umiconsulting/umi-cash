@@ -137,8 +137,10 @@ export async function generateApplePass(data: PassData): Promise<{
   // Secondary: member name
   pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
 
-  // Auxiliary: visits + reward
-  pass.auxiliaryFields.push({ key: 'visits', label: 'VISITAS', value: `${data.visitsThisCycle} / ${data.visitsRequired}` });
+  // Auxiliary: stamp card + reward
+  const filled = '●'.repeat(data.visitsThisCycle);
+  const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
+  pass.auxiliaryFields.push({ key: 'stamps', label: `VISITAS ${data.visitsThisCycle}/${data.visitsRequired}`, value: filled + empty });
   pass.auxiliaryFields.push({ key: 'reward', label: 'RECOMPENSA', value: data.rewardName });
 
   // Back fields
