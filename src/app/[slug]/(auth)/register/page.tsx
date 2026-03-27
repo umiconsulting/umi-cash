@@ -22,24 +22,11 @@ function WalletAddButtons({ token, slug }: { token: string; slug: string }) {
   async function handleApple() {
     setAppleLoading(true);
     try {
-      const res = await fetch(`/api/${slug}/passes/apple`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || 'Error al guardar en Apple Wallet. Intenta desde tu iPhone.');
-        return;
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${slug}.pkpass`;
-      a.click();
-      URL.revokeObjectURL(url);
+      // Open directly so iOS Safari handles the .pkpass natively
+      window.location.href = `/api/${slug}/passes/apple?token=${encodeURIComponent(token)}`;
       setAppleAdded(true);
     } finally {
-      setAppleLoading(false);
+      setTimeout(() => setAppleLoading(false), 2000);
     }
   }
 
