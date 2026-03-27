@@ -88,16 +88,18 @@ function sendPush(token: string, pushToken: string, topic: string): Promise<bool
  */
 export async function sendApplePushUpdate(cardId: string): Promise<void> {
   const passTypeId = process.env.APPLE_PASS_TYPE_ID;
-  if (!passTypeId) return;
+  if (!passTypeId) { console.log('[APN] No APPLE_PASS_TYPE_ID set, skipping push'); return; }
 
   const token = await getApnToken();
-  if (!token) return;
+  if (!token) { console.log('[APN] Could not get APN token, skipping push'); return; }
 
   const registrations = await prisma.applePushToken.findMany({ where: { cardId } });
-  if (registrations.length === 0) return;
+  if (registrations.length === 0) { console.log(`[APN] No registered devices for card ${cardId}`); return; }
 
+  console.log(`[APN] Sending push to ${registrations.length} device(s) for card ${cardId}`);
   for (const reg of registrations) {
-    await sendPush(token, reg.pushToken, passTypeId).catch(() => null);
+    const ok = await sendPush(token, reg.pushToken, passTypeId).catch(() => false);
+    console.log(`[APN] Push to ${reg.pushToken.slice(0, 8)}...: ${ok ? 'success' : 'failed'}`);
   }
 }
 
@@ -110,6 +112,7 @@ export async function sendApplePushUpdateForTenant(tenantId: string): Promise<vo
     select: { id: true },
   });
 
+  console.log(`[APN] Updating ${cards.length} card(s) for tenant ${tenantId}`);
   for (const card of cards) {
     await sendApplePushUpdate(card.id);
   }

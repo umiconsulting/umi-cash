@@ -152,8 +152,6 @@ export async function generateApplePass(data: PassData): Promise<{
     label: 'Términos y condiciones',
     value: `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`,
   });
-  pass.backFields.push({ key: 'website', label: 'Consulta tu tarjeta', value: `${process.env.NEXT_PUBLIC_APP_URL}/${tenantSlug}/card` });
-
   const buffer = await pass.getAsBuffer();
   return { buffer, serial, authToken };
 }

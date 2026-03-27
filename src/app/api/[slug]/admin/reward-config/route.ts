@@ -55,7 +55,7 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
         data: { isActive: false },
       });
 
-      return tx.rewardConfig.create({
+      const config = await tx.rewardConfig.create({
         data: {
           tenantId: tenant.id,
           visitsRequired: data.visitsRequired,
@@ -65,10 +65,21 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
           isActive: true,
         },
       });
+
+      // Touch all loyalty cards so Apple's "passesUpdatedSince" check
+      // sees them as changed and fetches the updated pass content
+      await tx.loyaltyCard.updateMany({
+        where: { tenantId: tenant.id, applePassSerial: { not: null } },
+        data: { updatedAt: new Date() },
+      });
+
+      return config;
     });
 
     // Push update to all wallet passes so reward name refreshes
-    sendApplePushUpdateForTenant(tenant.id).catch(() => {});
+    sendApplePushUpdateForTenant(tenant.id).catch((err) =>
+      console.error('[reward-config] Push update failed:', err)
+    );
 
     return NextResponse.json({ newConfig });
   } catch (err) {
