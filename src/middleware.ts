@@ -5,7 +5,7 @@ const ALLOWED_ORIGINS = [
   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
   'http://localhost:3000',
   'http://localhost:3001',
-].filter(Boolean) as string[];
+].filter(Boolean).map((o) => (o as string).replace(/\/$/, '')) as string[];
 
 // State-changing methods that require origin validation
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
   if (pathname.startsWith('/api/') && MUTATING_METHODS.has(method ?? '')) {
     const origin = req.headers.get('origin');
     // Allow requests with no Origin (server-to-server, Postman in dev)
-    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    if (origin && !ALLOWED_ORIGINS.includes(origin.replace(/\/$/, ''))) {
       return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
