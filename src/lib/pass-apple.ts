@@ -129,6 +129,7 @@ export async function generateApplePass(data: PassData): Promise<{
     message: data.cardNumber,
     format: 'PKBarcodeFormatQR',
     messageEncoding: 'iso-8859-1',
+    altText: data.cardNumber,
   });
 
   // Header: SALDO on the right (tenant name shown via logoText)
