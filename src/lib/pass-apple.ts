@@ -96,7 +96,7 @@ export async function generateApplePass(data: PassData): Promise<{
       ? `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} pendiente${data.pendingRewards > 1 ? 's' : ''}`
       : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`;
 
-  const pass = await (PKPass.from as Function)(
+  const pass = await PKPass.from(
     {
       model: TEMPLATE_DIR,
       certificates: {
@@ -105,19 +105,20 @@ export async function generateApplePass(data: PassData): Promise<{
         signerKey: certCache.signerKey,
         signerKeyPassphrase: process.env.APPLE_KEY_PASSPHRASE || undefined,
       },
-    },
-    {},
+    } as any,
     {
       serialNumber: serial,
       authenticationToken: authToken,
       passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.co.umicash.loyalty',
       teamIdentifier: process.env.APPLE_TEAM_ID || '',
+      organizationName: tenantName,
+      description: `Tarjeta de lealtad ${tenantName}`,
       backgroundColor: bgColor,
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
       webServiceURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/${tenantSlug}/passes/apple`,
-    }
-  ) as PKPass;
+    } as any
+  );
 
   // Set pass type
   pass.type = 'storeCard';
