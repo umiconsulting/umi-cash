@@ -68,8 +68,9 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/vnd.apple.pkpass',
-        'Content-Disposition': `attachment; filename="${params.slug}.pkpass"`,
+        'Content-Disposition': `inline; filename="${params.slug}.pkpass"`,
         'Cache-Control': 'no-store',
+        'Content-Security-Policy': '',
       },
     });
   } catch (err) {
