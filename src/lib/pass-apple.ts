@@ -103,10 +103,8 @@ export async function generateApplePass(data: PassData): Promise<{
       certificates: {
         wwdr: certCache.wwdr,
         signerCert: certCache.signerCert,
-        signerKey: {
-          keyFile: certCache.signerKey,
-          passphrase: process.env.APPLE_KEY_PASSPHRASE || '',
-        },
+        signerKey: certCache.signerKey,
+        signerKeyPassphrase: process.env.APPLE_KEY_PASSPHRASE || undefined,
       },
     } as any,
     {
