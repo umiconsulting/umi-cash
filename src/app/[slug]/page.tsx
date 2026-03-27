@@ -34,21 +34,16 @@ function QRCodeMock({ size = 96 }: { size?: number }) {
 }
 
 function CheckeredStrip({ color }: { color: string }) {
-  // Parse hex to RGB, then create lighter and darker variants
+  // Parse hex to RGB, blend ~60% toward warm cream for the light squares
   const r = parseInt(color.slice(1, 3), 16);
   const g = parseInt(color.slice(3, 5), 16);
   const b = parseInt(color.slice(5, 7), 16);
-  // Lighter square: blend toward warm cream
-  const lr = Math.min(255, r + 30);
-  const lg = Math.min(255, g + 20);
-  const lb = Math.min(255, b + 15);
-  // Darker square: slightly darker than base
-  const dr = Math.max(0, r - 15);
-  const dg = Math.max(0, g - 15);
-  const db = Math.max(0, b - 15);
+  const lr = Math.round(r + (250 - r) * 0.57);
+  const lg = Math.round(g + (235 - g) * 0.64);
+  const lb = Math.round(b + (220 - b) * 0.65);
 
   const light = `rgb(${lr},${lg},${lb})`;
-  const dark = `rgb(${dr},${dg},${db})`;
+  const dark = color;
   const cols = 6;
   const rows = 2;
 
@@ -61,9 +56,9 @@ function CheckeredStrip({ color }: { color: string }) {
         return (
           <div
             key={i}
-            className="aspect-square"
             style={{
               width: `${100 / cols}%`,
+              paddingBottom: `${100 / cols}%`,
               backgroundColor: isLight ? light : dark,
             }}
           />
@@ -123,7 +118,11 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
             <div className="rounded-[18px] overflow-hidden shadow-2xl relative" style={{ backgroundColor: tenant.primaryColor }}>
               {/* Header: logo + saldo */}
               <div className="px-4 pt-4 pb-2 flex items-start justify-between">
-                <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
+                {tenant.logoUrl ? (
+                  <img src={tenant.logoUrl} alt={tenant.name} className="h-10 w-auto object-contain" />
+                ) : (
+                  <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
+                )}
                 <div className="text-right flex-shrink-0 ml-3">
                   <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
                   <p className="text-white text-xl font-bold leading-tight">$150.00</p>
