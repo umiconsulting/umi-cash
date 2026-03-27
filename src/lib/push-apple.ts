@@ -1,51 +1,116 @@
 /**
  * Apple Push Notifications for Wallet pass updates.
- * When a customer's card changes, we push a silent notification to their
- * device so Apple Wallet fetches the updated pass automatically.
+ * Uses native HTTP/2 with .p8 token-based auth (no external deps).
  */
 
+import http2 from 'http2';
+import { SignJWT } from 'jose';
+import { createPrivateKey } from 'crypto';
 import { prisma } from './prisma';
 
-export async function sendApplePushUpdate(cardId: string): Promise<void> {
-  if (!process.env.APPLE_APN_KEY_PATH || !process.env.APPLE_APN_KEY_ID) {
-    return; // Not configured — pass updates only happen when user opens Wallet
+const APN_HOST = 'https://api.push.apple.com';
+
+let cachedToken: { jwt: string; expiresAt: number } | null = null;
+
+function getApnKey(): Buffer | null {
+  if (process.env.APPLE_APN_KEY) {
+    return Buffer.from(process.env.APPLE_APN_KEY, 'base64');
+  }
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    return fs.readFileSync(path.join(process.cwd(), 'passes', 'apple', 'apn_key.p8'));
+  } catch {
+    return null;
+  }
+}
+
+async function getApnToken(): Promise<string | null> {
+  const keyId = process.env.APPLE_APN_KEY_ID;
+  const teamId = process.env.APPLE_TEAM_ID;
+  if (!keyId || !teamId) return null;
+
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.jwt;
   }
 
-  try {
-    const tokens = await prisma.applePushToken.findMany({
-      where: { cardId },
+  const key = getApnKey();
+  if (!key) return null;
+
+  const privateKey = createPrivateKey({ key, format: 'pem' });
+
+  const jwt = await new SignJWT({})
+    .setProtectedHeader({ alg: 'ES256', kid: keyId })
+    .setIssuer(teamId)
+    .setIssuedAt()
+    .sign(privateKey);
+
+  cachedToken = { jwt, expiresAt: Date.now() + 50 * 60 * 1000 };
+  return jwt;
+}
+
+function sendPush(token: string, pushToken: string, topic: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const client = http2.connect(APN_HOST);
+    client.on('error', () => resolve(false));
+
+    const req = client.request({
+      ':method': 'POST',
+      ':path': `/3/device/${pushToken}`,
+      authorization: `bearer ${token}`,
+      'apns-topic': topic,
+      'apns-push-type': 'background',
+      'apns-priority': '5',
     });
 
-    if (tokens.length === 0) return;
+    req.end('{}');
 
-    // Dynamic import to avoid issues when certs aren't present
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore — apn is an optional peer dep; gracefully absent when APNs not configured
-    const { default: apn } = await import('apn').catch(() => null) as any;
-    if (!apn) return;
-
-    const fs = await import('fs');
-    const provider = new apn.Provider({
-      token: {
-        key: fs.readFileSync(process.env.APPLE_APN_KEY_PATH),
-        keyId: process.env.APPLE_APN_KEY_ID,
-        teamId: process.env.APPLE_TEAM_ID,
-      },
-      production: process.env.NODE_ENV === 'production',
+    req.on('response', (headers) => {
+      const status = headers[':status'];
+      if (status !== 200) {
+        console.warn(`[APN] Push failed for ${pushToken.slice(0, 8)}...: status ${status}`);
+      }
+      resolve(status === 200);
     });
 
-    const notification = new apn.Notification();
-    notification.topic = `${process.env.APPLE_PASS_TYPE_ID}.voip`;
-    notification.pushType = 'background';
-    notification.priority = 5;
-    notification.payload = {};
+    req.on('error', () => resolve(false));
+    req.setTimeout(10000, () => {
+      req.close();
+      resolve(false);
+    });
 
-    for (const { pushToken } of tokens) {
-      await provider.send(notification, pushToken).catch(() => null);
-    }
+    req.on('close', () => client.close());
+  });
+}
 
-    provider.shutdown();
-  } catch (err) {
-    console.error('[Apple Push] Error sending push update:', err);
+/**
+ * Push update to all devices registered for a single card.
+ */
+export async function sendApplePushUpdate(cardId: string): Promise<void> {
+  const passTypeId = process.env.APPLE_PASS_TYPE_ID;
+  if (!passTypeId) return;
+
+  const token = await getApnToken();
+  if (!token) return;
+
+  const registrations = await prisma.applePushToken.findMany({ where: { cardId } });
+  if (registrations.length === 0) return;
+
+  for (const reg of registrations) {
+    await sendPush(token, reg.pushToken, passTypeId).catch(() => null);
+  }
+}
+
+/**
+ * Push update to ALL cards for a tenant (e.g., when reward config changes).
+ */
+export async function sendApplePushUpdateForTenant(tenantId: string): Promise<void> {
+  const cards = await prisma.loyaltyCard.findMany({
+    where: { tenantId, applePassSerial: { not: null } },
+    select: { id: true },
+  });
+
+  for (const card of cards) {
+    await sendApplePushUpdate(card.id);
   }
 }

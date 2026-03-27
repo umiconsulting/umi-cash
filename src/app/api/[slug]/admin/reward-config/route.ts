@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getTenant } from '@/lib/tenant';
+import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
 
 const UpdateRewardSchema = z.object({
   visitsRequired: z.number().int().min(1).max(100),
@@ -65,6 +66,9 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
         },
       });
     });
+
+    // Push update to all wallet passes so reward name refreshes
+    sendApplePushUpdateForTenant(tenant.id).catch(() => {});
 
     return NextResponse.json({ newConfig });
   } catch (err) {
