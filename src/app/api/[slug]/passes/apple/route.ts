@@ -65,6 +65,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     });
   } catch (err) {
     console.error('[Apple Pass]', err);
-    return NextResponse.json({ error: 'Error generando pase' }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Error generando pase: ${msg}` }, { status: 500 });
   }
 }
