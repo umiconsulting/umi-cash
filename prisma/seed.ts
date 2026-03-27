@@ -21,6 +21,9 @@ async function seedTenant({
   cardPrefix,
   primaryColor,
   secondaryColor,
+  logoUrl,
+  stripImageUrl,
+  passStyle,
   locations,
   rewardConfig,
   admin,
@@ -33,6 +36,9 @@ async function seedTenant({
   cardPrefix: string;
   primaryColor: string;
   secondaryColor: string;
+  logoUrl?: string;
+  stripImageUrl?: string;
+  passStyle?: string;
   locations: { name: string; address: string }[];
   rewardConfig: { visitsRequired: number; rewardName: string; rewardDescription: string };
   admin: { email: string; password: string };
@@ -41,8 +47,8 @@ async function seedTenant({
 }) {
   const tenant = await prisma.tenant.upsert({
     where: { slug },
-    update: { name, city, primaryColor, secondaryColor },
-    create: { slug, name, city, cardPrefix, primaryColor, secondaryColor, selfRegistration: true },
+    update: { name, city, primaryColor, secondaryColor, logoUrl, stripImageUrl, passStyle },
+    create: { slug, name, city, cardPrefix, primaryColor, secondaryColor, logoUrl, stripImageUrl, passStyle: passStyle ?? 'default', selfRegistration: true },
   });
 
   console.log(`Tenant: ${tenant.name} (${tenant.slug})`);
@@ -168,6 +174,9 @@ async function main() {
     cardPrefix: 'EGR',
     primaryColor: '#B5605A',
     secondaryColor: '#8C5E52',
+    logoUrl: '/logos/ribera-white.png',
+    stripImageUrl: '/logos/ribera-strip.png',
+    passStyle: 'default',
     locations: [
       { name: 'Sucursal Principal', address: 'Culiacán, Sinaloa' },
     ],
@@ -189,8 +198,10 @@ async function main() {
     name: 'Kalala Café',
     city: 'Culiacán, Sinaloa',
     cardPrefix: 'KLC',
-    primaryColor: '#7C8C5A',
+    primaryColor: '#2D5A3D',
     secondaryColor: '#E8843A',
+    logoUrl: '/logos/kalala-logo.png',
+    passStyle: 'stamps',
     locations: [
       { name: 'Sucursal Centro', address: 'Centro, Culiacán, Sinaloa' },
       { name: 'Sucursal Norte', address: 'Norte, Culiacán, Sinaloa' },
