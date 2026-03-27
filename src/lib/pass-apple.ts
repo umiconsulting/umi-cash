@@ -123,13 +123,23 @@ export async function generateApplePass(data: PassData): Promise<{
   // Handle strip image: use tenant's custom URL, or remove template default
   if (data.stripImageUrl) {
     try {
-      const res = await fetch(data.stripImageUrl);
+      // Resolve relative URLs against the app URL
+      const stripUrl = data.stripImageUrl.startsWith('/')
+        ? `${process.env.NEXT_PUBLIC_APP_URL}${data.stripImageUrl}`
+        : data.stripImageUrl;
+      const res = await fetch(stripUrl);
       if (res.ok) {
         const buf = Buffer.from(await res.arrayBuffer());
+        // Remove template defaults before adding custom
+        try { (pass as any).files?.delete('strip.png'); } catch {}
+        try { (pass as any).files?.delete('strip@2x.png'); } catch {}
+        try { (pass as any).files?.delete('strip@3x.png'); } catch {}
         pass.addBuffer('strip@2x.png', buf);
+      } else {
+        console.warn(`[Apple Pass] Strip fetch failed: ${res.status} ${stripUrl}`);
       }
-    } catch {
-      // Silently skip if fetch fails — pass works without strip
+    } catch (err) {
+      console.warn('[Apple Pass] Strip fetch error:', err);
     }
   } else {
     // Remove template strip images so tenants without a custom strip get a clean card
