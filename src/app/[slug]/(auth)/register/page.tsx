@@ -285,6 +285,11 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3">
               <p className="text-red-600 text-sm">{error}</p>
+              {error === 'Este teléfono ya está registrado' && (
+                <Link href={`/${slug}/card`} className="block mt-2 text-sm font-medium text-coffee-brand underline">
+                  ¿Ya tienes cuenta? Accede aquí →
+                </Link>
+              )}
             </div>
           )}
 
