@@ -135,14 +135,11 @@ export async function generateApplePass(data: PassData): Promise<{
   // Header: SALDO on the right (tenant name shown via logoText)
   pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
 
-  // Secondary: member name + reward
-  pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
-  pass.secondaryFields.push({ key: 'reward', label: 'RECOMPENSA', value: data.rewardName });
-
-  // Auxiliary: stamp card below secondary fields
+  // Secondary: member name + stamp card with reward as label
   const filled = '●'.repeat(data.visitsThisCycle);
   const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
-  pass.auxiliaryFields.push({ key: 'stamps', label: `VISITAS ${data.visitsThisCycle}/${data.visitsRequired}`, value: filled + empty });
+  pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
+  pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})` });
 
   // Back fields
   pass.backFields.push({ key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) });
