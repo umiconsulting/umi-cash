@@ -71,7 +71,8 @@
       "Bash(npx vercel:*)",
       "Bash(DATABASE_URL=\"$DIRECT_DATABASE_URL\" psql -c \"SELECT id, slug, name, \"\"primaryColor\"\" FROM \"\"Tenant\"\";\")",
       "Bash(vercel --prod --yes)",
-      "Bash(find /Users/469096 -name kalala* -maxdepth 5)"
+      "Bash(find /Users/469096 -name kalala* -maxdepth 5)",
+      "Bash(cd:*)"
     ]
   }
 }

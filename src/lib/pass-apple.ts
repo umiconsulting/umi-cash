@@ -65,6 +65,7 @@ export interface PassData {
   tenantName?: string;
   tenantSlug?: string;
   primaryColor?: string; // hex, e.g. "#B5605A"
+  logoUrl?: string | null; // URL to tenant logo image
   stripImageUrl?: string | null; // URL to custom strip image
   passStyle?: string; // "default" or "stamps"
 }
@@ -120,32 +121,29 @@ export async function generateApplePass(data: PassData): Promise<{
   // Set pass type
   pass.type = 'storeCard';
 
-  // Handle strip image: use tenant's custom URL, or remove template default
-  if (data.stripImageUrl) {
+  // Helper to resolve relative URLs and fetch image buffers
+  async function fetchImageBuffer(url: string): Promise<Buffer | null> {
     try {
-      // Resolve relative URLs against the app URL
-      const stripUrl = data.stripImageUrl.startsWith('/')
-        ? `${process.env.NEXT_PUBLIC_APP_URL}${data.stripImageUrl}`
-        : data.stripImageUrl;
-      const res = await fetch(stripUrl);
-      if (res.ok) {
-        const buf = Buffer.from(await res.arrayBuffer());
-        // Remove template defaults before adding custom
-        try { (pass as any).files?.delete('strip.png'); } catch {}
-        try { (pass as any).files?.delete('strip@2x.png'); } catch {}
-        try { (pass as any).files?.delete('strip@3x.png'); } catch {}
-        pass.addBuffer('strip@2x.png', buf);
-      } else {
-        console.warn(`[Apple Pass] Strip fetch failed: ${res.status} ${stripUrl}`);
-      }
+      const fullUrl = url.startsWith('/') ? `${process.env.NEXT_PUBLIC_APP_URL}${url}` : url;
+      const res = await fetch(fullUrl);
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      console.warn(`[Apple Pass] Image fetch failed: ${res.status} ${fullUrl}`);
     } catch (err) {
-      console.warn('[Apple Pass] Strip fetch error:', err);
+      console.warn('[Apple Pass] Image fetch error:', err);
     }
-  } else {
-    // Remove template strip images so tenants without a custom strip get a clean card
-    try { (pass as any).files?.delete('strip.png'); } catch {}
-    try { (pass as any).files?.delete('strip@2x.png'); } catch {}
-    try { (pass as any).files?.delete('strip@3x.png'); } catch {}
+    return null;
+  }
+
+  // Add tenant logo if available
+  if (data.logoUrl) {
+    const logoBuf = await fetchImageBuffer(data.logoUrl);
+    if (logoBuf) pass.addBuffer('logo@2x.png', logoBuf);
+  }
+
+  // Add tenant strip image if available
+  if (data.stripImageUrl) {
+    const stripBuf = await fetchImageBuffer(data.stripImageUrl);
+    if (stripBuf) pass.addBuffer('strip@2x.png', stripBuf);
   }
 
   // Set barcode
