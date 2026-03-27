@@ -156,7 +156,24 @@ export default function RegisterPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Error al registrarse');
+        if (res.status === 409) {
+          // Phone already registered — auto-login and show wallet buttons
+          const loginRes = await fetch(`/api/${slug}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier: fullPhone, role: 'CUSTOMER' }),
+          });
+          const loginData = await loginRes.json();
+          if (loginRes.ok) {
+            localStorage.setItem('accessToken', loginData.accessToken);
+            localStorage.setItem('userRole', loginData.user.role);
+            setSuccess({ name: loginData.user.name?.split(' ')[0] || 'tú', token: loginData.accessToken });
+          } else {
+            setError(data.error || 'Error al registrarse');
+          }
+        } else {
+          setError(data.error || 'Error al registrarse');
+        }
         return;
       }
 
@@ -285,11 +302,6 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3">
               <p className="text-red-600 text-sm">{error}</p>
-              {error === 'Este teléfono ya está registrado' && (
-                <Link href={`/${slug}/card`} className="block mt-2 text-sm font-medium text-coffee-brand underline">
-                  ¿Ya tienes cuenta? Accede aquí →
-                </Link>
-              )}
             </div>
           )}
 
