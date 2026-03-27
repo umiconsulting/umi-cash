@@ -7,31 +7,31 @@ import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
 import { getTenant } from '@/lib/tenant';
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
-  const user = await requireAuth()(req);
-  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-
-  const tenant = await getTenant(params.slug);
-  if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
-
-  if (user.tenantId !== tenant.id) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-
-  if (!isAppleWalletConfigured()) {
-    return NextResponse.json({
-      error: 'Apple Wallet no está configurado.',
-      configured: false,
-    }, { status: 503 });
-  }
-
-  const [card, rewardConfig] = await Promise.all([
-    prisma.loyaltyCard.findUnique({ where: { userId: user.sub }, include: { user: true } }),
-    getActiveRewardConfig(tenant.id),
-  ]);
-
-  if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
-
-  const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
-
   try {
+    const user = await requireAuth()(req);
+    if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+    const tenant = await getTenant(params.slug);
+    if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
+
+    if (user.tenantId !== tenant.id) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+
+    if (!isAppleWalletConfigured()) {
+      return NextResponse.json({
+        error: 'Apple Wallet no está configurado.',
+        configured: false,
+      }, { status: 503 });
+    }
+
+    const [card, rewardConfig] = await Promise.all([
+      prisma.loyaltyCard.findUnique({ where: { userId: user.sub }, include: { user: true } }),
+      getActiveRewardConfig(tenant.id),
+    ]);
+
+    if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
+
+    const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
+
     const { buffer, serial, authToken } = await generateApplePass({
       cardId: card.id,
       cardNumber: card.cardNumber,
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     });
   } catch (err) {
     console.error('[Apple Pass]', err);
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
     return NextResponse.json({ error: `Error generando pase: ${msg}` }, { status: 500 });
   }
 }
