@@ -2,9 +2,9 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['passkit-generator'],
-  },
-  outputFileTracingIncludes: {
-    '/api/*/passes/apple': ['./passes/apple/**/*'],
+    outputFileTracingIncludes: {
+      '/api/*/passes/apple': ['./passes/apple/**/*'],
+    },
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
