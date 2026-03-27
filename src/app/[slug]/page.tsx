@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getTenant } from '@/lib/tenant';
+import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
 import { notFound } from 'next/navigation';
 
 function QRCodeMock({ size = 96 }: { size?: number }) {
@@ -36,7 +37,12 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
   const tenant = await getTenant(params.slug);
   if (!tenant) notFound();
 
+  const rewardConfig = await getActiveRewardConfig(tenant.id);
+  const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
   const cardNumberExample = `${tenant.cardPrefix}-1234567890`;
+  const exampleVisits = 4;
+  const filled = '●'.repeat(exampleVisits);
+  const empty = '○'.repeat(visitsRequired - exampleVisits);
 
   return (
     <main className="min-h-screen bg-coffee-cream">
@@ -73,35 +79,42 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
         </div>
 
         <div className="flex justify-center">
-          <div className="w-full max-w-[300px]">
-            <div className="rounded-[18px] overflow-hidden shadow-2xl loyalty-card">
-              <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-                <span className="text-white text-[13px] font-semibold tracking-tight">{tenant.name}</span>
+          <div className="w-full max-w-[320px]">
+            <div className="rounded-[18px] overflow-hidden shadow-2xl loyalty-card relative">
+              {/* Header: logo + saldo */}
+              <div className="px-5 pt-5 pb-3 flex items-start justify-between relative z-10">
+                <span className="text-white text-xl font-extrabold tracking-tight uppercase" style={{ fontFamily: 'var(--font-display, system-ui)' }}>{tenant.name}</span>
                 <div className="text-right">
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest font-medium">Saldo</p>
-                  <p className="text-white text-[15px] font-bold">$150.00</p>
+                  <p className="text-[var(--color-coffee-pale)]/60 text-[9px] uppercase tracking-widest font-medium">Saldo</p>
+                  <p className="text-white text-lg font-bold">$150.00</p>
                 </div>
               </div>
-              <div className="mx-5 h-px bg-white/10" />
-              <div className="px-5 pt-3 pb-2">
-                <p className="text-white/40 text-[9px] uppercase tracking-widest font-medium">Miembro</p>
-                <p className="text-white text-[16px] font-semibold mt-0.5">María García</p>
-              </div>
-              <div className="px-5 pb-3 flex justify-between">
-                <div>
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest font-medium">Visitas</p>
-                  <p className="text-white text-[13px] font-semibold mt-0.5">4 / 10</p>
+
+              {/* Checkered strip pattern */}
+              <div className="relative z-0 mx-0 py-6" style={{
+                backgroundImage: `
+                  linear-gradient(45deg, rgba(255,255,255,0.08) 25%, transparent 25%),
+                  linear-gradient(-45deg, rgba(255,255,255,0.08) 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.08) 75%),
+                  linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.08) 75%)
+                `,
+                backgroundSize: '40px 40px',
+                backgroundPosition: '0 0, 0 20px, 20px -20px, -20px 0px',
+              }} />
+
+              {/* Fields: miembro + reward/stamps */}
+              <div className="px-5 pb-4 flex gap-4 relative z-10">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--color-coffee-pale)]/60 text-[9px] uppercase tracking-widest font-medium">Miembro</p>
+                  <p className="text-white text-sm font-semibold mt-0.5 truncate">María García</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-white/40 text-[9px] uppercase tracking-widest font-medium">Recompensa</p>
-                  <p className="text-white text-[13px] font-semibold mt-0.5">Cookie</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--color-coffee-pale)]/60 text-[9px] uppercase tracking-widest font-medium">{rewardName.toUpperCase()}</p>
+                  <p className="text-white text-sm font-semibold mt-0.5">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
                 </div>
               </div>
-              <div className="px-5 pb-4 flex gap-1">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className={`h-2 flex-1 rounded-full ${i < 4 ? 'bg-white' : 'bg-white/20'}`} />
-                ))}
-              </div>
+
+              {/* QR code + card number */}
               <div className="bg-white mx-4 mb-4 rounded-2xl px-4 py-3 flex flex-col items-center gap-1.5">
                 <QRCodeMock size={100} />
                 <p className="text-[10px] font-mono text-gray-300 tracking-wider">{cardNumberExample}</p>
@@ -145,7 +158,7 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
             { n: '1', title: 'Regístrate una vez', desc: 'Solo tu nombre y teléfono. En 30 segundos tienes tu tarjeta.' },
             { n: '2', title: 'Guárdala en tu teléfono', desc: 'Un tap y vive en Apple Wallet o Google Wallet. Sin registros, sin contraseñas.' },
             { n: '3', title: 'Muestra el QR al barista', desc: 'Cada visita suma automáticamente. Sin abrir apps, sin contraseñas.' },
-            { n: '4', title: 'Gana recompensas de temporada', desc: 'A las 10 visitas: cookie, latte, lo que el chef prepare ese mes.' },
+            { n: '4', title: 'Gana recompensas', desc: `A las ${visitsRequired} visitas: ${rewardName}.` },
           ].map(({ n, title, desc }) => (
             <div key={n} className="flex gap-4 items-start">
               <div className="w-8 h-8 rounded-full bg-coffee-brand text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
