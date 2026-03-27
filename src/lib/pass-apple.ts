@@ -96,7 +96,7 @@ export async function generateApplePass(data: PassData): Promise<{
       ? `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} pendiente${data.pendingRewards > 1 ? 's' : ''}`
       : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`;
 
-  // Second arg cast to any — passkit-generator type defs vary between v3 patch versions
+  // PKPass.from(source, bufferData, overrides) — 3 args in v3
   const pass = await PKPass.from(
     {
       model: TEMPLATE_DIR,
@@ -107,6 +107,7 @@ export async function generateApplePass(data: PassData): Promise<{
         signerKeyPassphrase: process.env.APPLE_KEY_PASSPHRASE || undefined,
       },
     } as any,
+    {} as any, // no additional buffer files
     {
       serialNumber: serial,
       authenticationToken: authToken,
@@ -116,46 +117,42 @@ export async function generateApplePass(data: PassData): Promise<{
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
       webServiceURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/${tenantSlug}/passes/apple`,
-      barcodes: [
-        {
-          message: data.cardNumber,
-          format: 'PKBarcodeFormatQR',
-          messageEncoding: 'iso-8859-1',
-        },
-      ],
-      storeCard: {
-        headerFields: [
-          {
-            key: 'balance',
-            label: 'SALDO',
-            value: formatMXN(data.balanceCentavos),
-            textAlignment: 'PKTextAlignmentRight',
-          },
-        ],
-        primaryFields: [
-          { key: 'tenantName', label: 'PROGRAMA', value: tenantName },
-          { key: 'memberName', label: 'MIEMBRO', value: data.customerName },
-        ],
-        secondaryFields: [
-          { key: 'visits', label: 'VISITAS', value: `${data.visitsThisCycle}/${data.visitsRequired}` },
-          { key: 'reward', label: 'PRÓXIMA RECOMPENSA', value: rewardText },
-        ],
-        auxiliaryFields: [
-          { key: 'rewardName', label: 'RECOMPENSA DEL CICLO', value: data.rewardName },
-        ],
-        backFields: [
-          { key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) },
-          { key: 'cardNumber', label: 'Número de tarjeta', value: data.cardNumber },
-          {
-            key: 'terms',
-            label: 'Términos y condiciones',
-            value: `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`,
-          },
-          { key: 'website', label: 'Consulta tu tarjeta', value: `${process.env.NEXT_PUBLIC_APP_URL}/${tenantSlug}/card` },
-        ],
-      },
     } as any
   );
+
+  // Set pass type
+  pass.type = 'storeCard';
+
+  // Set barcode
+  pass.setBarcodes({
+    message: data.cardNumber,
+    format: 'PKBarcodeFormatQR',
+    messageEncoding: 'iso-8859-1',
+  });
+
+  // Header fields
+  pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
+
+  // Primary fields
+  pass.primaryFields.push({ key: 'tenantName', label: 'PROGRAMA', value: tenantName });
+  pass.primaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
+
+  // Secondary fields
+  pass.secondaryFields.push({ key: 'visits', label: 'VISITAS', value: `${data.visitsThisCycle}/${data.visitsRequired}` });
+  pass.secondaryFields.push({ key: 'reward', label: 'PRÓXIMA RECOMPENSA', value: rewardText });
+
+  // Auxiliary fields
+  pass.auxiliaryFields.push({ key: 'rewardName', label: 'RECOMPENSA DEL CICLO', value: data.rewardName });
+
+  // Back fields
+  pass.backFields.push({ key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) });
+  pass.backFields.push({ key: 'cardNumber', label: 'Número de tarjeta', value: data.cardNumber });
+  pass.backFields.push({
+    key: 'terms',
+    label: 'Términos y condiciones',
+    value: `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`,
+  });
+  pass.backFields.push({ key: 'website', label: 'Consulta tu tarjeta', value: `${process.env.NEXT_PUBLIC_APP_URL}/${tenantSlug}/card` });
 
   const buffer = await pass.getAsBuffer();
   return { buffer, serial, authToken };
