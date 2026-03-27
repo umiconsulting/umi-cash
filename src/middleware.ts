@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_APP_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
   'http://localhost:3000',
   'http://localhost:3001',
 ].filter(Boolean) as string[];
