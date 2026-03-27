@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { verifyUmiSession } from '@/lib/umi-auth';
+import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
 
 const UpdateTenantSchema = z.object({
   subscriptionStatus: z.enum(['ACTIVE', 'SUSPENDED', 'TRIAL']).optional(),
@@ -88,6 +89,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
             ...(data.visitsRequired !== undefined && { visitsRequired: data.visitsRequired }),
           },
         });
+
+        // Bump card timestamps + push wallet updates
+        await prisma.loyaltyCard.updateMany({
+          where: { tenantId: params.id, applePassSerial: { not: null } },
+          data: { updatedAt: new Date() },
+        });
+        sendApplePushUpdateForTenant(params.id).catch((err) =>
+          console.error('[umi-admin] Push update failed:', err)
+        );
       }
     }
 

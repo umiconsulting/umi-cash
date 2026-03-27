@@ -40,7 +40,29 @@
       "Bash(node:*)",
       "Bash(find /Users/469096/Documents/umi/umi-cash/src/app/[slug] -name \"layout.tsx\")",
       "Bash(find /Users/469096/Documents/umi/umi-cash/src/lib -type f -name *.ts -o -name *.tsx)",
-      "Bash(find /Users/469096/Documents/umi/umi-cash/src/app/[slug]/\\\\\\(auth\\\\\\) -type f)"
+      "Bash(find /Users/469096/Documents/umi/umi-cash/src/app/[slug]/\\\\\\(auth\\\\\\) -type f)",
+      "Bash(cd /Users/469096/Documents/umi/umi-cash echo \"APPLE_SIGNER_CERT:\" base64 -i passes/apple/certificates/signerCert.pem)",
+      "Bash(git log:*)",
+      "Read(//private/tmp/**)",
+      "Bash(APPLE_TEAM_ID=3S5NL9WM88 APPLE_PASS_TYPE_ID=pass.co.umicash.loyalty APPLE_KEY_PASSPHRASE=\"\" node -e \":*)",
+      "Bash(openssl rsa:*)",
+      "Bash(openssl pkey:*)",
+      "Bash(pbcopy)",
+      "Bash(curl:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel --prod)",
+      "Bash(vercel deploy:*)",
+      "Bash(unzip -l /tmp/test.pkpass)",
+      "Bash(unzip -p /tmp/test.pkpass pass.json)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"from PIL import Image; print\\(''pillow''\\)\")",
+      "Bash(pip3 install:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(find ~/Desktop ~/Downloads ~/Documents/umi -maxdepth 2 -type f \\\\\\(-name *.png -o -name *.jpg -o -name *.jpeg -o -name *.webp -o -name *ribera* -o -name *RIBERA* -o -name *logo* \\\\\\))",
+      "Bash(git revert:*)"
     ]
   }
 }
