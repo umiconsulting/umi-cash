@@ -88,12 +88,10 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                 ) : (
                   <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
                 )}
-                {tenant.passStyle !== 'stamps' && (
-                  <div className="text-right flex-shrink-0 ml-3">
-                    <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
-                    <p className="text-white text-xl font-bold leading-tight">$150.00</p>
-                  </div>
-                )}
+                <div className="text-right flex-shrink-0 ml-3">
+                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
+                  <p className="text-white text-xl font-bold leading-tight">$150.00</p>
+                </div>
               </div>
 
               {/* Strip image or solid color */}

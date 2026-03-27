@@ -17,6 +17,7 @@ import { PKPass } from 'passkit-generator';
 import fs from 'fs';
 import path from 'path';
 import { formatMXN } from './currency';
+import { generateStampStrip } from './strip-generator';
 import { generatePassSerial, generateRandomToken } from './auth';
 
 const PASSES_DIR = path.join(process.cwd(), 'passes', 'apple');
@@ -140,8 +141,20 @@ export async function generateApplePass(data: PassData): Promise<{
     if (logoBuf) pass.addBuffer('logo@2x.png', logoBuf);
   }
 
-  // Add tenant strip image if available
-  if (data.stripImageUrl) {
+  // Add strip image: dynamic stamp card for "stamps" style, static image otherwise
+  if (data.passStyle === 'stamps') {
+    try {
+      const stripBuf = await generateStampStrip(
+        data.visitsThisCycle,
+        data.visitsRequired,
+        '/logos/kalala-stamp-filled.png',
+        '/logos/kalala-stamp-empty.png',
+      );
+      pass.addBuffer('strip@2x.png', stripBuf);
+    } catch (err) {
+      console.warn('[Apple Pass] Dynamic strip generation failed:', err);
+    }
+  } else if (data.stripImageUrl) {
     const stripBuf = await fetchImageBuffer(data.stripImageUrl);
     if (stripBuf) pass.addBuffer('strip@2x.png', stripBuf);
   }
@@ -156,8 +169,11 @@ export async function generateApplePass(data: PassData): Promise<{
 
   const remaining = data.visitsRequired - data.visitsThisCycle;
 
+  // Balance header for all styles
+  pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
+
   if (data.passStyle === 'stamps') {
-    // Stamps style (Kalala): remaining stamps + pending rewards, no balance header
+    // Stamps style (Kalala): remaining stamps + pending rewards
     pass.secondaryFields.push({
       key: 'remaining',
       label: 'SELLOS FALTANTES',
@@ -169,8 +185,7 @@ export async function generateApplePass(data: PassData): Promise<{
       value: `${data.pendingRewards} premio${data.pendingRewards !== 1 ? 's' : ''}`,
     });
   } else {
-    // Default style (Ribera): balance header + member name + stamp dots
-    pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
+    // Default style (Ribera): member name + stamp dots
     const filled = '●'.repeat(data.visitsThisCycle);
     const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
     pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
