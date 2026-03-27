@@ -113,6 +113,7 @@ export async function generateApplePass(data: PassData): Promise<{
       teamIdentifier: process.env.APPLE_TEAM_ID || '',
       organizationName: tenantName,
       description: `Tarjeta de lealtad ${tenantName}`,
+      logoText: tenantName,
       backgroundColor: bgColor,
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
@@ -130,19 +131,15 @@ export async function generateApplePass(data: PassData): Promise<{
     messageEncoding: 'iso-8859-1',
   });
 
-  // Header fields
+  // Header: SALDO on the right (tenant name shown via logoText)
   pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
 
-  // Primary fields
-  pass.primaryFields.push({ key: 'tenantName', label: 'PROGRAMA', value: tenantName });
+  // Primary: member name only
   pass.primaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
 
-  // Secondary fields
-  pass.secondaryFields.push({ key: 'visits', label: 'VISITAS', value: `${data.visitsThisCycle}/${data.visitsRequired}` });
-  pass.secondaryFields.push({ key: 'reward', label: 'PRÓXIMA RECOMPENSA', value: rewardText });
-
-  // Auxiliary fields
-  pass.auxiliaryFields.push({ key: 'rewardName', label: 'RECOMPENSA DEL CICLO', value: data.rewardName });
+  // Secondary: visits + reward name
+  pass.secondaryFields.push({ key: 'visits', label: 'VISITAS', value: `${data.visitsThisCycle} / ${data.visitsRequired}` });
+  pass.secondaryFields.push({ key: 'reward', label: 'RECOMPENSA', value: data.rewardName });
 
   // Back fields
   pass.backFields.push({ key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) });
