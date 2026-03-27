@@ -19,9 +19,9 @@ const CreateSchema = z.object({
 });
 
 function generateGiftCode(): string {
-  // Format: XXXX-XXXX (8 hex chars, uppercase)
-  const hex = generateRandomToken(4).toUpperCase();
-  return `${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+  // Format: XXXX-XXXX-XXXX-XXXX (16 hex chars, uppercase) — 8 bytes of entropy
+  const hex = generateRandomToken(8).toUpperCase();
+  return `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}`;
 }
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {

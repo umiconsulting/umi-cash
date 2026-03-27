@@ -60,7 +60,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     return handleGetPass(req, params.slug, route.params.serial);
   }
   if (route.handler === 'listSerials') {
-    return handleListSerials(req, route.params.deviceId, route.params.passTypeId);
+    return handleListSerials(req, params.slug, route.params.deviceId, route.params.passTypeId);
   }
   return new NextResponse(null, { status: 404 });
 }
@@ -131,13 +131,16 @@ async function handleUnregister(req: NextRequest, deviceId: string, serial: stri
 
 // ─── List updated serial numbers ─────────────────────────────────────────────
 
-async function handleListSerials(req: NextRequest, deviceId: string, passTypeId: string) {
+async function handleListSerials(req: NextRequest, slug: string, deviceId: string, passTypeId: string) {
+  const tenant = await getTenant(slug);
+  if (!tenant) return new NextResponse(null, { status: 404 });
+
   const since = req.nextUrl.searchParams.get('passesUpdatedSince');
   const sinceDate = since ? new Date(parseInt(since) * 1000) : new Date(0);
 
-  // Find all cards that this device is registered for AND have been updated
+  // Find cards for this device scoped to the current tenant
   const registrations = await prisma.applePushToken.findMany({
-    where: { deviceToken: deviceId },
+    where: { deviceToken: deviceId, card: { tenantId: tenant.id } },
     include: { card: true },
   });
 

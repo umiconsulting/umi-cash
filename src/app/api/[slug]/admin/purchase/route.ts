@@ -9,6 +9,13 @@ import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 import { sendApplePushUpdate } from '@/lib/push-apple';
 import { updateGoogleWalletObject } from '@/lib/pass-google';
 
+class InsufficientBalanceError extends Error {
+  constructor(public availableCentavos: number) {
+    super(`Saldo insuficiente. Disponible: ${formatMXN(availableCentavos)}`);
+    this.name = 'InsufficientBalanceError';
+  }
+}
+
 const PurchaseSchema = z.object({
   cardId: z.string().min(1),
   amountCentavos: z.number().int().min(1, 'El monto mínimo es $0.01'),
@@ -39,13 +46,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
     if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
 
-    if (card.balanceCentavos < amountCentavos) {
-      return NextResponse.json({
-        error: `Saldo insuficiente. Disponible: ${formatMXN(card.balanceCentavos)}`,
-      }, { status: 400 });
-    }
-
+    // Balance check + mutation inside a single transaction to prevent race conditions
     const updatedCard = await prisma.$transaction(async (tx) => {
+      const freshCard = await tx.loyaltyCard.findUniqueOrThrow({
+        where: { id: card.id },
+      });
+      if (freshCard.balanceCentavos < amountCentavos) {
+        throw new InsufficientBalanceError(freshCard.balanceCentavos);
+      }
       await tx.transaction.create({
         data: {
           cardId: card.id,
@@ -95,6 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    if (err instanceof InsufficientBalanceError) return NextResponse.json({ error: err.message }, { status: 400 });
     console.error('[Purchase]', err);
     return NextResponse.json({ error: 'Error al procesar pago' }, { status: 500 });
   }

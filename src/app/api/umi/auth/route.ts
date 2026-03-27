@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const token = await new SignJWT({ sub: 'umi-admin', role: 'UMI_ADMIN' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h')
+    .setExpirationTime('4h')
     .sign(getSecret());
 
   const res = NextResponse.json({ ok: true });
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 24,
+    maxAge: 60 * 60 * 4,
     path: '/',
   });
   return res;

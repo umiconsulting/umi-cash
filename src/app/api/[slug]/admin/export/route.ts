@@ -3,10 +3,15 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { formatMXN } from '@/lib/currency';
 import { getTenant } from '@/lib/tenant';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   const staff = await requireAuth(['STAFF', 'ADMIN'])(req);
   if (!staff) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+  // Rate limit: 10 exports per hour per staff member
+  const rl = rateLimit(`export:${staff.sub}`, 10, 60 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   const tenant = await getTenant(params.slug);
   if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });

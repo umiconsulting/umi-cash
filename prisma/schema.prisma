@@ -159,6 +159,8 @@ model Transaction {
 
   @@index([cardId])
   @@index([createdAt])
+  @@index([staffId, type, createdAt])
+  @@index([cardId, type, createdAt])
 }
 
 // ─── Reward Config ────────────────────────────────────────────────────────────

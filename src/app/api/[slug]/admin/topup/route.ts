@@ -12,6 +12,13 @@ import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 // Staff top-up limit: $5,000 MXN per day per staff member
 const STAFF_DAILY_TOPUP_LIMIT = 500_000;
 
+class LimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LimitError';
+  }
+}
+
 const TopUpSchema = z.object({
   cardId: z.string().min(1),
   amountCentavos: z.number().int().positive().min(100).max(MAX_TOPUP_CENTAVOS),
@@ -44,31 +51,29 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       return NextResponse.json({ error: 'No puedes recargar tu propia tarjeta' }, { status: 403 });
     }
 
-    // Daily top-up limit per staff member (prevents embezzlement/abuse)
     const dayStart = new Date();
     dayStart.setHours(0, 0, 0, 0);
-    const staffTodayTotal = await prisma.transaction.aggregate({
-      _sum: { amountCentavos: true },
-      where: { staffId: staff.sub, type: TRANSACTION_TYPES.TOPUP, createdAt: { gte: dayStart } },
-    });
-    const todaySum = staffTodayTotal._sum.amountCentavos ?? 0;
-    if (todaySum + amountCentavos > STAFF_DAILY_TOPUP_LIMIT) {
-      return NextResponse.json({
-        error: `Límite diario de recargas alcanzado (máx. ${formatMXN(STAFF_DAILY_TOPUP_LIMIT)} por día). Contacta al administrador.`,
-      }, { status: 429 });
-    }
 
-    // Same card cannot receive more than 3 top-ups per day (anti-fraud)
-    const cardTopupsToday = await prisma.transaction.count({
-      where: { cardId: card.id, type: TRANSACTION_TYPES.TOPUP, createdAt: { gte: dayStart } },
-    });
-    if (cardTopupsToday >= 3) {
-      return NextResponse.json({
-        error: 'Esta tarjeta ya recibió el máximo de recargas por hoy (3). Contacta al administrador.',
-      }, { status: 429 });
-    }
-
+    // All limit checks + mutation inside a single transaction to prevent race conditions
     const updatedCard = await prisma.$transaction(async (tx) => {
+      // Daily top-up limit per staff member (prevents embezzlement/abuse)
+      const staffTodayTotal = await tx.transaction.aggregate({
+        _sum: { amountCentavos: true },
+        where: { staffId: staff.sub, type: TRANSACTION_TYPES.TOPUP, createdAt: { gte: dayStart } },
+      });
+      const todaySum = staffTodayTotal._sum.amountCentavos ?? 0;
+      if (todaySum + amountCentavos > STAFF_DAILY_TOPUP_LIMIT) {
+        throw new LimitError(`Límite diario de recargas alcanzado (máx. ${formatMXN(STAFF_DAILY_TOPUP_LIMIT)} por día). Contacta al administrador.`);
+      }
+
+      // Same card cannot receive more than 3 top-ups per day (anti-fraud)
+      const cardTopupsToday = await tx.transaction.count({
+        where: { cardId: card.id, type: TRANSACTION_TYPES.TOPUP, createdAt: { gte: dayStart } },
+      });
+      if (cardTopupsToday >= 3) {
+        throw new LimitError('Esta tarjeta ya recibió el máximo de recargas por hoy (3). Contacta al administrador.');
+      }
+
       await tx.transaction.create({
         data: {
           cardId: card.id,
@@ -115,6 +120,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    if (err instanceof LimitError) return NextResponse.json({ error: err.message }, { status: 429 });
     console.error('[TopUp]', err);
     return NextResponse.json({ error: 'Error al recargar' }, { status: 500 });
   }
