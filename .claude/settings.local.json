@@ -69,7 +69,9 @@
       "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma migrate dev --name add-strip-image-url)",
       "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma db push)",
       "Bash(npx vercel:*)",
-      "Bash(DATABASE_URL=\"$DIRECT_DATABASE_URL\" psql -c \"SELECT id, slug, name, \"\"primaryColor\"\" FROM \"\"Tenant\"\";\")"
+      "Bash(DATABASE_URL=\"$DIRECT_DATABASE_URL\" psql -c \"SELECT id, slug, name, \"\"primaryColor\"\" FROM \"\"Tenant\"\";\")",
+      "Bash(vercel --prod --yes)",
+      "Bash(find /Users/469096 -name kalala* -maxdepth 5)"
     ]
   }
 }
