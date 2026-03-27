@@ -33,6 +33,46 @@ function QRCodeMock({ size = 96 }: { size?: number }) {
   );
 }
 
+function CheckeredStrip({ color }: { color: string }) {
+  // Parse hex to RGB, then create lighter and darker variants
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  // Lighter square: blend toward warm cream
+  const lr = Math.min(255, r + 30);
+  const lg = Math.min(255, g + 20);
+  const lb = Math.min(255, b + 15);
+  // Darker square: slightly darker than base
+  const dr = Math.max(0, r - 15);
+  const dg = Math.max(0, g - 15);
+  const db = Math.max(0, b - 15);
+
+  const light = `rgb(${lr},${lg},${lb})`;
+  const dark = `rgb(${dr},${dg},${db})`;
+  const cols = 6;
+  const rows = 2;
+
+  return (
+    <div className="flex flex-wrap">
+      {Array.from({ length: rows * cols }).map((_, i) => {
+        const row = Math.floor(i / cols);
+        const col = i % cols;
+        const isLight = (row + col) % 2 === 0;
+        return (
+          <div
+            key={i}
+            className="aspect-square"
+            style={{
+              width: `${100 / cols}%`,
+              backgroundColor: isLight ? light : dark,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 export default async function TenantLandingPage({ params }: { params: { slug: string } }) {
   const tenant = await getTenant(params.slug);
   if (!tenant) notFound();
@@ -80,44 +120,38 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
 
         <div className="flex justify-center">
           <div className="w-full max-w-[320px]">
-            <div className="rounded-[18px] overflow-hidden shadow-2xl loyalty-card relative">
+            <div className="rounded-[18px] overflow-hidden shadow-2xl relative" style={{ backgroundColor: tenant.primaryColor }}>
               {/* Header: logo + saldo */}
-              <div className="px-5 pt-5 pb-3 flex items-start justify-between relative z-10">
-                <span className="text-white text-xl font-extrabold tracking-tight uppercase" style={{ fontFamily: 'var(--font-display, system-ui)' }}>{tenant.name}</span>
-                <div className="text-right">
-                  <p className="text-[var(--color-coffee-pale)]/60 text-[9px] uppercase tracking-widest font-medium">Saldo</p>
-                  <p className="text-white text-lg font-bold">$150.00</p>
+              <div className="px-4 pt-4 pb-2 flex items-start justify-between">
+                <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
+                <div className="text-right flex-shrink-0 ml-3">
+                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
+                  <p className="text-white text-xl font-bold leading-tight">$150.00</p>
                 </div>
               </div>
 
-              {/* Checkered strip pattern */}
-              <div className="relative z-0 mx-0 py-6" style={{
-                backgroundImage: `
-                  linear-gradient(45deg, rgba(255,255,255,0.08) 25%, transparent 25%),
-                  linear-gradient(-45deg, rgba(255,255,255,0.08) 25%, transparent 25%),
-                  linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.08) 75%),
-                  linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.08) 75%)
-                `,
-                backgroundSize: '40px 40px',
-                backgroundPosition: '0 0, 0 20px, 20px -20px, -20px 0px',
-              }} />
+              {/* Checkered strip pattern — large visible squares */}
+              <CheckeredStrip color={tenant.primaryColor} />
 
               {/* Fields: miembro + reward/stamps */}
-              <div className="px-5 pb-4 flex gap-4 relative z-10">
+              <div className="px-4 pt-1 pb-3 flex gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-[var(--color-coffee-pale)]/60 text-[9px] uppercase tracking-widest font-medium">Miembro</p>
-                  <p className="text-white text-sm font-semibold mt-0.5 truncate">María García</p>
+                  <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Miembro</p>
+                  <p className="text-white text-[15px] font-semibold mt-0.5 truncate">María García</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[var(--color-coffee-pale)]/60 text-[9px] uppercase tracking-widest font-medium">{rewardName.toUpperCase()}</p>
-                  <p className="text-white text-sm font-semibold mt-0.5">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
+                  <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>{rewardName.toUpperCase()}</p>
+                  <p className="text-white text-[15px] font-semibold mt-0.5">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
                 </div>
               </div>
 
+              {/* Spacer matching wallet gap */}
+              <div className="h-8" />
+
               {/* QR code + card number */}
-              <div className="bg-white mx-4 mb-4 rounded-2xl px-4 py-3 flex flex-col items-center gap-1.5">
-                <QRCodeMock size={100} />
-                <p className="text-[10px] font-mono text-gray-300 tracking-wider">{cardNumberExample}</p>
+              <div className="bg-white mx-auto mb-5 rounded-2xl px-4 py-3 flex flex-col items-center gap-1.5 w-fit">
+                <QRCodeMock size={110} />
+                <p className="text-[10px] font-mono text-gray-400 tracking-wider">{cardNumberExample}</p>
               </div>
             </div>
 
