@@ -19,6 +19,7 @@ model Tenant {
   primaryColor   String   @default("#B5605A")
   secondaryColor String?
   logoUrl        String?
+  stripImageUrl  String?                   // URL to custom strip/banner image for wallet pass
   selfRegistration   Boolean  @default(true)
   subscriptionStatus String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
   suspendedAt        DateTime?

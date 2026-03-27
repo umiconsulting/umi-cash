@@ -65,6 +65,7 @@ export interface PassData {
   tenantName?: string;
   tenantSlug?: string;
   primaryColor?: string; // hex, e.g. "#B5605A"
+  stripImageUrl?: string | null; // URL to custom strip image
 }
 
 export async function generateApplePass(data: PassData): Promise<{
@@ -123,6 +124,24 @@ export async function generateApplePass(data: PassData): Promise<{
 
   // Set pass type
   pass.type = 'storeCard';
+
+  // Handle strip image: use tenant's custom URL, or remove template default
+  if (data.stripImageUrl) {
+    try {
+      const res = await fetch(data.stripImageUrl);
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        pass.addBuffer('strip@2x.png', buf);
+      }
+    } catch {
+      // Silently skip if fetch fails — pass works without strip
+    }
+  } else {
+    // Remove template strip images so tenants without a custom strip get a clean card
+    try { (pass as any).files?.delete('strip.png'); } catch {}
+    try { (pass as any).files?.delete('strip@2x.png'); } catch {}
+    try { (pass as any).files?.delete('strip@3x.png'); } catch {}
+  }
 
   // Set barcode
   pass.setBarcodes({

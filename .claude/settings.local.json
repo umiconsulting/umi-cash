@@ -62,7 +62,12 @@
       "Bash(ls:*)",
       "Bash(python3:*)",
       "Bash(find ~/Desktop ~/Downloads ~/Documents/umi -maxdepth 2 -type f \\\\\\(-name *.png -o -name *.jpg -o -name *.jpeg -o -name *.webp -o -name *ribera* -o -name *RIBERA* -o -name *logo* \\\\\\))",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(find /Users/469096/Documents/umi/umi-cash/src -type f \\\\\\(-name *card* -o -name *pass* \\\\\\) \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Bash(source /Users/469096/Documents/umi/umi-cash/.env.local)",
+      "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma db execute --stdin << 'SQL':*)",
+      "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma migrate dev --name add-strip-image-url)",
+      "Bash(DATABASE_URL=\"$DATABASE_URL\" DIRECT_DATABASE_URL=\"$DIRECT_DATABASE_URL\" npx prisma db push)"
     ]
   }
 }

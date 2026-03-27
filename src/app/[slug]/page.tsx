@@ -33,38 +33,6 @@ function QRCodeMock({ size = 96 }: { size?: number }) {
   );
 }
 
-function CheckeredStrip({ color }: { color: string }) {
-  // Parse hex to RGB, blend ~60% toward warm cream for the light squares
-  const r = parseInt(color.slice(1, 3), 16);
-  const g = parseInt(color.slice(3, 5), 16);
-  const b = parseInt(color.slice(5, 7), 16);
-  const lr = Math.round(r + (250 - r) * 0.57);
-  const lg = Math.round(g + (235 - g) * 0.64);
-  const lb = Math.round(b + (220 - b) * 0.65);
-
-  const light = `rgb(${lr},${lg},${lb})`;
-  const dark = color;
-  const cols = 6;
-  const rows = 2;
-
-  return (
-    <div className="grid grid-cols-6 gap-[2px] px-[2px]" style={{ backgroundColor: color }}>
-      {Array.from({ length: rows * cols }).map((_, i) => {
-        const row = Math.floor(i / cols);
-        const col = i % cols;
-        const isLight = (row + col) % 2 === 0;
-        return (
-          <div
-            key={i}
-            className="aspect-square"
-            style={{ backgroundColor: isLight ? light : dark }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 export default async function TenantLandingPage({ params }: { params: { slug: string } }) {
   const tenant = await getTenant(params.slug);
   if (!tenant) notFound();
@@ -126,8 +94,12 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                 </div>
               </div>
 
-              {/* Checkered strip pattern — large visible squares */}
-              <CheckeredStrip color={tenant.primaryColor} />
+              {/* Strip image or solid color */}
+              {tenant.stripImageUrl ? (
+                <img src={tenant.stripImageUrl} alt="" className="w-full h-auto" />
+              ) : (
+                <div className="h-4" />
+              )}
 
               {/* Fields: miembro + reward/stamps */}
               <div className="px-4 pt-1 pb-3 flex gap-3">

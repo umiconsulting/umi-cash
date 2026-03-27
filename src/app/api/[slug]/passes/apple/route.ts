@@ -56,6 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       tenantName: tenant.name,
       tenantSlug: params.slug,
       primaryColor: tenant.primaryColor,
+      stripImageUrl: tenant.stripImageUrl,
     });
 
     if (!card.applePassSerial) {

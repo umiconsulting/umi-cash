@@ -9,6 +9,7 @@ interface TenantSettings {
   primaryColor: string;
   secondaryColor: string | null;
   logoUrl: string | null;
+  stripImageUrl: string | null;
   selfRegistration: boolean;
   cardPrefix: string;
   slug: string;
@@ -27,6 +28,7 @@ export default function SettingsPage() {
     primaryColor: '#B5605A',
     secondaryColor: '',
     logoUrl: '',
+    stripImageUrl: '',
     selfRegistration: true,
   });
 
@@ -45,6 +47,7 @@ export default function SettingsPage() {
       primaryColor: data.primaryColor,
       secondaryColor: data.secondaryColor ?? '',
       logoUrl: data.logoUrl ?? '',
+      stripImageUrl: data.stripImageUrl ?? '',
       selfRegistration: data.selfRegistration,
     });
     setLoading(false);
@@ -124,6 +127,18 @@ export default function SettingsPage() {
               type="url"
               value={form.logoUrl}
               onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+              className="input-field"
+              placeholder="https://..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-coffee-dark mb-1.5">Imagen decorativa para tarjeta (opcional)</label>
+            <p className="text-xs text-coffee-medium mb-1.5">Banner que aparece en la tarjeta de wallet. Tamaño recomendado: 1125×369px</p>
+            <input
+              type="url"
+              value={form.stripImageUrl}
+              onChange={(e) => setForm({ ...form, stripImageUrl: e.target.value })}
               className="input-field"
               placeholder="https://..."
             />
