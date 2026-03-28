@@ -10,6 +10,7 @@ interface TenantSettings {
   secondaryColor: string | null;
   logoUrl: string | null;
   stripImageUrl: string | null;
+  promoMessage: string | null;
   selfRegistration: boolean;
   cardPrefix: string;
   slug: string;
@@ -29,6 +30,7 @@ export default function SettingsPage() {
     secondaryColor: '',
     logoUrl: '',
     stripImageUrl: '',
+    promoMessage: '',
     selfRegistration: true,
   });
 
@@ -48,6 +50,7 @@ export default function SettingsPage() {
       secondaryColor: data.secondaryColor ?? '',
       logoUrl: data.logoUrl ?? '',
       stripImageUrl: data.stripImageUrl ?? '',
+      promoMessage: data.promoMessage ?? '',
       selfRegistration: data.selfRegistration,
     });
     setLoading(false);
@@ -142,6 +145,25 @@ export default function SettingsPage() {
               className="input-field"
               placeholder="https://..."
             />
+          </div>
+        </div>
+
+        {/* Promotions */}
+        <div className="card-surface space-y-4">
+          <h2 className="font-semibold text-coffee-dark text-sm">Promoción en Wallet</h2>
+          <p className="text-xs text-coffee-medium -mt-2">Los usuarios recibirán una notificación en su celular cuando cambies este mensaje.</p>
+
+          <div>
+            <label className="block text-sm font-medium text-coffee-dark mb-1.5">Mensaje de promoción</label>
+            <input
+              type="text"
+              value={form.promoMessage}
+              onChange={(e) => setForm({ ...form, promoMessage: e.target.value })}
+              className="input-field"
+              placeholder="Ej: 2x1 en bebidas este viernes"
+              maxLength={200}
+            />
+            <p className="text-xs text-coffee-light mt-1">Déjalo vacío para quitar la promoción</p>
           </div>
         </div>
 

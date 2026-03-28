@@ -1,8 +1,10 @@
+import { waitUntil } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getTenant } from '@/lib/tenant';
+import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
 
 const SettingsSchema = z.object({
   name: z.string().min(2).max(100).optional(),
@@ -12,6 +14,7 @@ const SettingsSchema = z.object({
   logoUrl: z.string().url().max(500).optional().or(z.literal('')),
   stripImageUrl: z.string().url().max(500).optional().or(z.literal('')),
   passStyle: z.enum(['default', 'stamps']).optional(),
+  promoMessage: z.string().max(200).optional().or(z.literal('')),
   selfRegistration: z.boolean().optional(),
 });
 
@@ -32,6 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     logoUrl: tenant.logoUrl,
     stripImageUrl: tenant.stripImageUrl,
     passStyle: tenant.passStyle,
+    promoMessage: tenant.promoMessage,
     selfRegistration: tenant.selfRegistration,
     cardPrefix: tenant.cardPrefix,
     slug: tenant.slug,
@@ -61,9 +65,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
         ...(data.logoUrl !== undefined && { logoUrl: data.logoUrl || null }),
         ...(data.stripImageUrl !== undefined && { stripImageUrl: data.stripImageUrl || null }),
         ...(data.passStyle !== undefined && { passStyle: data.passStyle }),
+        ...(data.promoMessage !== undefined && { promoMessage: data.promoMessage || null }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
       },
     });
+
+    // If promo message changed, bump cards and push to all wallets
+    if (data.promoMessage !== undefined && data.promoMessage !== tenant.promoMessage) {
+      await prisma.loyaltyCard.updateMany({
+        where: { tenantId: tenant.id, applePassSerial: { not: null } },
+        data: { updatedAt: new Date() },
+      });
+      waitUntil(
+        sendApplePushUpdateForTenant(tenant.id).catch((err) =>
+          console.error('[settings] Push update failed:', err)
+        )
+      );
+    }
 
     return NextResponse.json({ ok: true, tenant: { name: updated.name, primaryColor: updated.primaryColor } });
   } catch (err) {

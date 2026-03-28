@@ -59,6 +59,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       logoUrl: tenant.logoUrl,
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
+      promoMessage: tenant.promoMessage,
     });
 
     if (!card.applePassSerial) {

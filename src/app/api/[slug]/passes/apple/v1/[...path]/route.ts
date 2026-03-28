@@ -192,6 +192,7 @@ async function handleGetPass(req: NextRequest, slug: string, serial: string) {
       logoUrl: tenant.logoUrl,
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
+      promoMessage: tenant.promoMessage,
     });
 
     return new NextResponse(buffer as unknown as BodyInit, {

@@ -69,6 +69,7 @@ export interface PassData {
   logoUrl?: string | null; // URL to tenant logo image
   stripImageUrl?: string | null; // URL to custom strip image
   passStyle?: string; // "default" or "stamps"
+  promoMessage?: string | null; // Current promotion text — triggers notification on change
 }
 
 export async function generateApplePass(data: PassData): Promise<{
@@ -222,6 +223,14 @@ export async function generateApplePass(data: PassData): Promise<{
     pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
     pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})`, changeMessage: 'Progreso actualizado: %@' });
   }
+
+  // Promotion field — value change triggers lock screen notification
+  pass.auxiliaryFields.push({
+    key: 'promo',
+    label: 'PROMOCIÓN',
+    value: data.promoMessage || ' ',
+    changeMessage: '%@',
+  });
 
   // Back fields
   pass.backFields.push({ key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) });
