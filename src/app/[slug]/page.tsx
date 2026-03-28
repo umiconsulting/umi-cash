@@ -100,8 +100,29 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                 </div>
               </div>
 
-              {/* Strip image or spacer */}
-              {tenant.stripImageUrl && tenant.passStyle !== 'stamps' ? (
+              {/* Strip: stamps grid or static image */}
+              {tenant.passStyle === 'stamps' ? (
+                <div className="px-3 py-2" style={{ backgroundColor: tenant.secondaryColor || 'transparent' }}>
+                  <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(visitsRequired, Math.ceil(visitsRequired / 2) + (visitsRequired <= 6 ? visitsRequired - Math.ceil(visitsRequired / 2) : 0))}, 1fr)` }}>
+                    {Array.from({ length: visitsRequired }).map((_, i) => (
+                      <div key={i} className="aspect-square flex items-center justify-center">
+                        {i < exampleVisits ? (
+                          <img
+                            src={`/logos/${params.slug}-stamp-filled.png`}
+                            alt="Sello"
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full rounded-full"
+                            style={{ border: `2px solid ${tenant.primaryColor}33` }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : tenant.stripImageUrl ? (
                 <img src={tenant.stripImageUrl} alt="" className="w-full h-auto" />
               ) : (
                 <div className="h-4" />
