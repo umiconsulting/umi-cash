@@ -127,11 +127,11 @@ export default function SettingsPage() {
           <div>
             <label className="block text-sm font-medium text-coffee-dark mb-1.5">URL del logo (opcional)</label>
             <input
-              type="url"
+              type="text"
               value={form.logoUrl}
               onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
               className="input-field"
-              placeholder="https://..."
+              placeholder="/logos/mi-logo.png o https://..."
             />
           </div>
 
@@ -139,11 +139,11 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-coffee-dark mb-1.5">Imagen decorativa para tarjeta (opcional)</label>
             <p className="text-xs text-coffee-medium mb-1.5">Banner que aparece en la tarjeta de wallet. Tamaño recomendado: 1125×369px</p>
             <input
-              type="url"
+              type="text"
               value={form.stripImageUrl}
               onChange={(e) => setForm({ ...form, stripImageUrl: e.target.value })}
               className="input-field"
-              placeholder="https://..."
+              placeholder="/logos/mi-strip.png o https://..."
             />
           </div>
         </div>
