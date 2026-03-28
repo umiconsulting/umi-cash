@@ -10,12 +10,8 @@ const STRIP_W = 1125; // @3x width
 const STRIP_H = 369;  // @3x height
 
 function hexToBg(hex?: string): { r: number; g: number; b: number; alpha: number } {
-  if (!hex) return { r: 255, g: 182, b: 193, alpha: 1 }; // pink default
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  // Lighten the color for the strip background
-  return { r: Math.min(255, r + 40), g: Math.min(255, g + 40), b: Math.min(255, b + 40), alpha: 1 };
+  // Transparent background — inherits the pass's primary color
+  return { r: 0, g: 0, b: 0, alpha: 0 };
 }
 
 /**
