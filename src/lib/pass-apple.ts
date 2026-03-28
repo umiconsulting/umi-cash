@@ -248,6 +248,11 @@ export async function generateApplePass(data: PassData): Promise<{
     label: 'Términos y condiciones',
     value: `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`,
   });
+  pass.backFields.push({
+    key: 'developer',
+    label: '',
+    value: 'Developed by Umi Consulting',
+  });
   const buffer = await pass.getAsBuffer();
   return { buffer, serial, authToken };
 }
