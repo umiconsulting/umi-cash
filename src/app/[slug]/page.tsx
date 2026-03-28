@@ -66,8 +66,7 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
           </p>
           <Link
             href={`/${params.slug}/register`}
-            className="inline-block font-semibold px-7 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity active:scale-95 transform"
-            style={{ backgroundColor: accent, color: 'white' }}
+            className="inline-block bg-white text-coffee-dark font-semibold px-7 py-3 rounded-xl text-sm hover:bg-coffee-pale transition-colors active:scale-95 transform"
           >
             Crear mi tarjeta gratis →
           </Link>
