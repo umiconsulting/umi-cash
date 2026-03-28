@@ -25,22 +25,43 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   const passTypeId = process.env.APPLE_PASS_TYPE_ID;
   const apnKeyRaw = process.env.APPLE_APN_KEY;
 
-  log(`APPLE_APN_KEY_ID: ${keyId ? 'set' : 'MISSING'}`);
-  log(`APPLE_TEAM_ID: ${teamId ? 'set' : 'MISSING'}`);
+  log(`APPLE_APN_KEY_ID: ${keyId ? 'set (' + keyId + ')' : 'MISSING'}`);
+  log(`APPLE_TEAM_ID: ${teamId ? 'set (' + teamId + ')' : 'MISSING'}`);
   log(`APPLE_PASS_TYPE_ID: ${passTypeId ? 'set (' + passTypeId + ')' : 'MISSING'}`);
-  log(`APPLE_APN_KEY: ${apnKeyRaw ? 'set (' + apnKeyRaw.length + ' chars)' : 'MISSING'}`);
+  log(`APPLE_APN_KEY env: ${apnKeyRaw ? 'set (' + apnKeyRaw.length + ' chars)' : 'MISSING'}`);
 
-  if (!keyId || !teamId || !passTypeId || !apnKeyRaw) {
-    return NextResponse.json({ logs, error: 'Missing env vars' });
+  // Also try file-based key
+  let fileKey: Buffer | null = null;
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    fileKey = fs.readFileSync(path.join(process.cwd(), 'passes', 'apple', 'apn_key.p8'));
+    log(`File key: found (${fileKey!.length} bytes)`);
+    const fileBase64 = fileKey!.toString('base64');
+    log(`File key base64: ${fileBase64.length} chars`);
+    if (apnKeyRaw) {
+      log(`Keys match: ${fileBase64 === apnKeyRaw}`);
+      if (fileBase64 !== apnKeyRaw) {
+        log(`Env first 20: ${apnKeyRaw.slice(0, 20)}`);
+        log(`File first 20: ${fileBase64.slice(0, 20)}`);
+      }
+    }
+  } catch (err: any) {
+    log(`File key: not found (${err.message})`);
+  }
+
+  // Use file key if available, else env var
+  const keySource = fileKey || (apnKeyRaw ? Buffer.from(apnKeyRaw, 'base64') : null);
+
+  if (!keyId || !teamId || !passTypeId || !keySource) {
+    return NextResponse.json({ logs, error: 'Missing env vars or key' });
   }
 
   // Create JWT
   let jwt: string;
   try {
-    const key = Buffer.from(apnKeyRaw, 'base64');
-    log(`Key decoded: ${key.length} bytes`);
-    log(`Key starts with: ${key.toString('utf8').slice(0, 30)}`);
-    const privateKey = createPrivateKey({ key, format: 'pem' });
+    log(`Using key: ${keySource.length} bytes, starts with: ${keySource.toString('utf8').slice(0, 30)}`);
+    const privateKey = createPrivateKey({ key: keySource, format: 'pem' });
     jwt = await new SignJWT({})
       .setProtectedHeader({ alg: 'ES256', kid: keyId })
       .setIssuer(teamId)
