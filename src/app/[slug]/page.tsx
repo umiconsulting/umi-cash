@@ -129,8 +129,8 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                     <p className="text-white text-lg font-semibold mt-0.5">{visitsRequired - exampleVisits} visitas</p>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Nº de recompensas</p>
-                    <p className="text-white text-lg font-semibold mt-0.5">0 premios</p>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Tipo de recompensa</p>
+                    <p className="text-white text-lg font-semibold mt-0.5">{rewardName}</p>
                   </div>
                 </>) : (<>
                   <div className="min-w-0" style={{ flex: '0 0 40%' }}>

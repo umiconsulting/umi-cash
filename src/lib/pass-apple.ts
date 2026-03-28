@@ -220,9 +220,9 @@ export async function generateApplePass(data: PassData): Promise<{
     });
     pass.secondaryFields.push({
       key: 'rewards',
-      label: 'Nº DE RECOMPENSAS',
-      value: `${data.pendingRewards} premio${data.pendingRewards !== 1 ? 's' : ''}`,
-      changeMessage: 'Recompensas disponibles: %@',
+      label: 'TIPO DE RECOMPENSA',
+      value: data.rewardName,
+      changeMessage: 'Recompensa: %@',
     });
   } else {
     // Default style (Ribera): member name + stamp dots
