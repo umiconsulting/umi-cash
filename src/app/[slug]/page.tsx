@@ -44,23 +44,30 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
   const filled = '●'.repeat(exampleVisits);
   const empty = '○'.repeat(visitsRequired - exampleVisits);
 
+  const primary = tenant.primaryColor;
+  const accent = tenant.secondaryColor || primary;
+
   return (
-    <main className="min-h-screen bg-coffee-cream">
+    <main
+      className="min-h-screen bg-coffee-cream"
+      style={{ '--tenant-primary': primary, '--tenant-accent': accent } as React.CSSProperties}
+    >
       {/* Hero */}
-      <div className="loyalty-card text-white px-6 pt-14 pb-12">
+      <div className="text-white px-6 pt-14 pb-12" style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}ee 100%)` }}>
         <div className="max-w-sm mx-auto relative z-10">
-          <p className="text-coffee-pale/50 text-xs font-medium tracking-[0.25em] uppercase mb-4">
+          <p className="text-white/50 text-xs font-medium tracking-[0.25em] uppercase mb-4">
             {tenant.name}{tenant.city ? ` · ${tenant.city}` : ''}
           </p>
           <h1 className="font-display text-3xl font-bold leading-tight mb-3">
             Tu cafetería favorita,<br />siempre en tu bolsillo.
           </h1>
-          <p className="text-coffee-light text-sm leading-relaxed mb-8">
+          <p className="text-white/70 text-sm leading-relaxed mb-8">
             Acumula visitas, gana recompensas de temporada y lleva tu saldo directo en el teléfono. Sin apps extra, sin contraseñas.
           </p>
           <Link
             href={`/${params.slug}/register`}
-            className="inline-block bg-white text-coffee-dark font-semibold px-7 py-3 rounded-xl text-sm hover:bg-coffee-pale transition-colors active:scale-95 transform"
+            className="inline-block font-semibold px-7 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity active:scale-95 transform"
+            style={{ backgroundColor: accent, color: 'white' }}
           >
             Crear mi tarjeta gratis →
           </Link>
@@ -80,8 +87,8 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
 
         <div className="flex justify-center">
           <div className="w-full max-w-[320px]">
-            <div className="rounded-[18px] overflow-hidden shadow-2xl relative" style={{ backgroundColor: tenant.primaryColor }}>
-              {/* Header: logo + saldo (saldo only for default style) */}
+            <div className="rounded-[18px] overflow-hidden shadow-2xl relative" style={{ backgroundColor: primary }}>
+              {/* Header: logo + saldo */}
               <div className="px-4 pt-4 pb-2 flex items-start justify-between">
                 {tenant.logoUrl ? (
                   <img src={tenant.logoUrl} alt={tenant.name} className="h-10 w-auto object-contain" />
@@ -89,13 +96,13 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                   <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
                 )}
                 <div className="text-right flex-shrink-0 ml-3">
-                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgb(250, 235, 220)' }}>Saldo</p>
+                  <p className="text-[10px] uppercase tracking-widest font-medium text-white/50">Saldo</p>
                   <p className="text-white text-xl font-bold leading-tight">$150.00</p>
                 </div>
               </div>
 
-              {/* Strip image or solid color */}
-              {tenant.stripImageUrl ? (
+              {/* Strip image or spacer */}
+              {tenant.stripImageUrl && tenant.passStyle !== 'stamps' ? (
                 <img src={tenant.stripImageUrl} alt="" className="w-full h-auto" />
               ) : (
                 <div className="h-4" />
@@ -105,26 +112,26 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
               <div className="px-4 pt-1 pb-3 flex gap-3">
                 {tenant.passStyle === 'stamps' ? (<>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Sellos faltantes</p>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Sellos faltantes</p>
                     <p className="text-white text-lg font-semibold mt-0.5">{visitsRequired - exampleVisits} sellos</p>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Nº de recompensas</p>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Nº de recompensas</p>
                     <p className="text-white text-lg font-semibold mt-0.5">0 premios</p>
                   </div>
                 </>) : (<>
                   <div className="min-w-0" style={{ flex: '0 0 40%' }}>
-                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>Miembro</p>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Miembro</p>
                     <p className="text-white text-[13px] font-semibold mt-0.5 truncate">María García</p>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgb(250, 235, 220)' }}>{rewardName.toUpperCase()}</p>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">{rewardName.toUpperCase()}</p>
                     <p className="text-white text-[13px] font-semibold mt-0.5 whitespace-nowrap">{filled}{empty} ({exampleVisits}/{visitsRequired})</p>
                   </div>
                 </>)}
               </div>
 
-              {/* Spacer matching wallet gap */}
+              {/* Spacer */}
               <div className="h-10" />
 
               {/* QR code + card number */}
@@ -174,7 +181,10 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
             { n: '4', title: 'Gana recompensas', desc: `A las ${visitsRequired} visitas: ${rewardName}.` },
           ].map(({ n, title, desc }) => (
             <div key={n} className="flex gap-4 items-start">
-              <div className="w-8 h-8 rounded-full bg-coffee-brand text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+              <div
+                className="w-8 h-8 rounded-full text-white flex items-center justify-center text-sm font-bold flex-shrink-0"
+                style={{ backgroundColor: accent }}
+              >
                 {n}
               </div>
               <div className="pt-0.5">
@@ -190,10 +200,10 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
       <section className="px-6 pb-10 max-w-sm mx-auto">
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: <svg className="w-5 h-5 text-coffee-medium" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>, title: 'Sin apps extra', desc: 'Funciona desde Apple Wallet o Google Wallet' },
-            { icon: <svg className="w-5 h-5 text-coffee-medium" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 102.13-9.36L1 10" /></svg>, title: 'Se actualiza solo', desc: 'Tu tarjeta refleja cada visita' },
-            { icon: <svg className="w-5 h-5 text-coffee-medium" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></svg>, title: 'Saldo que no vence', desc: 'Tu dinero, siempre disponible' },
-            { icon: <svg className="w-5 h-5 text-coffee-medium" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>, title: 'Recompensas de temporada', desc: 'Sorpresas cada 10 visitas' },
+            { icon: <svg className="w-5 h-5" style={{ color: primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>, title: 'Sin apps extra', desc: 'Funciona desde Apple Wallet o Google Wallet' },
+            { icon: <svg className="w-5 h-5" style={{ color: primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 102.13-9.36L1 10" /></svg>, title: 'Se actualiza solo', desc: 'Tu tarjeta refleja cada visita' },
+            { icon: <svg className="w-5 h-5" style={{ color: primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></svg>, title: 'Saldo que no vence', desc: 'Tu dinero, siempre disponible' },
+            { icon: <svg className="w-5 h-5" style={{ color: primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>, title: 'Recompensas de temporada', desc: 'Sorpresas cada 10 visitas' },
           ].map(({ icon, title, desc }) => (
             <div key={title} className="card-surface">
               <span className="block mb-2">{icon}</span>
@@ -206,7 +216,11 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
 
       {/* CTA */}
       <section className="px-6 pb-12 max-w-sm mx-auto text-center">
-        <Link href={`/${params.slug}/register`} className="btn-primary block w-full">
+        <Link
+          href={`/${params.slug}/register`}
+          className="block w-full font-semibold px-7 py-3 rounded-xl text-sm text-white hover:opacity-90 transition-opacity active:scale-95 transform text-center"
+          style={{ backgroundColor: primary }}
+        >
           Crear mi tarjeta gratis
         </Link>
         <p className="text-xs text-coffee-light mt-4">
