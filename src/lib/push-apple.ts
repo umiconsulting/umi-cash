@@ -1,9 +1,8 @@
 /**
  * Apple Push Notifications for Wallet pass updates.
- * Uses native HTTP/2 with .p8 token-based auth (no external deps).
+ * Uses fetch (HTTP/2 via undici on Vercel) with .p8 token-based auth.
  */
 
-import http2 from 'http2';
 import { SignJWT } from 'jose';
 import { createPrivateKey } from 'crypto';
 import { prisma } from './prisma';
@@ -49,38 +48,28 @@ async function getApnToken(): Promise<string | null> {
   return jwt;
 }
 
-function sendPush(token: string, pushToken: string, topic: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const client = http2.connect(APN_HOST);
-    client.on('error', () => resolve(false));
-
-    const req = client.request({
-      ':method': 'POST',
-      ':path': `/3/device/${pushToken}`,
-      authorization: `bearer ${token}`,
-      'apns-topic': topic,
-      'apns-push-type': 'background',
-      'apns-priority': '5',
+async function sendPush(token: string, pushToken: string, topic: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${APN_HOST}/3/device/${pushToken}`, {
+      method: 'POST',
+      headers: {
+        authorization: `bearer ${token}`,
+        'apns-topic': topic,
+        'apns-push-type': 'background',
+        'apns-priority': '5',
+      },
+      body: '{}',
     });
 
-    req.end('{}');
-
-    req.on('response', (headers) => {
-      const status = headers[':status'];
-      if (status !== 200) {
-        console.warn(`[APN] Push failed for ${pushToken.slice(0, 8)}...: status ${status}`);
-      }
-      resolve(status === 200);
-    });
-
-    req.on('error', () => resolve(false));
-    req.setTimeout(10000, () => {
-      req.close();
-      resolve(false);
-    });
-
-    req.on('close', () => client.close());
-  });
+    if (res.status !== 200) {
+      const body = await res.text().catch(() => '');
+      console.warn(`[APN] Push failed for ${pushToken.slice(0, 8)}...: status ${res.status} ${body}`);
+    }
+    return res.status === 200;
+  } catch (err) {
+    console.warn(`[APN] Push error for ${pushToken.slice(0, 8)}...:`, err);
+    return false;
+  }
 }
 
 /**
@@ -97,10 +86,14 @@ export async function sendApplePushUpdate(cardId: string): Promise<void> {
   if (registrations.length === 0) { console.log(`[APN] No registered devices for card ${cardId}`); return; }
 
   console.log(`[APN] Sending push to ${registrations.length} device(s) for card ${cardId}`);
-  for (const reg of registrations) {
-    const ok = await sendPush(token, reg.pushToken, passTypeId).catch(() => false);
-    console.log(`[APN] Push to ${reg.pushToken.slice(0, 8)}...: ${ok ? 'success' : 'failed'}`);
-  }
+  const results = await Promise.allSettled(
+    registrations.map(async (reg) => {
+      const ok = await sendPush(token, reg.pushToken, passTypeId);
+      console.log(`[APN] Push to ${reg.pushToken.slice(0, 8)}...: ${ok ? 'success' : 'failed'}`);
+      return ok;
+    })
+  );
+  console.log(`[APN] Push complete: ${results.filter((r) => r.status === 'fulfilled' && r.value).length}/${results.length} succeeded`);
 }
 
 /**
