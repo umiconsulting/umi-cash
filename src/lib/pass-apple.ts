@@ -135,10 +135,17 @@ export async function generateApplePass(data: PassData): Promise<{
     return null;
   }
 
-  // Add tenant logo if available
+  // Add tenant logo if available — resize to crisp @2x dimensions
   if (data.logoUrl) {
     const logoBuf = await fetchImageBuffer(data.logoUrl);
-    if (logoBuf) pass.addBuffer('logo@2x.png', logoBuf);
+    if (logoBuf) {
+      const { default: sharp } = await import('sharp');
+      const resized = await sharp(logoBuf)
+        .resize({ height: 50, withoutEnlargement: true })
+        .png()
+        .toBuffer();
+      pass.addBuffer('logo@2x.png', resized);
+    }
   }
 
   // Add strip image: dynamic stamp card for "stamps" style, static image otherwise
