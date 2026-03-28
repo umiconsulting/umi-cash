@@ -198,8 +198,8 @@ async function main() {
     name: 'Kalala Café',
     city: 'Culiacán, Sinaloa',
     cardPrefix: 'KLC',
-    primaryColor: '#2D5A3D',
-    secondaryColor: '#E8843A',
+    primaryColor: '#81875D',
+    secondaryColor: '#F06080',
     logoUrl: '/logos/kalala-logo.png',
     passStyle: 'stamps',
     locations: [
