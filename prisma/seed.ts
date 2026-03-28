@@ -176,7 +176,7 @@ async function main() {
     secondaryColor: '#8C5E52',
     logoUrl: '/logos/ribera-white.png',
     stripImageUrl: '/logos/ribera-strip.png',
-    passStyle: 'default',
+    passStyle: 'stamps',
     locations: [
       { name: 'Sucursal Principal', address: 'Culiacán, Sinaloa' },
     ],

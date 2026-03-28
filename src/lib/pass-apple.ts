@@ -69,6 +69,8 @@ export interface PassData {
   logoUrl?: string | null; // URL to tenant logo image
   stripImageUrl?: string | null; // URL to custom strip image
   passStyle?: string; // "default" or "stamps"
+  stampFilledUrl?: string | null; // Custom filled stamp image URL
+  stampEmptyUrl?: string | null; // Custom empty stamp image URL
   promoMessage?: string | null; // Current promotion text — triggers notification on change
 }
 
@@ -174,11 +176,16 @@ export async function generateApplePass(data: PassData): Promise<{
   // Add strip image: dynamic stamp card for "stamps" style, static image otherwise
   if (data.passStyle === 'stamps') {
     try {
+      // Use tenant-specific stamp images: /logos/{slug}-stamp-filled.png
+      const slug = data.tenantSlug || 'app';
+      const filledUrl = data.stampFilledUrl || `/logos/${slug}-stamp-filled.png`;
+      const emptyUrl = data.stampEmptyUrl || `/logos/${slug}-stamp-empty.png`;
       const stripBuf = await generateStampStrip(
         data.visitsThisCycle,
         data.visitsRequired,
-        '/logos/kalala-stamp-filled.png',
-        '/logos/kalala-stamp-empty.png',
+        filledUrl,
+        emptyUrl,
+        data.primaryColor,
       );
       pass.addBuffer('strip@2x.png', stripBuf);
     } catch (err) {

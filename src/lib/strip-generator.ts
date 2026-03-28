@@ -6,7 +6,15 @@ import sharp from 'sharp';
 
 const STRIP_W = 1125; // @3x width
 const STRIP_H = 369;  // @3x height
-const PINK_BG = { r: 255, g: 182, b: 193, alpha: 1 };
+
+function hexToBg(hex?: string): { r: number; g: number; b: number; alpha: number } {
+  if (!hex) return { r: 255, g: 182, b: 193, alpha: 1 }; // pink default
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Lighten the color for the strip background
+  return { r: Math.min(255, r + 40), g: Math.min(255, g + 40), b: Math.min(255, b + 40), alpha: 1 };
+}
 
 /**
  * Generate a dynamic stamp-card strip image.
@@ -17,6 +25,7 @@ export async function generateStampStrip(
   visitsRequired: number,
   filledStampUrl: string,
   emptyStampUrl: string,
+  primaryColor?: string,
 ): Promise<Buffer> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
 
@@ -71,7 +80,7 @@ export async function generateStampStrip(
       width: STRIP_W,
       height: STRIP_H,
       channels: 4,
-      background: PINK_BG,
+      background: hexToBg(primaryColor),
     },
   })
     .composite(composites)
