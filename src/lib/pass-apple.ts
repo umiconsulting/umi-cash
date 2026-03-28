@@ -111,7 +111,7 @@ export async function generateApplePass(data: PassData): Promise<{
       teamIdentifier: process.env.APPLE_TEAM_ID || '',
       organizationName: tenantName,
       description: `Tarjeta de lealtad ${tenantName}`,
-      logoText: tenantName,
+      // logoText omitted — logo image is sufficient, text would duplicate the name
       backgroundColor: bgColor,
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
