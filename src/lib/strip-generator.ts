@@ -19,24 +19,32 @@ function hexToBg(hex?: string): { r: number; g: number; b: number; alpha: number
 }
 
 /**
- * Load a stamp image from filesystem (public/) or fetch via HTTP.
+ * Load a stamp image — tries filesystem first, then HTTP.
  */
 async function loadStampImage(url: string): Promise<Buffer> {
-  // Try filesystem first for relative paths (e.g., /logos/ribera-stamp-filled.png)
+  // Try filesystem first (works locally, may not work on Vercel)
   if (url.startsWith('/')) {
     const filePath = path.join(process.cwd(), 'public', url);
     try {
-      return fs.readFileSync(filePath);
+      const buf = fs.readFileSync(filePath);
+      console.log(`[StampStrip] Loaded ${url} from filesystem (${buf.length} bytes)`);
+      return buf;
     } catch {
-      // Fall back to HTTP fetch
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-      const res = await fetch(`${appUrl}${url}`);
-      return Buffer.from(await res.arrayBuffer());
+      // Not available on filesystem (Vercel), fall through to HTTP
     }
   }
-  // Absolute URL — fetch via HTTP
-  const res = await fetch(url);
-  return Buffer.from(await res.arrayBuffer());
+
+  // HTTP fetch — resolves relative URLs against NEXT_PUBLIC_APP_URL
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const fullUrl = url.startsWith('/') ? `${appUrl}${url}` : url;
+  console.log(`[StampStrip] Fetching ${fullUrl} via HTTP`);
+  const res = await fetch(fullUrl);
+  if (!res.ok) {
+    throw new Error(`[StampStrip] Failed to fetch ${fullUrl}: ${res.status}`);
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  console.log(`[StampStrip] Fetched ${fullUrl} (${buf.length} bytes)`);
+  return buf;
 }
 
 /**
@@ -50,6 +58,8 @@ export async function generateStampStrip(
   emptyStampUrl: string,
   primaryColor?: string,
 ): Promise<Buffer> {
+  console.log(`[StampStrip] Generating strip: ${visitsThisCycle}/${visitsRequired} visits, color=${primaryColor}`);
+
   const [filledBuf, emptyBuf] = await Promise.all([
     loadStampImage(filledStampUrl),
     loadStampImage(emptyStampUrl),
@@ -89,6 +99,8 @@ export async function generateStampStrip(
       top: y,
     });
   }
+
+  console.log(`[StampStrip] Compositing ${composites.length} stamps (${stampSize}px each, ${cols}x${rows})`);
 
   // Create background and composite stamps
   return sharp({
