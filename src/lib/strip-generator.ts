@@ -3,6 +3,8 @@
  * Generates stamp-card style strips showing visit progress.
  */
 import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
 
 const STRIP_W = 1125; // @3x width
 const STRIP_H = 369;  // @3x height
@@ -17,6 +19,27 @@ function hexToBg(hex?: string): { r: number; g: number; b: number; alpha: number
 }
 
 /**
+ * Load a stamp image from filesystem (public/) or fetch via HTTP.
+ */
+async function loadStampImage(url: string): Promise<Buffer> {
+  // Try filesystem first for relative paths (e.g., /logos/ribera-stamp-filled.png)
+  if (url.startsWith('/')) {
+    const filePath = path.join(process.cwd(), 'public', url);
+    try {
+      return fs.readFileSync(filePath);
+    } catch {
+      // Fall back to HTTP fetch
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+      const res = await fetch(`${appUrl}${url}`);
+      return Buffer.from(await res.arrayBuffer());
+    }
+  }
+  // Absolute URL — fetch via HTTP
+  const res = await fetch(url);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/**
  * Generate a dynamic stamp-card strip image.
  * Shows filled stamps (with mascot) for completed visits, empty circles for remaining.
  */
@@ -27,17 +50,10 @@ export async function generateStampStrip(
   emptyStampUrl: string,
   primaryColor?: string,
 ): Promise<Buffer> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-
-  // Fetch stamp images
-  const resolveUrl = (url: string) => url.startsWith('/') ? `${appUrl}${url}` : url;
-  const [filledRes, emptyRes] = await Promise.all([
-    fetch(resolveUrl(filledStampUrl)),
-    fetch(resolveUrl(emptyStampUrl)),
+  const [filledBuf, emptyBuf] = await Promise.all([
+    loadStampImage(filledStampUrl),
+    loadStampImage(emptyStampUrl),
   ]);
-
-  const filledBuf = Buffer.from(await filledRes.arrayBuffer());
-  const emptyBuf = Buffer.from(await emptyRes.arrayBuffer());
 
   // Layout: arrange stamps in rows
   // For 10 stamps: 2 rows of 5
@@ -74,7 +90,7 @@ export async function generateStampStrip(
     });
   }
 
-  // Create pink background and composite stamps
+  // Create background and composite stamps
   return sharp({
     create: {
       width: STRIP_W,
