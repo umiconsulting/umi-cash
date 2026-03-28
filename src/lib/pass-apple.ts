@@ -176,8 +176,8 @@ export async function generateApplePass(data: PassData): Promise<{
 
   const remaining = data.visitsRequired - data.visitsThisCycle;
 
-  // Balance header for all styles
-  pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight' });
+  // Balance header for all styles — changeMessage triggers lock screen notification
+  pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight', changeMessage: 'Tu saldo cambió a %@' });
 
   if (data.passStyle === 'stamps') {
     // Stamps style (Kalala): remaining stamps + pending rewards
@@ -185,18 +185,20 @@ export async function generateApplePass(data: PassData): Promise<{
       key: 'remaining',
       label: 'SELLOS FALTANTES',
       value: `${remaining} sello${remaining !== 1 ? 's' : ''}`,
+      changeMessage: 'Sellos faltantes: %@',
     });
     pass.secondaryFields.push({
       key: 'rewards',
       label: 'Nº DE RECOMPENSAS',
       value: `${data.pendingRewards} premio${data.pendingRewards !== 1 ? 's' : ''}`,
+      changeMessage: 'Recompensas disponibles: %@',
     });
   } else {
     // Default style (Ribera): member name + stamp dots
     const filled = '●'.repeat(data.visitsThisCycle);
     const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
     pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
-    pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})` });
+    pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})`, changeMessage: 'Progreso actualizado: %@' });
   }
 
   // Back fields
