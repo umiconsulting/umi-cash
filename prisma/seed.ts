@@ -182,8 +182,8 @@ async function main() {
     ],
     rewardConfig: {
       visitsRequired: 10,
-      rewardName: 'Cookie de temporada',
-      rewardDescription: 'Una deliciosa cookie horneada en casa. ¡Pregunta al barista cuál es la del día!',
+      rewardName: 'Bebida gratis',
+      rewardDescription: 'Elige cualquier bebida del menú. ¡Te lo has ganado!',
     },
     admin: {
       email: process.env.EGR_ADMIN_EMAIL || 'admin@elgranribera.mx',
