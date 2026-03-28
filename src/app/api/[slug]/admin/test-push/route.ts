@@ -20,8 +20,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   const log = (msg: string) => { logs.push(msg); console.log('[test-push]', msg); };
 
   // Check env vars
-  const keyId = process.env.APPLE_APN_KEY_ID;
-  const teamId = process.env.APPLE_TEAM_ID;
+  const keyId = process.env.APPLE_APN_KEY_ID?.trim();
+  const teamId = process.env.APPLE_TEAM_ID?.trim();
   const passTypeId = process.env.APPLE_PASS_TYPE_ID;
   const apnKeyRaw = process.env.APPLE_APN_KEY;
 

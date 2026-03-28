@@ -29,8 +29,8 @@ function getApnKey(): Buffer | null {
 }
 
 async function getApnToken(): Promise<string | null> {
-  const keyId = process.env.APPLE_APN_KEY_ID;
-  const teamId = process.env.APPLE_TEAM_ID;
+  const keyId = process.env.APPLE_APN_KEY_ID?.trim();
+  const teamId = process.env.APPLE_TEAM_ID?.trim();
   if (!keyId || !teamId) {
     console.log('[APN] Missing env vars — keyId:', !!keyId, 'teamId:', !!teamId);
     return null;

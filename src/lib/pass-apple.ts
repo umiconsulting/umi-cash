@@ -111,8 +111,8 @@ export async function generateApplePass(data: PassData): Promise<{
     {
       serialNumber: serial,
       authenticationToken: authToken,
-      passTypeIdentifier: process.env.APPLE_PASS_TYPE_ID || 'pass.co.umicash.loyalty',
-      teamIdentifier: process.env.APPLE_TEAM_ID || '',
+      passTypeIdentifier: (process.env.APPLE_PASS_TYPE_ID || 'pass.co.umicash.loyalty').trim(),
+      teamIdentifier: (process.env.APPLE_TEAM_ID || '').trim(),
       organizationName: tenantName,
       description: `Tarjeta de lealtad ${tenantName}`,
       // logoText omitted — logo image is sufficient, text would duplicate the name
