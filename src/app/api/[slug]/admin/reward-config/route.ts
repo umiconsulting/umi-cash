@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth';
@@ -77,8 +78,10 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
     });
 
     // Push update to all wallet passes so reward name refreshes
-    sendApplePushUpdateForTenant(tenant.id).catch((err) =>
-      console.error('[reward-config] Push update failed:', err)
+    waitUntil(
+      sendApplePushUpdateForTenant(tenant.id).catch((err) =>
+        console.error('[reward-config] Push update failed:', err)
+      )
     );
 
     return NextResponse.json({ newConfig });

@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
@@ -121,24 +122,26 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     // Update wallet passes
     const rewardConfig = await getActiveRewardConfig(tenant.id);
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
-    Promise.all([
-      sendApplePushUpdate(user.card.id),
-      updateGoogleWalletObject({
-        cardId: user.card.id,
-        cardNumber: user.card.cardNumber,
-        customerName: updatedCard.user.name || DEFAULT_CUSTOMER_NAME,
-        balanceCentavos: updatedCard.balanceCentavos,
-        visitsThisCycle: updatedCard.visitsThisCycle,
-        visitsRequired,
-        pendingRewards: updatedCard.pendingRewards,
-        rewardName,
-        totalVisits: updatedCard.totalVisits,
-        memberSince: user.card.createdAt.toISOString(),
-        tenantName: tenant.name,
-        tenantSlug: params.slug,
-        primaryColor: tenant.primaryColor,
-      }),
-    ]).catch((err) => console.warn('[GiftCard:walletUpdate]', err));
+    waitUntil(
+      Promise.all([
+        sendApplePushUpdate(user.card.id),
+        updateGoogleWalletObject({
+          cardId: user.card.id,
+          cardNumber: user.card.cardNumber,
+          customerName: updatedCard.user.name || DEFAULT_CUSTOMER_NAME,
+          balanceCentavos: updatedCard.balanceCentavos,
+          visitsThisCycle: updatedCard.visitsThisCycle,
+          visitsRequired,
+          pendingRewards: updatedCard.pendingRewards,
+          rewardName,
+          totalVisits: updatedCard.totalVisits,
+          memberSince: user.card.createdAt.toISOString(),
+          tenantName: tenant.name,
+          tenantSlug: params.slug,
+          primaryColor: tenant.primaryColor,
+        }),
+      ]).catch((err) => console.warn('[GiftCard:walletUpdate]', err))
+    );
 
     return NextResponse.json({
       success: true,

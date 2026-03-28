@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, generateRandomToken } from '@/lib/auth';
@@ -76,24 +77,26 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const rewardConfig = await getActiveRewardConfig(tenant.id);
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
-    Promise.all([
-      sendApplePushUpdate(card.id),
-      updateGoogleWalletObject({
-        cardId: card.id,
-        cardNumber: card.cardNumber,
-        customerName: updatedCard.user.name || DEFAULT_CUSTOMER_NAME,
-        balanceCentavos: updatedCard.balanceCentavos,
-        visitsThisCycle: updatedCard.visitsThisCycle,
-        visitsRequired,
-        pendingRewards: updatedCard.pendingRewards,
-        rewardName,
-        totalVisits: updatedCard.totalVisits,
-        memberSince: card.createdAt.toISOString(),
-        tenantName: tenant.name,
-        tenantSlug: params.slug,
-        primaryColor: tenant.primaryColor,
-      }),
-    ]).catch((err) => console.warn('[Wallet Update]', err));
+    waitUntil(
+      Promise.all([
+        sendApplePushUpdate(card.id),
+        updateGoogleWalletObject({
+          cardId: card.id,
+          cardNumber: card.cardNumber,
+          customerName: updatedCard.user.name || DEFAULT_CUSTOMER_NAME,
+          balanceCentavos: updatedCard.balanceCentavos,
+          visitsThisCycle: updatedCard.visitsThisCycle,
+          visitsRequired,
+          pendingRewards: updatedCard.pendingRewards,
+          rewardName,
+          totalVisits: updatedCard.totalVisits,
+          memberSince: card.createdAt.toISOString(),
+          tenantName: tenant.name,
+          tenantSlug: params.slug,
+          primaryColor: tenant.primaryColor,
+        }),
+      ]).catch((err) => console.warn('[Wallet Update]', err))
+    );
 
     return NextResponse.json({
       success: true,

@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, verifyQRPayload, generateRandomToken } from '@/lib/auth';
@@ -186,21 +187,23 @@ function triggerWalletUpdates(
   tenantSlug: string,
   primaryColor: string
 ) {
-  Promise.all([
-    sendApplePushUpdate(cardId),
-    updateGoogleWalletObject({
-      cardId, cardNumber,
-      customerName: card.user.name || DEFAULT_CUSTOMER_NAME,
-      balanceCentavos: card.balanceCentavos,
-      visitsThisCycle: card.visitsThisCycle,
-      visitsRequired,
-      pendingRewards: card.pendingRewards,
-      rewardName,
-      totalVisits: card.totalVisits,
-      memberSince: createdAt.toISOString(),
-      tenantName,
-      tenantSlug,
-      primaryColor,
-    }),
-  ]).catch((err) => console.warn('[Wallet Update]', err));
+  waitUntil(
+    Promise.all([
+      sendApplePushUpdate(cardId),
+      updateGoogleWalletObject({
+        cardId, cardNumber,
+        customerName: card.user.name || DEFAULT_CUSTOMER_NAME,
+        balanceCentavos: card.balanceCentavos,
+        visitsThisCycle: card.visitsThisCycle,
+        visitsRequired,
+        pendingRewards: card.pendingRewards,
+        rewardName,
+        totalVisits: card.totalVisits,
+        memberSince: createdAt.toISOString(),
+        tenantName,
+        tenantSlug,
+        primaryColor,
+      }),
+    ]).catch((err) => console.warn('[Wallet Update]', err))
+  );
 }
