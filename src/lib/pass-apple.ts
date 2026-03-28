@@ -145,6 +145,45 @@ export async function generateApplePass(data: PassData): Promise<{
         .png()
         .toBuffer();
       pass.addBuffer('logo@2x.png', resized);
+
+      // Generate icon with primary color background so it's visible in notifications
+      const hex = data.primaryColor || '#B5605A';
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      const iconSize = 87; // @3x icon size (29pt × 3)
+      const icon = await sharp({
+        create: { width: iconSize, height: iconSize, channels: 4, background: { r, g, b, alpha: 1 } },
+      })
+        .composite([{
+          input: await sharp(logoBuf).resize({ width: 60, height: 60, fit: 'inside' }).png().toBuffer(),
+          gravity: 'centre',
+        }])
+        .png()
+        .toBuffer();
+      pass.addBuffer('icon@3x.png', icon);
+
+      const icon2x = await sharp({
+        create: { width: 58, height: 58, channels: 4, background: { r, g, b, alpha: 1 } },
+      })
+        .composite([{
+          input: await sharp(logoBuf).resize({ width: 40, height: 40, fit: 'inside' }).png().toBuffer(),
+          gravity: 'centre',
+        }])
+        .png()
+        .toBuffer();
+      pass.addBuffer('icon@2x.png', icon2x);
+
+      const icon1x = await sharp({
+        create: { width: 29, height: 29, channels: 4, background: { r, g, b, alpha: 1 } },
+      })
+        .composite([{
+          input: await sharp(logoBuf).resize({ width: 20, height: 20, fit: 'inside' }).png().toBuffer(),
+          gravity: 'centre',
+        }])
+        .png()
+        .toBuffer();
+      pass.addBuffer('icon.png', icon1x);
     }
   }
 
