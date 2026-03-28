@@ -173,7 +173,7 @@ async function main() {
     city: 'Culiacán, Sinaloa',
     cardPrefix: 'EGR',
     primaryColor: '#B5605A',
-    secondaryColor: '#8C5E52',
+    secondaryColor: '#F5E6D3',
     logoUrl: '/logos/ribera-white.png',
     stripImageUrl: '/logos/ribera-strip.png',
     passStyle: 'stamps',
