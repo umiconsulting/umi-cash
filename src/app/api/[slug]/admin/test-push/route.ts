@@ -2,16 +2,19 @@ import http2 from 'http2';
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { createPrivateKey } from 'crypto';
-import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getTenant } from '@/lib/tenant';
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
-  const user = await requireAuth(['ADMIN'])(req);
-  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  // Accept UMI_ADMIN_PASSWORD as bearer token for easy CLI testing
+  const authHeader = req.headers.get('authorization');
+  const umiPassword = process.env.UMI_ADMIN_PASSWORD;
+  if (!umiPassword || authHeader !== `Bearer ${umiPassword}`) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
 
   const tenant = await getTenant(params.slug);
-  if (!tenant || user.tenantId !== tenant.id) return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
 
   const logs: string[] = [];
   const log = (msg: string) => { logs.push(msg); console.log('[test-push]', msg); };
