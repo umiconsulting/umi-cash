@@ -125,8 +125,8 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
               <div className="px-4 pt-1 pb-3 flex gap-3">
                 {tenant.passStyle === 'stamps' ? (<>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Sellos faltantes</p>
-                    <p className="text-white text-lg font-semibold mt-0.5">{visitsRequired - exampleVisits} sellos</p>
+                    <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Visitas faltantes</p>
+                    <p className="text-white text-lg font-semibold mt-0.5">{visitsRequired - exampleVisits} visitas</p>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase tracking-widest font-semibold text-white/50">Nº de recompensas</p>

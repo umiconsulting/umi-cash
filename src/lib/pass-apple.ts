@@ -214,9 +214,9 @@ export async function generateApplePass(data: PassData): Promise<{
     // Stamps style (Kalala): remaining stamps + pending rewards
     pass.secondaryFields.push({
       key: 'remaining',
-      label: 'SELLOS FALTANTES',
-      value: `${remaining} sello${remaining !== 1 ? 's' : ''}`,
-      changeMessage: 'Sellos faltantes: %@',
+      label: 'VISITAS FALTANTES',
+      value: `${remaining} visita${remaining !== 1 ? 's' : ''}`,
+      changeMessage: 'Visitas faltantes: %@',
     });
     pass.secondaryFields.push({
       key: 'rewards',
