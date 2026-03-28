@@ -189,6 +189,7 @@ async function handleGetPass(req: NextRequest, slug: string, serial: string) {
       tenantName: tenant.name,
       tenantSlug: slug,
       primaryColor: tenant.primaryColor,
+      secondaryColor: tenant.secondaryColor,
       logoUrl: tenant.logoUrl,
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,

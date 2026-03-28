@@ -10,8 +10,11 @@ const STRIP_W = 1125; // @3x width
 const STRIP_H = 369;  // @3x height
 
 function hexToBg(hex?: string): { r: number; g: number; b: number; alpha: number } {
-  // Transparent background — inherits the pass's primary color
-  return { r: 0, g: 0, b: 0, alpha: 0 };
+  if (!hex) return { r: 0, g: 0, b: 0, alpha: 0 }; // transparent — inherits pass primary color
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b, alpha: 1 };
 }
 
 /**
@@ -52,9 +55,9 @@ export async function generateStampStrip(
   visitsRequired: number,
   filledStampUrl: string,
   emptyStampUrl: string,
-  primaryColor?: string,
+  stripBgColor?: string | null,
 ): Promise<Buffer> {
-  console.log(`[StampStrip] Generating strip: ${visitsThisCycle}/${visitsRequired} visits, color=${primaryColor}`);
+  console.log(`[StampStrip] Generating strip: ${visitsThisCycle}/${visitsRequired} visits, bgColor=${stripBgColor}`);
 
   const [filledBuf, emptyBuf] = await Promise.all([
     loadStampImage(filledStampUrl),
@@ -104,7 +107,7 @@ export async function generateStampStrip(
       width: STRIP_W,
       height: STRIP_H,
       channels: 4,
-      background: hexToBg(primaryColor),
+      background: hexToBg(stripBgColor ?? undefined),
     },
   })
     .composite(composites)

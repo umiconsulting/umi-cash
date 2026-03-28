@@ -66,6 +66,7 @@ export interface PassData {
   tenantName?: string;
   tenantSlug?: string;
   primaryColor?: string; // hex, e.g. "#B5605A"
+  secondaryColor?: string | null; // hex — used as stamp strip background
   logoUrl?: string | null; // URL to tenant logo image
   stripImageUrl?: string | null; // URL to custom strip image
   passStyle?: string; // "default" or "stamps"
@@ -185,7 +186,7 @@ export async function generateApplePass(data: PassData): Promise<{
         data.visitsRequired,
         filledUrl,
         emptyUrl,
-        data.primaryColor,
+        data.secondaryColor,
       );
       pass.addBuffer('strip@2x.png', stripBuf);
     } catch (err) {
