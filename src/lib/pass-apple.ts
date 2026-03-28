@@ -231,15 +231,14 @@ export async function generateApplePass(data: PassData): Promise<{
     pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})`, changeMessage: 'Progreso actualizado: %@' });
   }
 
-  // Promotion field — value change triggers lock screen notification
-  pass.auxiliaryFields.push({
+  // Back fields
+  // Promotion field on back — changeMessage still triggers lock screen notification
+  pass.backFields.push({
     key: 'promo',
-    label: 'PROMOCIÓN',
-    value: data.promoMessage || ' ',
+    label: 'Promoción',
+    value: data.promoMessage || 'Sin promoción activa',
     changeMessage: '%@',
   });
-
-  // Back fields
   pass.backFields.push({ key: 'totalVisits', label: 'Visitas totales', value: String(data.totalVisits) });
   pass.backFields.push({ key: 'cardNumber', label: 'Número de tarjeta', value: data.cardNumber });
   pass.backFields.push({
