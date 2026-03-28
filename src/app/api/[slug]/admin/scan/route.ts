@@ -106,7 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         });
       });
 
-      triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor);
+      await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor);
 
       return NextResponse.json({
         success: true,
@@ -176,7 +176,7 @@ function buildCardSummary(
   return { visitsThisCycle: card.visitsThisCycle, visitsRequired, pendingRewards: card.pendingRewards, balanceMXN: formatMXN(card.balanceCentavos) };
 }
 
-function triggerWalletUpdates(
+async function triggerWalletUpdates(
   cardId: string,
   cardNumber: string,
   card: { visitsThisCycle: number; pendingRewards: number; balanceCentavos: number; totalVisits: number; user: { name: string | null } },
@@ -187,23 +187,22 @@ function triggerWalletUpdates(
   tenantSlug: string,
   primaryColor: string
 ) {
-  waitUntil(
-    Promise.all([
-      sendApplePushUpdate(cardId),
-      updateGoogleWalletObject({
-        cardId, cardNumber,
-        customerName: card.user.name || DEFAULT_CUSTOMER_NAME,
-        balanceCentavos: card.balanceCentavos,
-        visitsThisCycle: card.visitsThisCycle,
-        visitsRequired,
-        pendingRewards: card.pendingRewards,
-        rewardName,
-        totalVisits: card.totalVisits,
-        memberSince: createdAt.toISOString(),
-        tenantName,
-        tenantSlug,
-        primaryColor,
-      }),
-    ]).catch((err) => console.warn('[Wallet Update]', err))
-  );
+  // Await push inline — waitUntil + http2 is unreliable on Vercel
+  await Promise.all([
+    sendApplePushUpdate(cardId),
+    updateGoogleWalletObject({
+      cardId, cardNumber,
+      customerName: card.user.name || DEFAULT_CUSTOMER_NAME,
+      balanceCentavos: card.balanceCentavos,
+      visitsThisCycle: card.visitsThisCycle,
+      visitsRequired,
+      pendingRewards: card.pendingRewards,
+      rewardName,
+      totalVisits: card.totalVisits,
+      memberSince: createdAt.toISOString(),
+      tenantName,
+      tenantSlug,
+      primaryColor,
+    }),
+  ]).catch((err) => console.warn('[Wallet Update]', err));
 }

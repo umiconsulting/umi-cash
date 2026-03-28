@@ -1,8 +1,12 @@
 /**
  * Apple Push Notifications for Wallet pass updates.
- * Uses fetch (HTTP/2 via undici on Vercel) with .p8 token-based auth.
+ * Uses native HTTP/2 with .p8 token-based auth (no external deps).
+ *
+ * Apple's APN endpoint requires HTTP/2 — Node's fetch uses HTTP/1.1,
+ * so we must use the http2 module directly.
  */
 
+import http2 from 'http2';
 import { SignJWT } from 'jose';
 import { createPrivateKey } from 'crypto';
 import { prisma } from './prisma';
@@ -27,14 +31,20 @@ function getApnKey(): Buffer | null {
 async function getApnToken(): Promise<string | null> {
   const keyId = process.env.APPLE_APN_KEY_ID;
   const teamId = process.env.APPLE_TEAM_ID;
-  if (!keyId || !teamId) return null;
+  if (!keyId || !teamId) {
+    console.log('[APN] Missing env vars — keyId:', !!keyId, 'teamId:', !!teamId);
+    return null;
+  }
 
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
     return cachedToken.jwt;
   }
 
   const key = getApnKey();
-  if (!key) return null;
+  if (!key) {
+    console.log('[APN] Could not load APN key — APPLE_APN_KEY:', !!process.env.APPLE_APN_KEY);
+    return null;
+  }
 
   const privateKey = createPrivateKey({ key, format: 'pem' });
 
@@ -48,28 +58,58 @@ async function getApnToken(): Promise<string | null> {
   return jwt;
 }
 
-async function sendPush(token: string, pushToken: string, topic: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${APN_HOST}/3/device/${pushToken}`, {
-      method: 'POST',
-      headers: {
-        authorization: `bearer ${token}`,
-        'apns-topic': topic,
-        'apns-push-type': 'background',
-        'apns-priority': '5',
-      },
-      body: '{}',
+function sendPush(token: string, pushToken: string, topic: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const client = http2.connect(APN_HOST);
+    client.on('error', (err) => {
+      console.warn(`[APN] Connection error: ${err.message}`);
+      resolve(false);
     });
 
-    if (res.status !== 200) {
-      const body = await res.text().catch(() => '');
-      console.warn(`[APN] Push failed for ${pushToken.slice(0, 8)}...: status ${res.status} ${body}`);
-    }
-    return res.status === 200;
-  } catch (err) {
-    console.warn(`[APN] Push error for ${pushToken.slice(0, 8)}...:`, err);
-    return false;
-  }
+    const req = client.request({
+      ':method': 'POST',
+      ':path': `/3/device/${pushToken}`,
+      authorization: `bearer ${token}`,
+      'apns-topic': topic,
+      'apns-push-type': 'background',
+      'apns-priority': '5',
+    });
+
+    req.end('{}');
+
+    let responseData = '';
+    req.on('data', (chunk) => { responseData += chunk; });
+
+    req.on('response', (headers) => {
+      const status = headers[':status'];
+      if (status !== 200) {
+        console.warn(`[APN] Push failed for ${pushToken.slice(0, 8)}...: status ${status}`);
+      }
+    });
+
+    req.on('end', () => {
+      if (responseData) {
+        console.warn(`[APN] Response body: ${responseData}`);
+      }
+      client.close();
+    });
+
+    req.on('error', (err) => {
+      console.warn(`[APN] Request error: ${err.message}`);
+      client.close();
+      resolve(false);
+    });
+
+    // Resolve on close so we wait for the full response
+    client.on('close', () => resolve(true));
+
+    req.setTimeout(10000, () => {
+      console.warn('[APN] Request timed out');
+      req.close();
+      client.close();
+      resolve(false);
+    });
+  });
 }
 
 /**
@@ -86,14 +126,10 @@ export async function sendApplePushUpdate(cardId: string): Promise<void> {
   if (registrations.length === 0) { console.log(`[APN] No registered devices for card ${cardId}`); return; }
 
   console.log(`[APN] Sending push to ${registrations.length} device(s) for card ${cardId}`);
-  const results = await Promise.allSettled(
-    registrations.map(async (reg) => {
-      const ok = await sendPush(token, reg.pushToken, passTypeId);
-      console.log(`[APN] Push to ${reg.pushToken.slice(0, 8)}...: ${ok ? 'success' : 'failed'}`);
-      return ok;
-    })
-  );
-  console.log(`[APN] Push complete: ${results.filter((r) => r.status === 'fulfilled' && r.value).length}/${results.length} succeeded`);
+  for (const reg of registrations) {
+    const ok = await sendPush(token, reg.pushToken, passTypeId);
+    console.log(`[APN] Push to ${reg.pushToken.slice(0, 8)}...: ${ok ? 'success' : 'failed'}`);
+  }
 }
 
 /**

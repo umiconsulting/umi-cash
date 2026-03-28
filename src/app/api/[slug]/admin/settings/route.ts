@@ -71,16 +71,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
     });
 
     // If promo message changed, bump cards and push to all wallets
-    if (data.promoMessage !== undefined && data.promoMessage !== tenant.promoMessage) {
-      await prisma.loyaltyCard.updateMany({
+    const promoChanged = data.promoMessage !== undefined && data.promoMessage !== (tenant.promoMessage ?? '');
+    console.log('[settings] promoChanged:', promoChanged, 'new:', data.promoMessage, 'old:', tenant.promoMessage);
+
+    if (promoChanged) {
+      const bumped = await prisma.loyaltyCard.updateMany({
         where: { tenantId: tenant.id, applePassSerial: { not: null } },
         data: { updatedAt: new Date() },
       });
-      waitUntil(
-        sendApplePushUpdateForTenant(tenant.id).catch((err) =>
-          console.error('[settings] Push update failed:', err)
-        )
-      );
+      console.log('[settings] Bumped', bumped.count, 'cards');
+      // Await push inline — waitUntil + http2 is unreliable on Vercel
+      try {
+        await sendApplePushUpdateForTenant(tenant.id);
+        console.log('[settings] Push complete');
+      } catch (err) {
+        console.error('[settings] Push update failed:', err);
+      }
     }
 
     return NextResponse.json({ ok: true, tenant: { name: updated.name, primaryColor: updated.primaryColor } });

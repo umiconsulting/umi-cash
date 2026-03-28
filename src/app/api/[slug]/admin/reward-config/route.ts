@@ -77,12 +77,12 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
       return config;
     });
 
-    // Push update to all wallet passes so reward name refreshes
-    waitUntil(
-      sendApplePushUpdateForTenant(tenant.id).catch((err) =>
-        console.error('[reward-config] Push update failed:', err)
-      )
-    );
+    // Await push inline — waitUntil + http2 is unreliable on Vercel
+    try {
+      await sendApplePushUpdateForTenant(tenant.id);
+    } catch (err) {
+      console.error('[reward-config] Push update failed:', err);
+    }
 
     return NextResponse.json({ newConfig });
   } catch (err) {
