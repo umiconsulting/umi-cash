@@ -135,55 +135,38 @@ export async function generateApplePass(data: PassData): Promise<{
     return null;
   }
 
+  const { default: sharp } = await import('sharp');
+
+  // Generate notification icons with tenant primary color background
+  const hex = data.primaryColor || '#B5605A';
+  const ir = parseInt(hex.slice(1, 3), 16);
+  const ig = parseInt(hex.slice(3, 5), 16);
+  const ib = parseInt(hex.slice(5, 7), 16);
+  const iconBg = { r: ir, g: ig, b: ib, alpha: 1 };
+
   // Add tenant logo if available — resize to crisp @2x dimensions
-  if (data.logoUrl) {
-    const logoBuf = await fetchImageBuffer(data.logoUrl);
+  const logoBuf = data.logoUrl ? await fetchImageBuffer(data.logoUrl) : null;
+  if (logoBuf) {
+    const resized = await sharp(logoBuf)
+      .resize({ height: 50, withoutEnlargement: true })
+      .png()
+      .toBuffer();
+    pass.addBuffer('logo@2x.png', resized);
+  }
+
+  // Icons: logo on colored background, or solid color fallback
+  const iconSizes = [
+    { name: 'icon.png', size: 29, logoSize: 20 },
+    { name: 'icon@2x.png', size: 58, logoSize: 40 },
+    { name: 'icon@3x.png', size: 87, logoSize: 60 },
+  ];
+  for (const { name, size, logoSize } of iconSizes) {
+    const base = sharp({ create: { width: size, height: size, channels: 4, background: iconBg } });
     if (logoBuf) {
-      const { default: sharp } = await import('sharp');
-      const resized = await sharp(logoBuf)
-        .resize({ height: 50, withoutEnlargement: true })
-        .png()
-        .toBuffer();
-      pass.addBuffer('logo@2x.png', resized);
-
-      // Generate icon with primary color background so it's visible in notifications
-      const hex = data.primaryColor || '#B5605A';
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      const iconSize = 87; // @3x icon size (29pt × 3)
-      const icon = await sharp({
-        create: { width: iconSize, height: iconSize, channels: 4, background: { r, g, b, alpha: 1 } },
-      })
-        .composite([{
-          input: await sharp(logoBuf).resize({ width: 60, height: 60, fit: 'inside' }).png().toBuffer(),
-          gravity: 'centre',
-        }])
-        .png()
-        .toBuffer();
-      pass.addBuffer('icon@3x.png', icon);
-
-      const icon2x = await sharp({
-        create: { width: 58, height: 58, channels: 4, background: { r, g, b, alpha: 1 } },
-      })
-        .composite([{
-          input: await sharp(logoBuf).resize({ width: 40, height: 40, fit: 'inside' }).png().toBuffer(),
-          gravity: 'centre',
-        }])
-        .png()
-        .toBuffer();
-      pass.addBuffer('icon@2x.png', icon2x);
-
-      const icon1x = await sharp({
-        create: { width: 29, height: 29, channels: 4, background: { r, g, b, alpha: 1 } },
-      })
-        .composite([{
-          input: await sharp(logoBuf).resize({ width: 20, height: 20, fit: 'inside' }).png().toBuffer(),
-          gravity: 'centre',
-        }])
-        .png()
-        .toBuffer();
-      pass.addBuffer('icon.png', icon1x);
+      const logoResized = await sharp(logoBuf).resize({ width: logoSize, height: logoSize, fit: 'inside' }).png().toBuffer();
+      pass.addBuffer(name, await base.composite([{ input: logoResized, gravity: 'centre' }]).png().toBuffer());
+    } else {
+      pass.addBuffer(name, await base.png().toBuffer());
     }
   }
 
