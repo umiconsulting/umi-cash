@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { generateApplePass, isAppleWalletConfigured } from '@/lib/pass-apple';
 import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
 import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
+import { getTenant } from '@/lib/tenant';
 
 export async function GET(
   req: NextRequest,
@@ -24,7 +25,13 @@ export async function GET(
     return new NextResponse(null, { status: 304 });
   }
 
-  const rewardConfig = await getActiveRewardConfig(card.tenantId);
+  const tenant = await getTenant(params.slug);
+  if (!tenant) return new NextResponse(null, { status: 404 });
+
+  const [rewardConfig, locations] = await Promise.all([
+    getActiveRewardConfig(card.tenantId),
+    prisma.location.findMany({ where: { tenantId: tenant.id, isActive: true, latitude: { not: null }, longitude: { not: null } } }),
+  ]);
   const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
   try {
@@ -40,12 +47,22 @@ export async function GET(
       totalVisits: card.totalVisits,
       serial: card.applePassSerial ?? undefined,
       authToken: card.applePassAuthToken ?? undefined,
+      tenantName: tenant.name,
+      tenantSlug: params.slug,
+      primaryColor: tenant.primaryColor,
+      secondaryColor: tenant.secondaryColor,
+      logoUrl: tenant.logoUrl,
+      stripImageUrl: tenant.stripImageUrl,
+      passStyle: tenant.passStyle,
+      promoMessage: tenant.promoMessage,
+      locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
     });
 
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/vnd.apple.pkpass',
         'Last-Modified': card.updatedAt.toUTCString(),
+        'Cache-Control': 'no-store',
       },
     });
   } catch (err) {

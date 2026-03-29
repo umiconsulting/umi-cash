@@ -121,14 +121,12 @@ export async function generateApplePass(data: PassData): Promise<{
       foregroundColor: 'rgb(255, 255, 255)',
       labelColor: 'rgb(250, 235, 220)',
       webServiceURL: `${process.env.NEXT_PUBLIC_APP_URL}/api/${tenantSlug}/passes/apple`,
+      sharingProhibited: true,
     } as any
   );
 
   // Set pass type
   pass.type = 'storeCard';
-
-  // Prevent AirDrop sharing of loyalty cards (fraud prevention)
-  (pass as any).props.sharingProhibited = true;
 
   // Helper to resolve relative URLs and fetch image buffers
   async function fetchImageBuffer(url: string): Promise<Buffer | null> {
@@ -258,11 +256,13 @@ export async function generateApplePass(data: PassData): Promise<{
   });
   // Add geo-location triggers — surfaces pass on lock screen when nearby
   if (data.locations && data.locations.length > 0) {
-    (pass as any).props.locations = data.locations.map((loc) => ({
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      ...(loc.relevantText ? { relevantText: loc.relevantText } : {}),
-    }));
+    pass.setLocations(
+      ...data.locations.map((loc) => ({
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        ...(loc.relevantText ? { relevantText: loc.relevantText } : {}),
+      }))
+    );
   }
 
   const buffer = await pass.getAsBuffer();
