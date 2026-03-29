@@ -16,8 +16,8 @@ export default async function TenantLayout({
     :root {
       --color-brand:        ${tenant.primaryColor};
       --color-brand-dark:   ${darken(tenant.primaryColor)};
-      --color-ink:          ${tenant.primaryColor === '#81875D' ? '#2A2A20' : '#1F1410'};
-      --color-ink-light:    #C4A882;
+      --color-ink:          ${veryDark(tenant.primaryColor)};
+      --color-ink-light:    ${muted(tenant.primaryColor)};
       --color-accent:       ${tenant.secondaryColor ?? tenant.primaryColor};
       --color-surface:      ${lightSurface(tenant.primaryColor)};
       --color-surface-dark: ${darkSurface(tenant.primaryColor)};
@@ -44,6 +44,26 @@ export default async function TenantLayout({
 }
 
 // Simple color utilities — good enough for the brand palette we use
+
+// Very dark version of the brand color — used for header, dark text
+function veryDark(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const factor = 0.3;
+  return `#${toHex(Math.round(r * factor))}${toHex(Math.round(g * factor))}${toHex(Math.round(b * factor))}`;
+}
+
+// Muted/desaturated version — used for subtle text, inactive icons
+function muted(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Blend toward gray at 50%, then lighten
+  const gray = 160;
+  return `#${toHex(Math.round(r * 0.4 + gray * 0.6))}${toHex(Math.round(g * 0.4 + gray * 0.6))}${toHex(Math.round(b * 0.4 + gray * 0.6))}`;
+}
+
 function darken(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);

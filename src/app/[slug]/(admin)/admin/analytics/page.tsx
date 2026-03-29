@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTenant } from '@/context/TenantContext';
 
 interface VisitDay {
   date: string;
@@ -129,6 +130,7 @@ function LoadingKpi() {
 
 export default function AnalyticsPage() {
   const { slug } = useParams<{ slug: string }>();
+  const tenant = useTenant();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -156,7 +158,7 @@ export default function AnalyticsPage() {
     return { label: `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`, count: v.count };
   });
 
-  const brandColor = '#B5605A';
+  const brandColor = tenant.primaryColor;
 
   return (
     <div className="p-4 max-w-lg mx-auto">
