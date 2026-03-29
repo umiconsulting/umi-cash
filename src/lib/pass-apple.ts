@@ -155,13 +155,11 @@ export async function generateApplePass(data: PassData): Promise<{
   if (logoBuf) {
     const logo2x = await sharp(logoBuf)
       .resize({ height: 70, withoutEnlargement: true })
-      .sharpen({ sigma: 1 })
       .png()
       .toBuffer();
     pass.addBuffer('logo@2x.png', logo2x);
     const logo3x = await sharp(logoBuf)
       .resize({ height: 105, withoutEnlargement: true })
-      .sharpen({ sigma: 1 })
       .png()
       .toBuffer();
     pass.addBuffer('logo@3x.png', logo3x);
