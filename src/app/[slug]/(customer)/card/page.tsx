@@ -99,7 +99,7 @@ function QRDisplay({ token, slug }: { token: string; slug: string }) {
 
       <div className="relative inline-block mx-auto">
         <svg width="200" height="200" className="absolute inset-0 -rotate-90" style={{ pointerEvents: 'none' }}>
-          <circle cx="100" cy="100" r="44" fill="none" stroke={urgency ? '#fca5a5' : '#EAE0D3'} strokeWidth="3" />
+          <circle cx="100" cy="100" r="44" fill="none" stroke={urgency ? '#fca5a5' : 'var(--color-surface-dark)'} strokeWidth="3" />
           <circle
             cx="100" cy="100" r="44"
             fill="none"

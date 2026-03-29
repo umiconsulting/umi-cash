@@ -108,13 +108,13 @@ function QRDisplay({ token }: { token: string }) {
           <circle
             cx="100" cy="100" r="44"
             fill="none"
-            stroke={urgency ? '#fca5a5' : '#EAE0D3'}
+            stroke={urgency ? '#fca5a5' : 'var(--color-surface-dark)'}
             strokeWidth="3"
           />
           <circle
             cx="100" cy="100" r="44"
             fill="none"
-            stroke={urgency ? '#ef4444' : '#1F1410'}
+            stroke={urgency ? '#ef4444' : 'var(--color-ink)'}
             strokeWidth="3"
             strokeLinecap="round"
             strokeDasharray={circumference}

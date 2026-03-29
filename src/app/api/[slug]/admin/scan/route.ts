@@ -144,6 +144,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         rewardName,
         slug: params.slug,
         appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://cash.umiconsulting.co',
+        brandColor: tenant.primaryColor,
       }).catch(() => {});
     }
 

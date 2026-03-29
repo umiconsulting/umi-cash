@@ -75,6 +75,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       amountMXN: formatMXN(data.amountCentavos),
       message: data.message ?? null,
       redeemUrl,
+      brandColor: tenant.primaryColor,
     };
 
     if (data.recipientEmail) {
