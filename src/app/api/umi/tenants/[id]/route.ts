@@ -4,6 +4,15 @@ import { prisma } from '@/lib/prisma';
 import { verifyUmiSession } from '@/lib/umi-auth';
 import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
 
+const LocationUpdateSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1).max(100),
+  address: z.string().max(200).nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  isActive: z.boolean().optional(),
+});
+
 const UpdateTenantSchema = z.object({
   subscriptionStatus: z.enum(['ACTIVE', 'SUSPENDED', 'TRIAL']).optional(),
   trialEndsAt: z.string().datetime().optional().nullable(),
@@ -14,6 +23,7 @@ const UpdateTenantSchema = z.object({
   selfRegistration: z.boolean().optional(),
   rewardName: z.string().min(2).max(100).optional(),
   visitsRequired: z.number().int().min(1).max(50).optional(),
+  locations: z.array(LocationUpdateSchema).optional(),
 });
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -25,6 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     where: { id: params.id },
     include: {
       rewardConfigs: { where: { isActive: true }, take: 1 },
+      locations: { orderBy: { name: 'asc' } },
     },
   });
   if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
@@ -43,6 +54,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     rewardConfig: tenant.rewardConfigs[0]
       ? { visitsRequired: tenant.rewardConfigs[0].visitsRequired, rewardName: tenant.rewardConfigs[0].rewardName }
       : null,
+    locations: tenant.locations.map((l) => ({
+      id: l.id,
+      name: l.name,
+      address: l.address,
+      latitude: l.latitude,
+      longitude: l.longitude,
+      isActive: l.isActive,
+    })),
   });
 }
 
@@ -75,6 +94,46 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       },
       select: { id: true, slug: true, name: true, subscriptionStatus: true, suspendedAt: true },
     });
+
+    // Update locations if provided
+    if (data.locations !== undefined) {
+      const existingLocations = await prisma.location.findMany({ where: { tenantId: params.id } });
+      const existingIds = existingLocations.map((l) => l.id);
+      const incomingIds = data.locations.filter((l) => l.id).map((l) => l.id!);
+
+      // Delete removed locations
+      const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
+      if (toDelete.length > 0) {
+        await prisma.location.deleteMany({ where: { id: { in: toDelete } } });
+      }
+
+      // Upsert locations
+      for (const loc of data.locations) {
+        if (loc.id && existingIds.includes(loc.id)) {
+          await prisma.location.update({
+            where: { id: loc.id },
+            data: {
+              name: loc.name,
+              address: loc.address ?? null,
+              latitude: loc.latitude ?? null,
+              longitude: loc.longitude ?? null,
+              isActive: loc.isActive ?? true,
+            },
+          });
+        } else {
+          await prisma.location.create({
+            data: {
+              tenantId: params.id,
+              name: loc.name,
+              address: loc.address ?? null,
+              latitude: loc.latitude ?? null,
+              longitude: loc.longitude ?? null,
+              isActive: true,
+            },
+          });
+        }
+      }
+    }
 
     // Update active reward config if reward fields provided
     if (data.rewardName !== undefined || data.visitsRequired !== undefined) {

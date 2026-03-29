@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+interface LocationData {
+  id?: string;
+  name: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  isActive: boolean;
+}
+
 interface TenantEditData {
   id: string;
   slug: string;
@@ -16,6 +25,7 @@ interface TenantEditData {
   subscriptionStatus: string;
   trialEndsAt: string | null;
   rewardConfig: { visitsRequired: number; rewardName: string } | null;
+  locations: LocationData[];
 }
 
 export default function EditTenantPage() {
@@ -37,6 +47,7 @@ export default function EditTenantPage() {
     rewardName: '',
     visitsRequired: 10,
   });
+  const [locations, setLocations] = useState<{ id?: string; name: string; address: string; latitude: string; longitude: string }[]>([]);
 
   useEffect(() => {
     fetch(`/api/umi/tenants/${id}`)
@@ -53,6 +64,17 @@ export default function EditTenantPage() {
           rewardName: d.rewardConfig?.rewardName ?? 'Bebida gratis',
           visitsRequired: d.rewardConfig?.visitsRequired ?? 10,
         });
+        setLocations(
+          d.locations.length > 0
+            ? d.locations.map((l) => ({
+                id: l.id,
+                name: l.name,
+                address: l.address ?? '',
+                latitude: l.latitude != null ? String(l.latitude) : '',
+                longitude: l.longitude != null ? String(l.longitude) : '',
+              }))
+            : [{ name: '', address: '', latitude: '', longitude: '' }]
+        );
         setLoading(false);
       })
       .catch(() => { setError('Error al cargar datos'); setLoading(false); });
@@ -63,6 +85,16 @@ export default function EditTenantPage() {
     setSaving(true);
     setError('');
     setSuccess('');
+
+    const validLocations = locations
+      .filter((l) => l.name.trim())
+      .map((l) => ({
+        ...(l.id ? { id: l.id } : {}),
+        name: l.name.trim(),
+        address: l.address.trim() || null,
+        latitude: l.latitude ? parseFloat(l.latitude) : null,
+        longitude: l.longitude ? parseFloat(l.longitude) : null,
+      }));
 
     const res = await fetch(`/api/umi/tenants/${id}`, {
       method: 'PATCH',
@@ -76,6 +108,7 @@ export default function EditTenantPage() {
         subscriptionStatus: form.subscriptionStatus,
         rewardName: form.rewardName,
         visitsRequired: form.visitsRequired,
+        locations: validLocations,
       }),
     });
 
@@ -195,6 +228,50 @@ export default function EditTenantPage() {
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" maxLength={100} />
               </div>
             </div>
+          </div>
+
+          {/* Locations */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-semibold text-gray-900">Sucursales</h2>
+              <button type="button" onClick={() => setLocations([...locations, { name: '', address: '', latitude: '', longitude: '' }])}
+                className="text-xs text-gray-500 hover:text-gray-900 transition-colors">+ Agregar sucursal</button>
+            </div>
+            {locations.map((loc, i) => (
+              <div key={loc.id ?? `new-${i}`} className="space-y-3 p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-gray-500">Sucursal {i + 1}</p>
+                  {locations.length > 1 && (
+                    <button type="button" onClick={() => setLocations(locations.filter((_, j) => j !== i))}
+                      className="text-xs text-red-400 hover:text-red-600 transition-colors">Eliminar</button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Nombre</label>
+                    <input type="text" value={loc.name} onChange={(e) => { const next = [...locations]; next[i] = { ...loc, name: e.target.value }; setLocations(next); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="Sucursal Centro" maxLength={100} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Dirección</label>
+                    <input type="text" value={loc.address} onChange={(e) => { const next = [...locations]; next[i] = { ...loc, address: e.target.value }; setLocations(next); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="Av. Álvaro Obregón 123" maxLength={200} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Latitud</label>
+                    <input type="text" inputMode="decimal" value={loc.latitude} onChange={(e) => { const next = [...locations]; next[i] = { ...loc, latitude: e.target.value }; setLocations(next); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="24.8049" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Longitud</label>
+                    <input type="text" inputMode="decimal" value={loc.longitude} onChange={(e) => { const next = [...locations]; next[i] = { ...loc, longitude: e.target.value }; setLocations(next); }}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="-107.3940" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Subscription & options */}

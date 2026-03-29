@@ -5,6 +5,13 @@ import { hashPassword } from '@/lib/auth';
 import { verifyUmiSession } from '@/lib/umi-auth';
 import { randomBytes } from 'crypto';
 
+const LocationSchema = z.object({
+  name: z.string().min(1).max(100),
+  address: z.string().max(200).nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+});
+
 const CreateTenantSchema = z.object({
   slug: z.string().min(2).max(30).regex(/^[a-z0-9-]+$/, 'Solo letras minúsculas, números y guiones'),
   name: z.string().min(2).max(100),
@@ -17,6 +24,7 @@ const CreateTenantSchema = z.object({
   visitsRequired: z.number().int().min(1).max(50).default(10),
   rewardName: z.string().min(2).max(100).default('Bebida gratis'),
   trialEndsAt: z.string().datetime().optional(),
+  locations: z.array(LocationSchema).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -60,6 +68,22 @@ export async function POST(req: NextRequest) {
           isActive: true,
         },
       });
+
+      // Locations
+      if (data.locations && data.locations.length > 0) {
+        for (const loc of data.locations) {
+          await tx.location.create({
+            data: {
+              tenantId: newTenant.id,
+              name: loc.name,
+              address: loc.address ?? null,
+              latitude: loc.latitude ?? null,
+              longitude: loc.longitude ?? null,
+              isActive: true,
+            },
+          });
+        }
+      }
 
       // Admin user
       await tx.user.create({
