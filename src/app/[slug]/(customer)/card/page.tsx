@@ -394,7 +394,7 @@ export default function CardPage() {
 
         <p className="text-center text-xs text-coffee-light pb-2">
           Tu saldo nunca vence ·{' '}
-          <a href="/terminos" className="underline">Términos</a>
+          <a href={`/${slug}/terminos`} className="underline">Términos</a>
         </p>
       </div>
     </main>

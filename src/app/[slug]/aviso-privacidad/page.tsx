@@ -1,15 +1,23 @@
 import BackButton from '@/components/ui/BackButton';
+import { getTenant } from '@/lib/tenant';
+import { notFound } from 'next/navigation';
 
-export const metadata = {
-  title: 'Aviso de Privacidad — El Gran Ribera',
-};
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const tenant = await getTenant(params.slug);
+  if (!tenant) return {};
+  return { title: `Aviso de Privacidad — ${tenant.name}` };
+}
 
-export default function AvisoPrivacidadPage() {
+export default async function AvisoPrivacidadPage({ params }: { params: { slug: string } }) {
+  const tenant = await getTenant(params.slug);
+  if (!tenant) notFound();
+  const name = tenant.name;
+
   return (
     <main className="min-h-screen bg-coffee-cream">
       <div className="loyalty-card text-white px-6 py-10 text-center">
         <div className="max-w-2xl mx-auto relative z-10">
-          <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-2">El Gran Ribera</p>
+          <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-2">{name}</p>
           <h1 className="font-display text-2xl font-bold">Aviso de Privacidad</h1>
           <p className="text-coffee-light text-sm mt-1">Ley Federal de Protección de Datos Personales</p>
         </div>
@@ -19,16 +27,16 @@ export default function AvisoPrivacidadPage() {
         <section className="card-surface space-y-3">
           <h2 className="font-display text-lg font-bold text-coffee-dark">1. Identidad del Responsable</h2>
           <p className="text-sm text-coffee-medium leading-relaxed">
-            <strong className="text-coffee-dark">El Gran Ribera</strong> (en adelante "el Responsable"),
-            con domicilio en la Ciudad de México, es responsable del tratamiento de sus datos personales
+            <strong className="text-coffee-dark">{name}</strong> (en adelante &ldquo;el Responsable&rdquo;),
+            es responsable del tratamiento de sus datos personales
             conforme a lo establecido en la{' '}
             <em>Ley Federal de Protección de Datos Personales en Posesión de los Particulares</em>{' '}
             (LFPDPPP) y su Reglamento.
           </p>
           <p className="text-sm text-coffee-medium">
             Contacto de privacidad:{' '}
-            <a href="mailto:privacidad@elgranribera.mx" className="text-coffee-dark underline">
-              privacidad@elgranribera.mx
+            <a href="mailto:hola@umiconsulting.co" className="text-coffee-dark underline">
+              hola@umiconsulting.co
             </a>
           </p>
         </section>
@@ -84,13 +92,13 @@ export default function AvisoPrivacidadPage() {
               { letter: 'R', name: 'Rectificación', desc: 'Corregir datos inexactos o incompletos' },
               { letter: 'C', name: 'Cancelación', desc: 'Solicitar la eliminación de sus datos' },
               { letter: 'O', name: 'Oposición', desc: 'Oponerse al tratamiento de sus datos' },
-            ].map(({ letter, name, desc }) => (
+            ].map(({ letter, name: arcoName, desc }) => (
               <div key={letter} className="bg-coffee-pale rounded-xl p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="w-6 h-6 bg-coffee-dark text-white rounded-full flex items-center justify-center text-xs font-bold">
                     {letter}
                   </span>
-                  <span className="font-semibold text-coffee-dark text-sm">{name}</span>
+                  <span className="font-semibold text-coffee-dark text-sm">{arcoName}</span>
                 </div>
                 <p className="text-xs text-coffee-medium">{desc}</p>
               </div>
@@ -98,8 +106,8 @@ export default function AvisoPrivacidadPage() {
           </div>
           <p className="text-sm text-coffee-medium">
             Para ejercer sus derechos ARCO, envíe su solicitud a{' '}
-            <a href="mailto:privacidad@elgranribera.mx" className="text-coffee-dark underline">
-              privacidad@elgranribera.mx
+            <a href="mailto:hola@umiconsulting.co" className="text-coffee-dark underline">
+              hola@umiconsulting.co
             </a>
             . Responderemos dentro de los 20 días hábiles siguientes a la recepción de su solicitud.
           </p>
@@ -110,8 +118,8 @@ export default function AvisoPrivacidadPage() {
           <p className="text-sm text-coffee-medium leading-relaxed">
             Puede revocar su consentimiento para el tratamiento de sus datos en cualquier momento,
             enviando un correo a{' '}
-            <a href="mailto:privacidad@elgranribera.mx" className="text-coffee-dark underline">
-              privacidad@elgranribera.mx
+            <a href="mailto:hola@umiconsulting.co" className="text-coffee-dark underline">
+              hola@umiconsulting.co
             </a>
             . Tenga en cuenta que la revocación puede implicar la cancelación de su cuenta y la
             pérdida del historial de visitas y saldo no redimido.

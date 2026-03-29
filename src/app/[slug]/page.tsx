@@ -246,9 +246,9 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
         <p className="text-xs text-coffee-light">
           <Link href={`/${params.slug}/admin-login`} className="underline hover:text-coffee-medium">Acceso personal</Link>
           {' · '}
-          <Link href="/aviso-privacidad" className="underline hover:text-coffee-medium">Aviso de privacidad</Link>
+          <Link href={`/${params.slug}/aviso-privacidad`} className="underline hover:text-coffee-medium">Aviso de privacidad</Link>
           {' · '}
-          <Link href="/terminos" className="underline hover:text-coffee-medium">Términos</Link>
+          <Link href={`/${params.slug}/terminos`} className="underline hover:text-coffee-medium">Términos</Link>
         </p>
         <p className="text-xs text-coffee-pale">{tenant.name}{tenant.city ? ` · ${tenant.city}` : ''}</p>
       </footer>

@@ -18,7 +18,7 @@ import { SignJWT } from 'jose';
 import { formatMXN } from './currency';
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || '';
-const CLASS_ID = process.env.GOOGLE_WALLET_CLASS_ID || 'elgranribera_loyalty_v1';
+const CLASS_ID_PREFIX = process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v1';
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com';
 
@@ -30,9 +30,10 @@ export function isGoogleWalletConfigured(): boolean {
   );
 }
 
-function getLoyaltyClass(tenantName: string, primaryColor: string) {
+function getLoyaltyClass(tenantName: string, primaryColor: string, tenantSlug?: string) {
+  const classId = tenantSlug ? `${tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX;
   return {
-    id: `${ISSUER_ID}.${CLASS_ID}`,
+    id: `${ISSUER_ID}.${classId}`,
     issuerName: tenantName,
     programName: 'Programa de Lealtad',
     programLogo: {
@@ -52,7 +53,7 @@ function getLoyaltyClass(tenantName: string, primaryColor: string) {
     linksModuleData: {
       uris: [
         {
-          uri: `${APP_URL}/card`,
+          uri: tenantSlug ? `${APP_URL}/${tenantSlug}/card` : `${APP_URL}/card`,
           description: 'Ver mi tarjeta',
           id: 'card_link',
         },
@@ -86,7 +87,7 @@ function getLoyaltyObject(data: GooglePassData) {
 
   return {
     id: objectId,
-    classId: `${ISSUER_ID}.${CLASS_ID}`,
+    classId: `${ISSUER_ID}.${data.tenantSlug ? `${data.tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX}`,
     state: 'ACTIVE',
     accountId: data.cardNumber,
     accountName: data.customerName || 'Cliente',
@@ -167,7 +168,7 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     typ: 'savetowallet',
     iat: Math.floor(Date.now() / 1000),
     payload: {
-      loyaltyClasses: [getLoyaltyClass(data.tenantName || 'Umi Cash', data.primaryColor || '#B5605A')],
+      loyaltyClasses: [getLoyaltyClass(data.tenantName || 'Umi Cash', data.primaryColor || '#B5605A', data.tenantSlug)],
       loyaltyObjects: [getLoyaltyObject(data)],
     },
   };

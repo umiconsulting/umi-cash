@@ -1,16 +1,24 @@
 import Link from 'next/link';
 import BackButton from '@/components/ui/BackButton';
+import { getTenant } from '@/lib/tenant';
+import { notFound } from 'next/navigation';
 
-export const metadata = {
-  title: 'Términos y Condiciones — El Gran Ribera',
-};
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const tenant = await getTenant(params.slug);
+  if (!tenant) return {};
+  return { title: `Términos y Condiciones — ${tenant.name}` };
+}
 
-export default function TerminosPage() {
+export default async function TerminosPage({ params }: { params: { slug: string } }) {
+  const tenant = await getTenant(params.slug);
+  if (!tenant) notFound();
+  const name = tenant.name;
+
   return (
     <main className="min-h-screen bg-coffee-cream">
       <div className="loyalty-card text-white px-6 py-10 text-center">
         <div className="max-w-2xl mx-auto relative z-10">
-          <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-2">El Gran Ribera</p>
+          <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-2">{name}</p>
           <h1 className="font-display text-2xl font-bold">Términos y Condiciones</h1>
           <p className="text-coffee-light text-sm mt-1">Programa de Lealtad y Tarjeta de Saldo</p>
         </div>
@@ -20,7 +28,7 @@ export default function TerminosPage() {
         <section className="card-surface space-y-3">
           <h2 className="font-display text-lg font-bold text-coffee-dark">1. Descripción del Programa</h2>
           <p className="text-sm text-coffee-medium leading-relaxed">
-            El Programa de Lealtad de <strong className="text-coffee-dark">El Gran Ribera</strong> es
+            El Programa de Lealtad de <strong className="text-coffee-dark">{name}</strong> es
             un programa de beneficios destinado a clientes frecuentes. Al registrarse, el cliente
             obtiene una tarjeta digital con dos funciones: (1) acumulación de visitas para ganar
             recompensas de temporada, y (2) saldo prepago para pagar en el establecimiento.
@@ -76,8 +84,8 @@ export default function TerminosPage() {
           <p className="text-sm text-coffee-medium leading-relaxed">
             El cliente puede solicitar la cancelación de su cuenta en cualquier momento enviando un
             correo a{' '}
-            <a href="mailto:privacidad@elgranribera.mx" className="text-coffee-dark underline">
-              privacidad@elgranribera.mx
+            <a href="mailto:hola@umiconsulting.co" className="text-coffee-dark underline">
+              hola@umiconsulting.co
             </a>
             . La cancelación implica la pérdida del historial de visitas y recompensas pendientes.
             El saldo monetario no redimido a la fecha de cancelación deberá ser utilizado previamente
@@ -88,7 +96,7 @@ export default function TerminosPage() {
         <section className="card-surface space-y-3">
           <h2 className="font-display text-lg font-bold text-coffee-dark">7. Modificaciones al Programa</h2>
           <p className="text-sm text-coffee-medium leading-relaxed">
-            El Gran Ribera se reserva el derecho de modificar los términos del programa con un aviso
+            {name} se reserva el derecho de modificar los términos del programa con un aviso
             previo de al menos 15 días naturales, publicado en la aplicación o comunicado al correo
             registrado. Los cambios no afectarán recompensas o saldo ya acumulados.
           </p>
@@ -107,7 +115,7 @@ export default function TerminosPage() {
         </section>
 
         <div className="text-center pt-2 space-y-3">
-          <Link href="/aviso-privacidad" className="text-coffee-medium underline text-sm block">
+          <Link href={`/${params.slug}/aviso-privacidad`} className="text-coffee-medium underline text-sm block">
             Ver Aviso de Privacidad
           </Link>
           <BackButton label="← Volver" />

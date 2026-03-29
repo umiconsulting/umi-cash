@@ -281,8 +281,8 @@ export default function RegisterPage() {
             <input type="checkbox" checked={privacyAccepted} onChange={(e) => setPrivacyAccepted(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-coffee-light text-coffee-dark focus:ring-coffee-medium flex-shrink-0" required />
             <span className="text-xs text-coffee-medium leading-relaxed">
               He leído y acepto el{' '}
-              <Link href="/aviso-privacidad" className="text-coffee-dark underline font-medium" target="_blank">Aviso de Privacidad</Link>{' '}y los{' '}
-              <Link href="/terminos" className="text-coffee-dark underline font-medium" target="_blank">Términos</Link>.
+              <Link href={`/${slug}/aviso-privacidad`} className="text-coffee-dark underline font-medium" target="_blank">Aviso de Privacidad</Link>{' '}y los{' '}
+              <Link href={`/${slug}/terminos`} className="text-coffee-dark underline font-medium" target="_blank">Términos</Link>.
             </span>
           </label>
 
