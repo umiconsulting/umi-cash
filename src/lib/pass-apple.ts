@@ -154,7 +154,7 @@ export async function generateApplePass(data: PassData): Promise<{
   const logoBuf = data.logoUrl ? await fetchImageBuffer(data.logoUrl) : null;
   if (logoBuf) {
     const resized = await sharp(logoBuf)
-      .resize({ height: 50, withoutEnlargement: true })
+      .resize({ height: 70, withoutEnlargement: true })
       .png()
       .toBuffer();
     pass.addBuffer('logo@2x.png', resized);
