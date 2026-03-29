@@ -73,6 +73,7 @@ export interface PassData {
   stampFilledUrl?: string | null; // Custom filled stamp image URL
   stampEmptyUrl?: string | null; // Custom empty stamp image URL
   promoMessage?: string | null; // Current promotion text — triggers notification on change
+  locations?: { latitude: number; longitude: number; relevantText?: string }[];
 }
 
 export async function generateApplePass(data: PassData): Promise<{
@@ -125,6 +126,9 @@ export async function generateApplePass(data: PassData): Promise<{
 
   // Set pass type
   pass.type = 'storeCard';
+
+  // Prevent AirDrop sharing of loyalty cards (fraud prevention)
+  (pass as any).props.sharingProhibited = true;
 
   // Helper to resolve relative URLs and fetch image buffers
   async function fetchImageBuffer(url: string): Promise<Buffer | null> {
@@ -252,6 +256,15 @@ export async function generateApplePass(data: PassData): Promise<{
     label: '',
     value: 'Developed by Umi Consulting',
   });
+  // Add geo-location triggers — surfaces pass on lock screen when nearby
+  if (data.locations && data.locations.length > 0) {
+    (pass as any).props.locations = data.locations.map((loc) => ({
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      ...(loc.relevantText ? { relevantText: loc.relevantText } : {}),
+    }));
+  }
+
   const buffer = await pass.getAsBuffer();
   return { buffer, serial, authToken };
 }

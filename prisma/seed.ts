@@ -39,7 +39,7 @@ async function seedTenant({
   logoUrl?: string;
   stripImageUrl?: string;
   passStyle?: string;
-  locations: { name: string; address: string }[];
+  locations: { name: string; address: string; latitude?: number; longitude?: number }[];
   rewardConfig: { visitsRequired: number; rewardName: string; rewardDescription: string };
   admin: { email: string; password: string };
   staff: { email: string; name: string; password: string };
@@ -63,6 +63,8 @@ async function seedTenant({
         tenantId: tenant.id,
         name: loc.name,
         address: loc.address,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
         isActive: true,
       },
     });
@@ -178,7 +180,7 @@ async function main() {
     stripImageUrl: '/logos/ribera-strip.png',
     passStyle: 'stamps',
     locations: [
-      { name: 'Sucursal Principal', address: 'Culiacán, Sinaloa' },
+      { name: 'Sucursal Principal', address: 'Culiacán, Sinaloa', latitude: 24.8049, longitude: -107.3940 },
     ],
     rewardConfig: {
       visitsRequired: 10,
@@ -203,8 +205,8 @@ async function main() {
     logoUrl: '/logos/kalala-logo.png',
     passStyle: 'stamps',
     locations: [
-      { name: 'Sucursal Centro', address: 'Centro, Culiacán, Sinaloa' },
-      { name: 'Sucursal Norte', address: 'Norte, Culiacán, Sinaloa' },
+      { name: 'Sucursal Centro', address: 'Centro, Culiacán, Sinaloa', latitude: 24.8090, longitude: -107.3890 },
+      { name: 'Sucursal Norte', address: 'Norte, Culiacán, Sinaloa', latitude: 24.8300, longitude: -107.3800 },
     ],
     rewardConfig: {
       visitsRequired: 8,

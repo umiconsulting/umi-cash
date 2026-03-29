@@ -170,7 +170,10 @@ async function handleGetPass(req: NextRequest, slug: string, serial: string) {
   const tenant = await getTenant(slug);
   if (!tenant) return new NextResponse(null, { status: 404 });
 
-  const rewardConfig = await getActiveRewardConfig(tenant.id);
+  const [rewardConfig, locations] = await Promise.all([
+    getActiveRewardConfig(tenant.id),
+    prisma.location.findMany({ where: { tenantId: tenant.id, isActive: true, latitude: { not: null }, longitude: { not: null } } }),
+  ]);
   const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
   try {
@@ -194,6 +197,7 @@ async function handleGetPass(req: NextRequest, slug: string, serial: string) {
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
       promoMessage: tenant.promoMessage,
+      locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
     });
 
     return new NextResponse(buffer as unknown as BodyInit, {

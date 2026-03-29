@@ -27,24 +27,41 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   try {
     const { qrPayload } = PreviewSchema.parse(await req.json());
 
+    // Try QR payload first; if it fails, try as card number or phone number
     const qrData = await verifyQRPayload(qrPayload);
-    if (!qrData) {
-      return NextResponse.json({ error: 'Código QR inválido o expirado' }, { status: 400 });
-    }
+    let card;
 
-    const card = await prisma.loyaltyCard.findFirst({
-      where: qrData.isWalletScan
-        ? { tenantId: tenant.id, cardNumber: qrData.cardId }
-        : { tenantId: tenant.id, id: qrData.cardId },
-      include: { user: true },
-    });
+    if (qrData) {
+      card = await prisma.loyaltyCard.findFirst({
+        where: qrData.isWalletScan
+          ? { tenantId: tenant.id, cardNumber: qrData.cardId }
+          : { tenantId: tenant.id, id: qrData.cardId },
+        include: { user: true },
+      });
 
-    if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
+      if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
 
-    if (!qrData.isWalletScan && card.qrToken !== qrData.qrToken) {
-      return NextResponse.json({
-        error: 'Código QR ya fue usado. Pídele al cliente que actualice su código.',
-      }, { status: 400 });
+      if (!qrData.isWalletScan && card.qrToken !== qrData.qrToken) {
+        return NextResponse.json({
+          error: 'Código QR ya fue usado. Pídele al cliente que actualice su código.',
+        }, { status: 400 });
+      }
+    } else {
+      // Manual lookup: card number, phone number, or name
+      const input = qrPayload.trim();
+      card = await prisma.loyaltyCard.findFirst({
+        where: {
+          tenantId: tenant.id,
+          OR: [
+            { cardNumber: input },
+            { user: { phone: input } },
+            { user: { phone: input.startsWith('+') ? input : `+52${input.replace(/\D/g, '')}` } },
+          ],
+        },
+        include: { user: true },
+      });
+
+      if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada. Verifica el número o teléfono.' }, { status: 404 });
     }
 
     if (card.userId === staff.sub) {

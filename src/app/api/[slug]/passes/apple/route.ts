@@ -32,9 +32,10 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       }, { status: 503 });
     }
 
-    const [card, rewardConfig] = await Promise.all([
+    const [card, rewardConfig, locations] = await Promise.all([
       prisma.loyaltyCard.findUnique({ where: { userId: user.sub }, include: { user: true } }),
       getActiveRewardConfig(tenant.id),
+      prisma.location.findMany({ where: { tenantId: tenant.id, isActive: true, latitude: { not: null }, longitude: { not: null } } }),
     ]);
 
     if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
@@ -61,6 +62,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
       promoMessage: tenant.promoMessage,
+      locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
     });
 
     if (!card.applePassSerial) {

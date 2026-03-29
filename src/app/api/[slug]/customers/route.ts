@@ -44,6 +44,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           userId: user.id,
           cardNumber: generateCardNumber(tenant.cardPrefix),
           qrToken: randomBytes(16).toString('hex'),
+          // Endowed progress: start with 1 stamp to increase completion rate
+          visitsThisCycle: 1,
+          totalVisits: 1,
         },
       });
 

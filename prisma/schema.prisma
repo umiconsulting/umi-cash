@@ -37,11 +37,13 @@ model Tenant {
 }
 
 model Location {
-  id       String  @id @default(cuid())
-  tenantId String
-  name     String            // "Matriz", "Plaza Fiesta"
-  address  String?
-  isActive Boolean @default(true)
+  id        String  @id @default(cuid())
+  tenantId  String
+  name      String            // "Matriz", "Plaza Fiesta"
+  address   String?
+  latitude  Float?
+  longitude Float?
+  isActive  Boolean @default(true)
 
   tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -64,6 +66,8 @@ model User {
   tenant       Tenant      @relation(fields: [tenantId], references: [id])
   card         LoyaltyCard?
   sessions     Session[]
+  staffVisits  Visit[]     @relation("StaffVisits")
+  staffTransactions Transaction[] @relation("StaffTransactions")
 
   @@unique([tenantId, phone])
   @@unique([tenantId, email])
@@ -139,6 +143,7 @@ model Visit {
   note      String?
 
   card      LoyaltyCard @relation(fields: [cardId], references: [id])
+  staff     User        @relation("StaffVisits", fields: [staffId], references: [id])
 
   @@index([cardId])
   @@index([scannedAt])
@@ -157,6 +162,7 @@ model Transaction {
   createdAt      DateTime @default(now())
 
   card           LoyaltyCard @relation(fields: [cardId], references: [id])
+  staff          User?       @relation("StaffTransactions", fields: [staffId], references: [id])
 
   @@index([cardId])
   @@index([createdAt])

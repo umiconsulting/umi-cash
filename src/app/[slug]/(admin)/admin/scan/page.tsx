@@ -311,7 +311,7 @@ export default function ScanPage() {
                 type="text"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                placeholder="EGR-1234567890"
+                placeholder="Tarjeta o teléfono"
                 className="input-field flex-1"
                 autoFocus
                 autoComplete="off"
@@ -322,7 +322,7 @@ export default function ScanPage() {
                 {processing ? '...' : '→'}
               </button>
             </form>
-            <p className="text-xs text-coffee-light mt-1.5">O usa la cámara para escanear el código QR del cliente.</p>
+            <p className="text-xs text-coffee-light mt-1.5">Ingresa número de tarjeta o teléfono, o escanea el QR.</p>
           </div>
 
           {/* Camera */}
