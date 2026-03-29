@@ -153,11 +153,18 @@ export async function generateApplePass(data: PassData): Promise<{
   // Add tenant logo if available — resize to crisp @2x dimensions
   const logoBuf = data.logoUrl ? await fetchImageBuffer(data.logoUrl) : null;
   if (logoBuf) {
-    const resized = await sharp(logoBuf)
+    const logo2x = await sharp(logoBuf)
       .resize({ height: 70, withoutEnlargement: true })
+      .sharpen({ sigma: 1 })
       .png()
       .toBuffer();
-    pass.addBuffer('logo@2x.png', resized);
+    pass.addBuffer('logo@2x.png', logo2x);
+    const logo3x = await sharp(logoBuf)
+      .resize({ height: 105, withoutEnlargement: true })
+      .sharpen({ sigma: 1 })
+      .png()
+      .toBuffer();
+    pass.addBuffer('logo@3x.png', logo3x);
   }
 
   // Icons: logo on colored background, or solid color fallback
