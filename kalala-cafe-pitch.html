@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umi Cash — Kalala Café</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    :root {
+      --primary: #2D6A4F;
+      --primary-light: #40916C;
+      --primary-dark: #1B4332;
+      --accent: #D4A373;
+      --accent-light: #E9C46A;
+      --bg: #FEFAE0;
+      --bg-card: #FFFFFF;
+      --text: #1A1A2E;
+      --text-muted: #6B7280;
+      --gradient: linear-gradient(135deg, #2D6A4F 0%, #40916C 50%, #52B788 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      color: var(--text);
+      background: #f8f9fa;
+      line-height: 1.6;
+    }
+
+    @media print {
+      body { background: white; }
+      .page { box-shadow: none !important; margin: 0 !important; }
+      .no-print { display: none !important; }
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: white;
+      box-shadow: 0 4px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      page-break-after: always;
+    }
+
+    /* ====== PAGE 1: COVER ====== */
+    .cover {
+      height: 297mm;
+      display: flex;
+      flex-direction: column;
+      background: var(--gradient);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 80%;
+      height: 120%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      left: -20%;
+      width: 60%;
+      height: 80%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+      border-radius: 50%;
+    }
+
+    .cover-content {
+      position: relative;
+      z-index: 1;
+      padding: 60px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 50px;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      width: fit-content;
+    }
+
+    .cover h1 {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+
+    .cover h1 span {
+      display: block;
+      font-weight: 300;
+      font-size: 36px;
+      opacity: 0.9;
+      margin-top: 8px;
+    }
+
+    .cover-subtitle {
+      font-size: 18px;
+      font-weight: 300;
+      opacity: 0.85;
+      max-width: 480px;
+      line-height: 1.7;
+      margin-bottom: 50px;
+    }
+
+    .cover-meta {
+      display: flex;
+      gap: 30px;
+      font-size: 13px;
+      opacity: 0.7;
+      margin-top: auto;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .cover-meta span { font-weight: 500; }
+
+    /* ====== PAGE 2: THE PROBLEM ====== */
+    .section-page {
+      padding: 55px 60px;
+      position: relative;
+    }
+
+    .section-number {
+      font-size: 80px;
+      font-weight: 900;
+      color: var(--primary);
+      opacity: 0.08;
+      position: absolute;
+      top: 30px;
+      right: 50px;
+      line-height: 1;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: rgba(45, 106, 79, 0.08);
+      padding: 6px 14px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 24px;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+
+    .section-intro {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin-bottom: 40px;
+      line-height: 1.8;
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 30px;
+    }
+
+    .problem-card {
+      background: linear-gradient(135deg, #FFF5F5 0%, #FFF0F0 100%);
+      border: 1px solid #FED7D7;
+      border-radius: 16px;
+      padding: 28px;
+    }
+
+    .problem-card .icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+
+    .problem-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #C53030;
+      margin-bottom: 8px;
+    }
+
+    .problem-card p {
+      font-size: 13.5px;
+      color: #742A2A;
+      line-height: 1.6;
+      opacity: 0.85;
+    }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 0;
+      margin-top: 40px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #E5E7EB;
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 24px 20px;
+      text-align: center;
+      background: white;
+      border-right: 1px solid #E5E7EB;
+    }
+
+    .stat-item:last-child { border-right: none; }
+
+    .stat-item .number {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+      display: block;
+    }
+
+    .stat-item .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* ====== SOLUTION CARDS ====== */
+    .solution-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .solution-card {
+      background: var(--bg-card);
+      border: 1px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 28px;
+      transition: transform 0.2s;
+    }
+
+    .solution-card.highlight {
+      background: var(--gradient);
+      color: white;
+      border: none;
+      grid-column: span 2;
+    }
+
+    .solution-card.highlight h3 { color: white; }
+    .solution-card.highlight p { color: rgba(255,255,255,0.85); }
+    .solution-card.highlight .card-icon { background: rgba(255,255,255,0.2); }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(45, 106, 79, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .solution-card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+
+    .solution-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ====== HOW IT WORKS ====== */
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 30px;
+      position: relative;
+    }
+
+    .flow-steps::before {
+      content: '';
+      position: absolute;
+      left: 28px;
+      top: 45px;
+      bottom: 45px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--primary), var(--accent));
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      padding: 20px 0;
+    }
+
+    .step-number {
+      width: 56px;
+      height: 56px;
+      min-width: 56px;
+      border-radius: 50%;
+      background: var(--gradient);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-content h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .step-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+      background: rgba(45, 106, 79, 0.08);
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    /* ====== ADMIN FEATURES ====== */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 30px;
+    }
+
+    .admin-card {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+    }
+
+    .admin-card .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .admin-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 6px;
+    }
+
+    .admin-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ====== ROI PAGE ====== */
+    .roi-box {
+      background: linear-gradient(135deg, #F0FFF4 0%, #E6FFFA 100%);
+      border: 2px solid #9AE6B4;
+      border-radius: 20px;
+      padding: 36px;
+      margin: 30px 0;
+    }
+
+    .roi-calc {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .roi-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(45, 106, 79, 0.1);
+    }
+
+    .roi-row:last-child { border-bottom: none; }
+
+    .roi-row .label {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .roi-row .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .roi-row.total {
+      padding-top: 20px;
+      margin-top: 8px;
+      border-top: 2px solid var(--primary);
+      border-bottom: none;
+    }
+
+    .roi-row.total .label {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .roi-row.total .value {
+      font-size: 28px;
+      color: var(--primary);
+    }
+
+    /* ====== PRICING ====== */
+    .pricing-cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-top: 30px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .pricing-card {
+      border-radius: 20px;
+      padding: 36px;
+      position: relative;
+    }
+
+    .pricing-card.basic {
+      background: #F9FAFB;
+      border: 2px solid #E5E7EB;
+    }
+
+    .pricing-card.pro {
+      background: var(--gradient);
+      color: white;
+      border: none;
+    }
+
+    .pricing-card.pro .pricing-label { color: rgba(255,255,255,0.7); }
+    .pricing-card.pro .pricing-feature { color: rgba(255,255,255,0.85); }
+    .pricing-card.pro .pricing-feature::before { color: #A7F3D0; }
+
+    .pricing-badge {
+      position: absolute;
+      top: -12px;
+      right: 24px;
+      background: var(--accent);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+    }
+
+    .pricing-name {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .pricing-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .pricing-price {
+      font-size: 42px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .pricing-price span {
+      font-size: 16px;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+
+    .pricing-period {
+      font-size: 13px;
+      opacity: 0.6;
+      margin-bottom: 24px;
+    }
+
+    .pricing-divider {
+      height: 1px;
+      background: rgba(0,0,0,0.08);
+      margin: 20px 0;
+    }
+
+    .pricing-card.pro .pricing-divider { background: rgba(255,255,255,0.2); }
+
+    .pricing-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13.5px;
+      color: var(--text);
+      padding: 6px 0;
+      line-height: 1.4;
+    }
+
+    .pricing-feature::before {
+      content: '✓';
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 14px;
+      min-width: 18px;
+    }
+
+    /* ====== COMPARISON TABLE ====== */
+    .comparison-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 30px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #E5E7EB;
+      font-size: 13px;
+    }
+
+    .comparison-table thead {
+      background: var(--primary-dark);
+      color: white;
+    }
+
+    .comparison-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .comparison-table th:not(:first-child) { text-align: center; }
+
+    .comparison-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+
+    .comparison-table td:not(:first-child) { text-align: center; }
+
+    .comparison-table tr:nth-child(even) { background: #F9FAFB; }
+    .comparison-table tr:last-child td { border-bottom: none; }
+
+    .check { color: var(--primary); font-weight: 700; }
+    .cross { color: #CBD5E0; }
+
+    /* ====== CTA PAGE ====== */
+    .cta-page {
+      height: 297mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px;
+      background: white;
+      position: relative;
+    }
+
+    .cta-page::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: var(--gradient);
+    }
+
+    .cta-emoji { font-size: 64px; margin-bottom: 30px; }
+
+    .cta-page h2 {
+      font-size: 38px;
+      font-weight: 900;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .cta-page .subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 460px;
+      line-height: 1.7;
+      margin-bottom: 50px;
+    }
+
+    .cta-details {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 50px;
+    }
+
+    .cta-detail {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .cta-detail .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(45, 106, 79, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .cta-footer {
+      margin-top: auto;
+      padding-top: 40px;
+      border-top: 1px solid #E5E7EB;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .watermark {
+      position: absolute;
+      bottom: 20px;
+      right: 30px;
+      font-size: 10px;
+      color: #D1D5DB;
+    }
+
+    /* Utility */
+    .highlight-text { color: var(--primary); font-weight: 700; }
+    .mt-20 { margin-top: 20px; }
+    .mb-10 { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- ====== PAGE 1: COVER ====== -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-content">
+      <div class="cover-badge">Propuesta Exclusiva</div>
+      <h1>
+        Umi Cash
+        <span>para Kalala Cafe</span>
+      </h1>
+      <p class="cover-subtitle">
+        Tu programa de lealtad digital: tarjetas de fidelidad, saldo prepagado y tarjetas de regalo — todo en Apple Wallet y Google Wallet. Sin app. Sin fricciones. Sin tarjetas fisicas.
+      </p>
+      <div class="cover-meta">
+        <span>Preparado por Umi Consulting</span>
+        <span>Marzo 2026</span>
+        <span>Confidencial</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE 2: THE PROBLEM ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">01</div>
+    <div class="section-label">El Problema</div>
+    <h2 class="section-title">Tus clientes te aman.<br>Pero se les olvida regresar.</h2>
+    <p class="section-intro">
+      Las cafeterias pierden hasta el 70% de sus clientes despues de la primera visita. No es por el cafe — es porque no hay un vinculo que los traiga de vuelta.
+    </p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon">📇</div>
+        <h3>Tarjetas fisicas perdidas</h3>
+        <p>El 80% de las tarjetas de sellos terminan en la basura, lavadas en el bolsillo o simplemente olvidadas en casa.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">📱</div>
+        <h3>"Descarga nuestra app"</h3>
+        <p>Nadie quiere instalar otra app. La tasa de adopcion de apps de lealtad es menor al 12% para negocios locales.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">📊</div>
+        <h3>Cero datos de tus clientes</h3>
+        <p>Con tarjetas fisicas no sabes quien vino, cuando, ni cuanto gasto. Operas a ciegas.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">💸</div>
+        <h3>Dinero en la mesa</h3>
+        <p>Sin un sistema de saldo prepagado y gift cards, pierdes ventas que tus clientes harian felizmente.</p>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="number">70%</span>
+        <span class="label">Clientes no regresan</span>
+      </div>
+      <div class="stat-item">
+        <span class="number">5x</span>
+        <span class="label">Mas caro adquirir que retener</span>
+      </div>
+      <div class="stat-item">
+        <span class="number">79%</span>
+        <span class="label">Eligen cafe por lealtad</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE 3: THE SOLUTION ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">02</div>
+    <div class="section-label">La Solucion</div>
+    <h2 class="section-title">Todo tu programa de lealtad<br>en la cartera digital de tu cliente.</h2>
+    <p class="section-intro">
+      Umi Cash convierte cada visita en una conexion medible, cada compra en datos accionables, y cada cliente en un embajador de tu marca.
+    </p>
+
+    <div class="solution-grid">
+      <div class="solution-card highlight">
+        <div class="card-icon">🎫</div>
+        <h3>Apple Wallet + Google Wallet Nativo</h3>
+        <p>Tu tarjeta de lealtad vive donde tu cliente ya vive: en su telefono. Sin app que descargar, sin cuenta que recordar. Se abre desde la pantalla de bloqueo. Se actualiza automaticamente con cada visita y recarga.</p>
+      </div>
+      <div class="solution-card">
+        <div class="card-icon">⭐</div>
+        <h3>Sellos Digitales</h3>
+        <p>Configura cuantas visitas necesita tu cliente para ganar una recompensa. "10 cafes = 1 gratis" o lo que tu quieras.</p>
+      </div>
+      <div class="solution-card">
+        <div class="card-icon">💰</div>
+        <h3>Saldo Prepagado</h3>
+        <p>Tus clientes cargan saldo y pagan directo desde su tarjeta digital. Dinero que ya es tuyo.</p>
+      </div>
+      <div class="solution-card">
+        <div class="card-icon">🎁</div>
+        <h3>Tarjetas de Regalo</h3>
+        <p>Crea gift cards digitales con mensaje personalizado. Perfectas para cumpleanos, navidad o "gracias".</p>
+      </div>
+      <div class="solution-card">
+        <div class="card-icon">📲</div>
+        <h3>QR Inteligente</h3>
+        <p>Codigo QR que se renueva cada 5 minutos. Imposible de clonar o reutilizar. Seguridad de banco.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE 4: HOW IT WORKS ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">03</div>
+    <div class="section-label">Como Funciona</div>
+    <h2 class="section-title">Tan simple como<br>pedir un cafe.</h2>
+    <p class="section-intro">
+      En menos de 2 minutos tu cliente ya tiene su tarjeta digital. Asi de facil es el proceso completo:
+    </p>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>El cliente llega a tu cafe</h3>
+          <p>Escanea un QR en tu mostrador o visita tu link personalizado <strong>kalalacafe.umicash.com</strong>. Se registra con su telefono en 30 segundos.</p>
+          <span class="step-tag">Sin app — funciona en cualquier navegador</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Agrega su tarjeta al Wallet</h3>
+          <p>Con un toque, la tarjeta de Kalala Cafe se agrega a Apple Wallet o Google Wallet. Ahora vive junto a sus tarjetas bancarias.</p>
+          <span class="step-tag">Acceso desde pantalla de bloqueo</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Cada visita cuenta</h3>
+          <p>Tu staff escanea el QR del cliente. La visita se registra al instante. El progreso hacia su recompensa se actualiza en tiempo real en su Wallet.</p>
+          <span class="step-tag">Actualizacion automatica via push notification</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>Gana su recompensa</h3>
+          <p>Despues de X visitas, gana su premio. Tu staff lo canjea con un toque. El ciclo se reinicia y el cliente vuelve por mas.</p>
+          <span class="step-tag">Configurable: tu decides el premio y las visitas</span>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+          <h3>Tu ves todo en tiempo real</h3>
+          <p>Dashboard con visitas del dia, clientes activos, recompensas canjeadas, saldo total y analiticas de retencion. Datos que antes no tenias.</p>
+          <span class="step-tag">Metricas actualizadas cada 30 segundos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE 5: ADMIN FEATURES ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">04</div>
+    <div class="section-label">Tu Panel de Control</div>
+    <h2 class="section-title">Controla todo desde<br>un solo lugar.</h2>
+    <p class="section-intro">
+      Un dashboard disenado para que tu equipo opere sin complicaciones y tu tengas visibilidad total de tu negocio.
+    </p>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <div class="icon">📊</div>
+        <h4>Dashboard en Vivo</h4>
+        <p>Visitas de hoy, recargas, recompensas pendientes y clientes totales — todo en tiempo real.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">📷</div>
+        <h4>Escaner QR</h4>
+        <p>Tu staff escanea, registra visitas o canjea recompensas. Con proteccion anti-fraude integrada.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">👥</div>
+        <h4>Gestion de Clientes</h4>
+        <p>Busca, filtra y exporta tu base de clientes. Ve historial de visitas y transacciones de cada uno.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">💳</div>
+        <h4>Recargas y Cobros</h4>
+        <p>Agrega saldo, cobra contra balance o crea gift cards. Todo desde el panel.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">🎯</div>
+        <h4>Recompensas</h4>
+        <p>Configura y cambia tu programa de lealtad cuando quieras sin afectar el progreso de tus clientes.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">📈</div>
+        <h4>Analiticas</h4>
+        <p>Visitas por dia, nuevos clientes, retencion, valor promedio y analisis de rentabilidad.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">🎨</div>
+        <h4>Tu Marca</h4>
+        <p>Colores, logo, imagenes y nombre de Kalala Cafe en cada punto de contacto con el cliente.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">📍</div>
+        <h4>Multi-Sucursal</h4>
+        <p>Maneja multiples ubicaciones desde un solo panel. Ideal cuando Kalala crezca.</p>
+      </div>
+      <div class="admin-card">
+        <div class="icon">📣</div>
+        <h4>Promociones</h4>
+        <p>Envia mensajes promocionales directo al Wallet de tus clientes. Sin email, sin spam.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE 6: ROI ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">05</div>
+    <div class="section-label">Retorno de Inversion</div>
+    <h2 class="section-title">Los numeros no mienten.</h2>
+    <p class="section-intro">
+      Un programa de lealtad bien ejecutado se paga solo en el primer mes. Aqui esta la matematica para Kalala Cafe:
+    </p>
+
+    <div class="roi-box">
+      <div class="roi-calc">
+        <div class="roi-row">
+          <span class="label">Clientes regulares estimados</span>
+          <span class="value">200</span>
+        </div>
+        <div class="roi-row">
+          <span class="label">Visitas promedio por mes (sin lealtad)</span>
+          <span class="value">2 visitas</span>
+        </div>
+        <div class="roi-row">
+          <span class="label">Ticket promedio</span>
+          <span class="value">$100 MXN</span>
+        </div>
+        <div class="roi-row">
+          <span class="label">Ingreso mensual base (200 x 2 x $100)</span>
+          <span class="value">$40,000 MXN</span>
+        </div>
+        <div class="roi-row" style="background: rgba(45, 106, 79, 0.05); border-radius: 10px; padding: 16px; margin: 8px -16px;">
+          <span class="label"><strong>Incremento con programa de lealtad (+20% visitas)</strong></span>
+          <span class="value" style="color: var(--primary);">+$8,000 MXN</span>
+        </div>
+        <div class="roi-row">
+          <span class="label">Ingreso por saldo prepagado (15% de clientes)</span>
+          <span class="value" style="color: var(--primary);">+$3,000 MXN</span>
+        </div>
+        <div class="roi-row">
+          <span class="label">Ingreso por gift cards (5 gift cards/mes)</span>
+          <span class="value" style="color: var(--primary);">+$1,250 MXN</span>
+        </div>
+        <div class="roi-row">
+          <span class="label">Costo del cafe gratis (recompensas)</span>
+          <span class="value" style="color: #C53030;">-$800 MXN</span>
+        </div>
+        <div class="roi-row total">
+          <span class="label">Ingreso adicional neto por mes</span>
+          <span class="value">+$11,450 MXN</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-bar" style="margin-top: 24px;">
+      <div class="stat-item">
+        <span class="number">4.8x</span>
+        <span class="label">ROI Promedio</span>
+      </div>
+      <div class="stat-item">
+        <span class="number">+20%</span>
+        <span class="label">Mas Visitas</span>
+      </div>
+      <div class="stat-item">
+        <span class="number">+40%</span>
+        <span class="label">Mas Gasto por Cliente</span>
+      </div>
+    </div>
+
+    <p style="font-size: 11px; color: var(--text-muted); margin-top: 16px; text-align: center;">
+      * Basado en estudios de la industria: clientes con programa de lealtad visitan 20% mas y gastan 40% mas. Fuentes: Capital One Shopping, Restroworks, Stamp Me.
+    </p>
+  </div>
+</div>
+
+<!-- ====== PAGE 7: VS COMPETITION ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">06</div>
+    <div class="section-label">Comparativa</div>
+    <h2 class="section-title">Por que Umi Cash y no<br>otra solucion?</h2>
+    <p class="section-intro">
+      Comparamos las alternativas del mercado para que la decision sea clara.
+    </p>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Caracteristica</th>
+          <th>Umi Cash</th>
+          <th>Stamp Me</th>
+          <th>Swirvle</th>
+          <th>Tarjetas Fisicas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Apple Wallet nativo</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>Google Wallet nativo</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>Sin descargar app</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Saldo prepagado</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>Gift cards digitales</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>QR anti-fraude (rotacion)</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>Marca 100% personalizada</td>
+          <td class="check">&#10003;</td>
+          <td>Parcial</td>
+          <td class="cross">&#10007;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>WhatsApp integrado</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>Analiticas de retencion</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td>Multi-sucursal</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+          <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+          <td><strong>Precio mensual</strong></td>
+          <td><strong style="color: var(--primary);">$350 MXN</strong></td>
+          <td>$980+ MXN</td>
+          <td>$749+ MXN</td>
+          <td>~$200 MXN*</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">
+      * Tarjetas fisicas: costo estimado de impresion mensual. No incluye perdida de clientes por tarjetas extraviadas ni costo de oportunidad por falta de datos.
+    </p>
+
+    <div style="background: #F9FAFB; border-radius: 16px; padding: 28px; margin-top: 30px; border: 1px solid #E5E7EB;">
+      <h3 style="font-size: 16px; font-weight: 700; color: var(--primary-dark); margin-bottom: 12px;">Lo que hace unico a Umi Cash:</h3>
+      <p style="font-size: 14px; color: var(--text); line-height: 1.7;">
+        <strong>Somos la unica plataforma</strong> que combina sellos de lealtad + saldo prepagado + gift cards + Apple/Google Wallet <strong>sin requerir que tu cliente descargue una app</strong>. Ademas, nuestro sistema de QR rotativo con expiracion de 5 minutos ofrece seguridad bancaria que ningun competidor en este rango de precio tiene. Y todo por $350 MXN/mes — menos de la mitad que la competencia.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PAGE 8: PRICING ====== -->
+<div class="page">
+  <div class="section-page">
+    <div class="section-number">07</div>
+    <div class="section-label">Inversion</div>
+    <h2 class="section-title">Un solo plan.<br>Todo incluido. $350/mes.</h2>
+    <p class="section-intro">
+      Sin tiers confusos. Sin contratos anuales. Sin letra chiquita. Cancela cuando quieras.
+    </p>
+
+    <div class="pricing-cards">
+      <div class="pricing-card pro">
+        <div class="pricing-badge">Todo Incluido</div>
+        <div class="pricing-name">Umi Cash</div>
+        <div class="pricing-label">Todo lo que necesitas. Sin sorpresas.</div>
+        <div class="pricing-price">$350 <span>MXN</span></div>
+        <div class="pricing-period">por mes / por sucursal</div>
+        <div class="pricing-divider"></div>
+        <div class="pricing-feature">Sellos de lealtad digitales</div>
+        <div class="pricing-feature">Apple Wallet + Google Wallet</div>
+        <div class="pricing-feature">QR seguro anti-fraude</div>
+        <div class="pricing-feature">Dashboard en tiempo real</div>
+        <div class="pricing-feature">Gestion de clientes + exportar CSV</div>
+        <div class="pricing-feature">Saldo prepagado y cobros</div>
+        <div class="pricing-feature">Gift cards digitales</div>
+        <div class="pricing-feature">Notificaciones por WhatsApp</div>
+        <div class="pricing-feature">Promociones via Wallet push</div>
+        <div class="pricing-feature">Analiticas avanzadas + rentabilidad</div>
+        <div class="pricing-feature">Marca 100% personalizada</div>
+        <div class="pricing-feature">Multi-sucursal</div>
+        <div class="pricing-feature">Soporte prioritario por WhatsApp</div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #FFF7ED, #FFFBEB); border: 1px solid #FED7AA; border-radius: 16px; padding: 24px; margin-top: 30px; text-align: center;">
+      <p style="font-size: 16px; font-weight: 700; color: #92400E; margin-bottom: 6px;">
+        🎉 Oferta de Lanzamiento para Kalala Cafe
+      </p>
+      <p style="font-size: 14px; color: #92400E; opacity: 0.85;">
+        <strong>30 dias gratis</strong> del Plan Pro para que pruebes todo sin compromiso. Si no te convence, no pagas nada.
+      </p>
+    </div>
+
+    <p style="font-size: 12px; color: var(--text-muted); margin-top: 20px; text-align: center; line-height: 1.6;">
+      Todos los precios en pesos mexicanos (MXN), IVA no incluido. Facturacion mensual.<br>
+      Incluye configuracion inicial, capacitacion de staff y soporte continuo.
+    </p>
+  </div>
+</div>
+
+<!-- ====== PAGE 9: CTA ====== -->
+<div class="page">
+  <div class="cta-page">
+    <div class="cta-emoji">☕</div>
+    <h2>Listo para transformar<br>la lealtad en Kalala?</h2>
+    <p class="subtitle">
+      En menos de una semana, tus clientes tendran la tarjeta de Kalala Cafe en su Wallet — y tu tendras los datos para crecer.
+    </p>
+
+    <div class="cta-details">
+      <div class="cta-detail">
+        <div class="icon">📅</div>
+        <span><strong>Paso 1:</strong> Reunion de 30 min para definir tu programa</span>
+      </div>
+      <div class="cta-detail">
+        <div class="icon">🎨</div>
+        <span><strong>Paso 2:</strong> Configuramos tu marca y recompensas</span>
+      </div>
+      <div class="cta-detail">
+        <div class="icon">🚀</div>
+        <span><strong>Paso 3:</strong> Lanzamos y capacitamos a tu equipo</span>
+      </div>
+      <div class="cta-detail">
+        <div class="icon">📈</div>
+        <span><strong>Paso 4:</strong> Empiezas a ver resultados desde la semana 1</span>
+      </div>
+    </div>
+
+    <div class="cta-footer">
+      <div>
+        <strong>Umi Consulting</strong><br>
+        cash.umiconsulting.co
+      </div>
+      <div style="text-align: right;">
+        <strong>Contacto</strong><br>
+        hola@umiconsulting.co
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
