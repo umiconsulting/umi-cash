@@ -87,10 +87,15 @@ export async function generateStampStrip(
 
   // Build composite operations
   const composites: sharp.OverlayOptions[] = [];
+  const lastRowCols = visitsRequired > cols ? visitsRequired - cols : cols;
   for (let i = 0; i < visitsRequired; i++) {
     const row = Math.floor(i / cols);
     const col = i % cols;
-    const x = startX + col * (stampSize + 10);
+    // Center the last row if it has fewer stamps
+    const rowColCount = row === rows - 1 ? lastRowCols : cols;
+    const rowW = rowColCount * (stampSize + 10) - 10;
+    const rowStartX = Math.floor((STRIP_W - rowW) / 2);
+    const x = rowStartX + col * (stampSize + 10);
     const y = startY + row * (stampSize + 10);
     composites.push({
       input: i < visitsThisCycle ? filledStamp : emptyStamp,
