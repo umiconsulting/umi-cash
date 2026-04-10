@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import jsQR from 'jsqr';
 import { centavosFromPesos, formatMXN, COMMON_TOPUP_AMOUNTS } from '@/lib/currency';
 
 interface CardPreview {
@@ -82,10 +83,12 @@ export default function ScanPage() {
   }
 
   function startQRDetection() {
-    if (!('BarcodeDetector' in window)) return;
-    const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    const useBarcodeDetector = 'BarcodeDetector' in window;
+    const detector = useBarcodeDetector
+      ? new (window as any).BarcodeDetector({ formats: ['qr_code'] })
+      : null;
 
     async function detect() {
       if (!videoRef.current || !streamRef.current) return;
@@ -93,17 +96,24 @@ export default function ScanPage() {
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
         ctx?.drawImage(videoRef.current, 0, 0);
+
+        let value: string | null = null;
         try {
-          const barcodes = await detector.detect(canvas);
-          if (barcodes.length > 0) {
-            const value = barcodes[0].rawValue;
-            if (value && value !== lastScannedRef.current) {
-              lastScannedRef.current = value;
-              await loadPreview(value);
-              setTimeout(() => { lastScannedRef.current = ''; }, 3000);
-            }
+          if (detector) {
+            const barcodes = await detector.detect(canvas);
+            if (barcodes.length > 0) value = barcodes[0].rawValue;
+          } else if (ctx) {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            if (code) value = code.data;
           }
         } catch {}
+
+        if (value && value !== lastScannedRef.current) {
+          lastScannedRef.current = value;
+          await loadPreview(value);
+          setTimeout(() => { lastScannedRef.current = ''; }, 3000);
+        }
       }
       if (streamRef.current) rafRef.current = requestAnimationFrame(detect);
     }
