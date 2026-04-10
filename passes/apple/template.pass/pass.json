@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "passTypeIdentifier": "pass.co.umicash.loyalty",
-  "teamIdentifier": "PLACEHOLDER",
+  "teamIdentifier": "PLACEHOLDER0",
   "organizationName": "Umi Cash",
   "description": "Tarjeta de lealtad",
   "backgroundColor": "rgb(181, 96, 90)",
@@ -79,6 +79,6 @@
     }
   ],
   "webServiceURL": "https://your-domain.com/api/passes/apple",
-  "authenticationToken": "PLACEHOLDER",
+  "authenticationToken": "PLACEHOLDER_TOKEN_",
   "sharingProhibited": false
 }
