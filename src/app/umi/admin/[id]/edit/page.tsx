@@ -48,6 +48,25 @@ export default function EditTenantPage() {
     visitsRequired: 10,
   });
   const [locations, setLocations] = useState<{ id?: string; name: string; address: string; latitude: string; longitude: string }[]>([]);
+  const [geocoding, setGeocoding] = useState<number | null>(null);
+
+  async function geocodeAddress(index: number) {
+    const loc = locations[index];
+    if (!loc.address || loc.address.length < 3) return;
+    setGeocoding(index);
+    try {
+      const res = await fetch(`/api/umi/geocode?address=${encodeURIComponent(loc.address)}`);
+      if (!res.ok) { setError('No se encontró la dirección'); return; }
+      const data = await res.json();
+      const next = [...locations];
+      next[index] = { ...loc, latitude: String(data.latitude), longitude: String(data.longitude), address: data.formattedAddress || loc.address };
+      setLocations(next);
+    } catch {
+      setError('Error al geocodificar');
+    } finally {
+      setGeocoding(null);
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/umi/tenants/${id}`)
@@ -254,8 +273,15 @@ export default function EditTenantPage() {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Dirección</label>
-                    <input type="text" value={loc.address} onChange={(e) => { const next = [...locations]; next[i] = { ...loc, address: e.target.value }; setLocations(next); }}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="Av. Álvaro Obregón 123" maxLength={200} />
+                    <div className="flex gap-2">
+                      <input type="text" value={loc.address} onChange={(e) => { const next = [...locations]; next[i] = { ...loc, address: e.target.value }; setLocations(next); }}
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="Av. Álvaro Obregón 123" maxLength={200} />
+                      <button type="button" onClick={() => geocodeAddress(i)} disabled={geocoding === i || !loc.address}
+                        className="px-3 py-2 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
+                        title="Obtener coordenadas de Google Maps">
+                        {geocoding === i ? '...' : 'GPS'}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
