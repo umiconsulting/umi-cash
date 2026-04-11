@@ -55,7 +55,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     return NextResponse.json({ saveUrl });
   } catch (err) {
-    console.error('[Google Pass]', err);
-    return NextResponse.json({ error: 'Error generando pase' }, { status: 500 });
+    console.error('[Google Pass]', err instanceof Error ? err.message : err);
+    console.error('[Google Pass] Stack:', err instanceof Error ? err.stack : '');
+    return NextResponse.json({ error: 'Error generando pase. Intenta de nuevo.' }, { status: 500 });
   }
 }
