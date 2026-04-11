@@ -94,26 +94,37 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
                 ) : (
                   <span className="text-white text-2xl font-black tracking-tight uppercase leading-none">{tenant.name}</span>
                 )}
-                <div className="text-right flex-shrink-0 ml-3">
-                  <p className="text-[10px] uppercase tracking-widest font-medium text-white/50">Saldo</p>
-                  <p className="text-white text-xl font-bold leading-tight">$150.00</p>
-                </div>
+                {tenant.topupEnabled && (
+                  <div className="text-right flex-shrink-0 ml-3">
+                    <p className="text-[10px] uppercase tracking-widest font-medium text-white/50">Saldo</p>
+                    <p className="text-white text-xl font-bold leading-tight">$150.00</p>
+                  </div>
+                )}
               </div>
 
               {/* Strip: stamps grid or static image */}
               {tenant.passStyle === 'stamps' ? (
                 <div className="px-3 py-2" style={{ backgroundColor: tenant.secondaryColor || 'transparent' }}>
-                  <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.min(visitsRequired, Math.ceil(visitsRequired / 2) + (visitsRequired <= 6 ? visitsRequired - Math.ceil(visitsRequired / 2) : 0))}, 1fr)` }}>
-                    {Array.from({ length: visitsRequired }).map((_, i) => (
-                      <div key={i} className="aspect-square flex items-center justify-center">
-                        <img
-                          src={`/logos/${params.slug}-stamp-${i < exampleVisits ? 'filled' : 'empty'}.png`}
-                          alt={i < exampleVisits ? 'Sello' : 'Vacío'}
-                          className="w-full h-full object-contain"
-                        />
+                  {(() => {
+                    const cols = visitsRequired <= 5 ? visitsRequired : Math.ceil(visitsRequired / 2);
+                    const rows: number[][] = [];
+                    for (let i = 0; i < visitsRequired; i += cols) {
+                      rows.push(Array.from({ length: Math.min(cols, visitsRequired - i) }, (_, j) => i + j));
+                    }
+                    return rows.map((row, ri) => (
+                      <div key={ri} className="flex justify-center gap-1.5" style={{ marginTop: ri > 0 ? '6px' : undefined }}>
+                        {row.map((i) => (
+                          <div key={i} className="aspect-square flex items-center justify-center" style={{ width: `${100 / cols - 2}%` }}>
+                            <img
+                              src={`/logos/${params.slug}-stamp-${i < exampleVisits ? 'filled' : 'empty'}.png`}
+                              alt={i < exampleVisits ? 'Sello' : 'Vacío'}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    ));
+                  })()}
                 </div>
               ) : tenant.stripImageUrl ? (
                 <img src={tenant.stripImageUrl} alt="" className="w-full h-auto" />
