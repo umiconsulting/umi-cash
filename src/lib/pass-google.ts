@@ -31,15 +31,18 @@ export function isGoogleWalletConfigured(): boolean {
   );
 }
 
-function getLoyaltyClass(tenantName: string, primaryColor: string, tenantSlug?: string) {
+function getLoyaltyClass(tenantName: string, primaryColor: string, tenantSlug?: string, logoUrl?: string | null) {
   const classId = tenantSlug ? `${tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX;
+  const logoUri = logoUrl
+    ? (logoUrl.startsWith('http') ? logoUrl : `${APP_URL}${logoUrl}`)
+    : `${APP_URL}/logos/kalala-logo.png`; // fallback
   return {
     id: `${ISSUER_ID}.${classId}`,
     issuerName: tenantName,
     programName: 'Programa de Lealtad',
     programLogo: {
       sourceUri: {
-        uri: `${APP_URL}/logo-wallet.png`,
+        uri: logoUri,
       },
       contentDescription: {
         defaultValue: {
@@ -80,6 +83,7 @@ interface GooglePassData {
   tenantName?: string;
   tenantSlug?: string;
   primaryColor?: string; // hex
+  logoUrl?: string | null;
 }
 
 function getLoyaltyObject(data: GooglePassData) {
@@ -170,7 +174,7 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     typ: 'savetowallet',
     iat: Math.floor(Date.now() / 1000),
     payload: {
-      loyaltyClasses: [getLoyaltyClass(data.tenantName || 'Umi Cash', data.primaryColor || '#B5605A', data.tenantSlug)],
+      loyaltyClasses: [getLoyaltyClass(data.tenantName || 'Umi Cash', data.primaryColor || '#B5605A', data.tenantSlug, data.logoUrl)],
       loyaltyObjects: [getLoyaltyObject(data)],
     },
   };
