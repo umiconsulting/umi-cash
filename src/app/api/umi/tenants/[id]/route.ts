@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyUmiSession } from '@/lib/umi-auth';
 import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
@@ -23,8 +24,10 @@ const UpdateTenantSchema = z.object({
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   selfRegistration: z.boolean().optional(),
   topupEnabled: z.boolean().optional(),
-  openHour: z.number().int().min(0).max(23).optional().nullable(),
-  closeHour: z.number().int().min(0).max(23).optional().nullable(),
+  businessHours: z.record(
+    z.string().regex(/^[0-6]$/),
+    z.tuple([z.number().int().min(0).max(23), z.number().int().min(0).max(23)]).nullable()
+  ).optional().nullable(),
   // timezone is auto-derived from location coordinates — not manually settable
   rewardName: z.string().min(2).max(100).optional(),
   visitsRequired: z.number().int().min(1).max(50).optional(),
@@ -55,8 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     cardPrefix: tenant.cardPrefix,
     selfRegistration: tenant.selfRegistration,
     topupEnabled: tenant.topupEnabled,
-    openHour: tenant.openHour,
-    closeHour: tenant.closeHour,
+    businessHours: tenant.businessHours,
     timezone: tenant.timezone,
     subscriptionStatus: tenant.subscriptionStatus,
     trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
@@ -95,8 +97,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         ...(data.secondaryColor !== undefined && { secondaryColor: data.secondaryColor }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
         ...(data.topupEnabled !== undefined && { topupEnabled: data.topupEnabled }),
-        ...(data.openHour !== undefined && { openHour: data.openHour }),
-        ...(data.closeHour !== undefined && { closeHour: data.closeHour }),
+        ...(data.businessHours !== undefined && { businessHours: data.businessHours === null ? Prisma.DbNull : data.businessHours }),
         ...(data.subscriptionStatus !== undefined && {
           subscriptionStatus: data.subscriptionStatus,
           suspendedAt: data.subscriptionStatus === 'SUSPENDED' ? new Date() : null,

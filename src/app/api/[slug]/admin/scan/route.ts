@@ -74,14 +74,24 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       return NextResponse.json({ error: 'No puedes escanear tu propia tarjeta' }, { status: 403 });
     }
 
-    // Warn on out-of-hours scans based on tenant business hours and timezone
+    // Warn on out-of-hours scans based on tenant per-day business hours
     const tz = tenant.timezone || 'America/Mexico_City';
-    const localHour = parseInt(new Date().toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: false }));
-    const openH = tenant.openHour ?? 6;
-    const closeH = tenant.closeHour ?? 23;
-    const isAfterHours = localHour < openH || localHour >= closeH;
+    const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+    const localHour = localNow.getHours();
+    const localDay = String(localNow.getDay()); // 0=Sun, 6=Sat
+    const hours = tenant.businessHours as Record<string, [number, number] | null> | null;
+    let isAfterHours = false;
+    if (hours) {
+      const dayHours = hours[localDay];
+      if (!dayHours) {
+        isAfterHours = true; // closed today
+      } else {
+        isAfterHours = localHour < dayHours[0] || localHour >= dayHours[1];
+      }
+    }
     if (isAfterHours) {
-      console.warn(`[Scan] After-hours scan by staff ${staff.sub} for card ${card.id} at hour ${localHour} (open: ${openH}-${closeH})`);
+      const dayHours = hours?.[localDay];
+      console.warn(`[Scan] After-hours scan by staff ${staff.sub} for card ${card.id} at hour ${localHour} day ${localDay} (hours: ${dayHours ? dayHours.join('-') : 'closed'})`);
     }
 
     // 1 visit per card per calendar day in tenant timezone

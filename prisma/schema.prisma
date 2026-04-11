@@ -25,8 +25,7 @@ model Tenant {
   promoStartsAt  DateTime?                 // When the promotion becomes active
   promoEndsAt    DateTime?                 // When the promotion expires
   promoDays      String?                   // Comma-separated day numbers (0=Sun..6=Sat), null = all days
-  openHour           Int?                       // Business open hour (0-23), null = no enforcement
-  closeHour          Int?                       // Business close hour (0-23), null = no enforcement
+  businessHours      Json?                      // Per-day hours: {"0":[8,14],"1":[8,20],...} keys=getDay(), null=no enforcement
   timezone           String   @default("America/Mexico_City") // IANA timezone for business hours
   topupEnabled       Boolean  @default(true)   // false = hide monedero/balance features
   selfRegistration   Boolean  @default(true)

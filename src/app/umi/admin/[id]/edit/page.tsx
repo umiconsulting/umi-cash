@@ -23,8 +23,7 @@ interface TenantEditData {
   cardPrefix: string;
   selfRegistration: boolean;
   topupEnabled: boolean;
-  openHour: number | null;
-  closeHour: number | null;
+  businessHours: Record<string, [number, number] | null> | null;
   timezone: string;
   subscriptionStatus: string;
   trialEndsAt: string | null;
@@ -41,6 +40,9 @@ export default function EditTenantPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const defaultHours: Record<string, [number, number]> = { '0': [8, 20], '1': [8, 20], '2': [8, 20], '3': [8, 20], '4': [8, 20], '5': [8, 20], '6': [8, 20] };
+
   const [form, setForm] = useState({
     name: '',
     city: '',
@@ -48,8 +50,7 @@ export default function EditTenantPage() {
     secondaryColor: '',
     selfRegistration: true,
     topupEnabled: true,
-    openHour: '',
-    closeHour: '',
+    businessHours: defaultHours as Record<string, [number, number] | null>,
     timezone: 'America/Mexico_City',
     subscriptionStatus: 'ACTIVE',
     rewardName: '',
@@ -88,8 +89,7 @@ export default function EditTenantPage() {
           secondaryColor: d.secondaryColor ?? '',
           selfRegistration: d.selfRegistration,
           topupEnabled: d.topupEnabled,
-          openHour: d.openHour != null ? String(d.openHour) : '',
-          closeHour: d.closeHour != null ? String(d.closeHour) : '',
+          businessHours: d.businessHours || defaultHours,
           timezone: d.timezone || 'America/Mexico_City',
           subscriptionStatus: d.subscriptionStatus,
           rewardName: d.rewardConfig?.rewardName ?? 'Bebida gratis',
@@ -137,8 +137,7 @@ export default function EditTenantPage() {
         secondaryColor: form.secondaryColor || null,
         selfRegistration: form.selfRegistration,
         topupEnabled: form.topupEnabled,
-        openHour: form.openHour !== '' ? parseInt(form.openHour as string) : null,
-        closeHour: form.closeHour !== '' ? parseInt(form.closeHour as string) : null,
+        businessHours: form.businessHours,
         subscriptionStatus: form.subscriptionStatus,
         // Only send reward fields if changed from what was loaded
         ...(data?.rewardConfig && (form.rewardName !== data.rewardConfig.rewardName || form.visitsRequired !== data.rewardConfig.visitsRequired)
@@ -353,34 +352,62 @@ export default function EditTenantPage() {
               </button>
             </label>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Horario apertura</label>
-                <select value={form.openHour} onChange={(e) => setForm({ ...form, openHour: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
-                  <option value="">Sin configurar</option>
-                  {Array.from({ length: 24 }).map((_, h) => (
-                    <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-1">Escaneos fuera de horario se marcan como sospechosos</p>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Horarios por día</label>
+                <span className="text-xs text-gray-400">{form.timezone}</span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Horario cierre</label>
-                <select value={form.closeHour} onChange={(e) => setForm({ ...form, closeHour: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
-                  <option value="">Sin configurar</option>
-                  {Array.from({ length: 24 }).map((_, h) => (
-                    <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
-                  ))}
-                </select>
+              <div className="space-y-2">
+                {[0, 1, 2, 3, 4, 5, 6].map((day) => {
+                  const key = String(day);
+                  const dayHours = form.businessHours[key];
+                  const isClosed = dayHours === null;
+                  return (
+                    <div key={day} className="flex items-center gap-2">
+                      <span className="w-10 text-xs font-medium text-gray-500">{DAY_NAMES[day]}</span>
+                      <select
+                        value={isClosed ? 'closed' : String(dayHours?.[0] ?? 8)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const next = { ...form.businessHours };
+                          if (val === 'closed') {
+                            next[key] = null;
+                          } else {
+                            const open = parseInt(val);
+                            next[key] = [open, dayHours?.[1] ?? 20];
+                          }
+                          setForm({ ...form, businessHours: next });
+                        }}
+                        className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+                      >
+                        <option value="closed">Cerrado</option>
+                        {Array.from({ length: 24 }).map((_, h) => (
+                          <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
+                        ))}
+                      </select>
+                      {!isClosed && (
+                        <>
+                          <span className="text-xs text-gray-400">a</span>
+                          <select
+                            value={String(dayHours?.[1] ?? 20)}
+                            onChange={(e) => {
+                              const next = { ...form.businessHours };
+                              next[key] = [dayHours?.[0] ?? 8, parseInt(e.target.value)];
+                              setForm({ ...form, businessHours: next });
+                            }}
+                            className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
+                          >
+                            {Array.from({ length: 24 }).map((_, h) => (
+                              <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Zona horaria</label>
-                <input type="text" value={form.timezone} readOnly
-                  className="w-full border border-gray-100 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed" />
-                <p className="text-xs text-gray-400 mt-1">Auto-detectada por coordenadas</p>
-              </div>
+              <p className="text-xs text-gray-400 mt-2">Escaneos fuera de horario se marcan como sospechosos</p>
             </div>
           </div>
 
