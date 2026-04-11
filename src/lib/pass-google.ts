@@ -15,13 +15,12 @@
  */
 
 import { SignJWT } from 'jose';
-import { formatMXN } from './currency';
 import { signWalletBarcode } from './auth';
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || '';
 const CLASS_ID_PREFIX = process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v2';
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cash.umiconsulting.co';
 
 export function isGoogleWalletConfigured(): boolean {
   return !!(
@@ -31,44 +30,7 @@ export function isGoogleWalletConfigured(): boolean {
   );
 }
 
-function getLoyaltyClass(tenantName: string, primaryColor: string, tenantSlug?: string, logoUrl?: string | null) {
-  const classId = tenantSlug ? `${tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX;
-  const logoUri = logoUrl
-    ? (logoUrl.startsWith('http') ? logoUrl : `${APP_URL}${logoUrl}`)
-    : `${APP_URL}/logos/kalala-logo.png`; // fallback
-  return {
-    id: `${ISSUER_ID}.${classId}`,
-    issuerName: tenantName,
-    programName: 'Programa de Lealtad',
-    programLogo: {
-      sourceUri: {
-        uri: logoUri,
-      },
-      contentDescription: {
-        defaultValue: {
-          language: 'es-MX',
-          value: `${tenantName} logo`,
-        },
-      },
-    },
-    hexBackgroundColor: primaryColor,
-    countryCode: 'MX',
-    reviewStatus: 'UNDER_REVIEW',
-    linksModuleData: {
-      uris: [
-        {
-          uri: tenantSlug ? `${APP_URL}/${tenantSlug}/card` : `${APP_URL}/card`,
-          description: 'Ver mi tarjeta',
-          id: 'card_link',
-        },
-      ],
-    },
-  };
-}
-
-// Keep old signature for internal use, updated below
-
-interface GooglePassData {
+export interface GooglePassData {
   cardId: string;
   cardNumber: string;
   customerName: string;
@@ -78,12 +40,35 @@ interface GooglePassData {
   pendingRewards: number;
   rewardName: string;
   totalVisits: number;
-  memberSince: string; // ISO date string
-  // Tenant branding
+  memberSince: string;
   tenantName?: string;
   tenantSlug?: string;
-  primaryColor?: string; // hex
+  primaryColor?: string;
   logoUrl?: string | null;
+}
+
+function getClassId(tenantSlug?: string): string {
+  return `${ISSUER_ID}.${tenantSlug ? `${tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX}`;
+}
+
+function getLoyaltyClass(data: GooglePassData) {
+  const logoUri = data.logoUrl
+    ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${APP_URL}${data.logoUrl}`)
+    : `${APP_URL}/logos/kalala-logo.png`;
+
+  return {
+    id: getClassId(data.tenantSlug),
+    issuerName: data.tenantName || 'Umi Cash',
+    programName: `Lealtad ${data.tenantName || 'Umi Cash'}`,
+    programLogo: {
+      sourceUri: { uri: logoUri },
+      contentDescription: {
+        defaultValue: { language: 'es-MX', value: `${data.tenantName} logo` },
+      },
+    },
+    hexBackgroundColor: data.primaryColor || '#B5605A',
+    reviewStatus: 'UNDER_REVIEW',
+  };
 }
 
 function getLoyaltyObject(data: GooglePassData) {
@@ -92,61 +77,34 @@ function getLoyaltyObject(data: GooglePassData) {
 
   return {
     id: objectId,
-    classId: `${ISSUER_ID}.${data.tenantSlug ? `${data.tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX}`,
+    classId: getClassId(data.tenantSlug),
     state: 'ACTIVE',
     accountId: data.cardNumber,
     accountName: data.customerName || 'Cliente',
     loyaltyPoints: {
-      balance: {
-        int: data.visitsThisCycle,
-      },
+      balance: { int: data.visitsThisCycle },
       label: `Visitas (meta: ${data.visitsRequired})`,
     },
-    secondaryLoyaltyPoints: {
-      balance: {
-        money: {
-          currencyCode: 'MXN',
-          // Google Wallet uses micros (millionths of currency unit)
-          // $1 MXN = 1,000,000 micros; centavos × 10,000 = micros
-          micros: data.balanceCentavos * 10_000,
-        },
-      },
-      label: 'Saldo regalo',
-    },
-    textModulesData: [
-      {
-        header: 'PRÓXIMA RECOMPENSA',
-        body:
-          data.pendingRewards > 0
-            ? `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} disponible${data.pendingRewards > 1 ? 's' : ''} — ¡canjéala en tienda!`
-            : `${remaining} visita${remaining !== 1 ? 's' : ''} más para obtener: ${data.rewardName}`,
-        id: 'reward_progress',
-      },
-      {
-        header: 'RECOMPENSA ACTUAL',
-        body: data.rewardName,
-        id: 'reward_name',
-      },
-    ],
     barcode: {
       type: 'QR_CODE',
       value: signWalletBarcode(data.cardNumber),
-      alternateText: `Tarjeta ${data.cardNumber}`,
+      alternateText: data.cardNumber,
     },
-    infoModuleData: {
-      labelValueRows: [
+    textModulesData: [
+      {
+        header: 'Recompensa',
+        body: data.pendingRewards > 0
+          ? `${data.pendingRewards} disponible${data.pendingRewards > 1 ? 's' : ''}`
+          : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`,
+        id: 'reward_progress',
+      },
+    ],
+    linksModuleData: {
+      uris: [
         {
-          columns: [
-            { label: 'Total de visitas', value: String(data.totalVisits) },
-            {
-              label: 'Miembro desde',
-              value: new Intl.DateTimeFormat('es-MX', {
-                month: 'long',
-                year: 'numeric',
-                timeZone: 'America/Mexico_City',
-              }).format(new Date(data.memberSince)),
-            },
-          ],
+          uri: `${APP_URL}/${data.tenantSlug || ''}/card`,
+          description: 'Ver mi tarjeta',
+          id: 'card_link',
         },
       ],
     },
@@ -168,6 +126,13 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     ['sign']
   );
 
+  const loyaltyClass = getLoyaltyClass(data);
+  const loyaltyObject = getLoyaltyObject(data);
+
+  console.log('[Google Wallet] Class ID:', loyaltyClass.id);
+  console.log('[Google Wallet] Object ID:', loyaltyObject.id);
+  console.log('[Google Wallet] Logo URI:', loyaltyClass.programLogo.sourceUri.uri);
+
   const payload = {
     iss: SERVICE_ACCOUNT_EMAIL,
     aud: 'google',
@@ -175,8 +140,8 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     iat: Math.floor(Date.now() / 1000),
     origins: [APP_URL],
     payload: {
-      loyaltyClasses: [getLoyaltyClass(data.tenantName || 'Umi Cash', data.primaryColor || '#B5605A', data.tenantSlug, data.logoUrl)],
-      loyaltyObjects: [getLoyaltyObject(data)],
+      loyaltyClasses: [loyaltyClass],
+      loyaltyObjects: [loyaltyObject],
     },
   };
 
@@ -226,6 +191,5 @@ export async function updateGoogleWalletObject(data: GooglePassData): Promise<vo
     );
   } catch (err) {
     console.error('[Google Wallet] Update failed:', err instanceof Error ? err.message : String(err));
-    // Non-fatal: pass will update on next open
   }
 }
