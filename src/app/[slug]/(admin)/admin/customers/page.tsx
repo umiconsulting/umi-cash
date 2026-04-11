@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { AdminCustomer } from '@/types/api';
+import { useTenant } from '@/context/TenantContext';
 
 const INACTIVE_DAYS = 30;
 const NEW_ACCOUNT_GRACE_DAYS = 7;
@@ -21,6 +22,7 @@ function isInactive(customer: AdminCustomer): boolean {
 
 export default function CustomersPage() {
   const { slug } = useParams<{ slug: string }>();
+  const tenant = useTenant();
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -86,7 +88,7 @@ export default function CustomersPage() {
         {[
           { value: 'recent', label: 'Recientes' },
           { value: 'visits', label: 'Más visitas' },
-          { value: 'balance', label: 'Mayor saldo' },
+          ...(tenant.topupEnabled ? [{ value: 'balance', label: 'Mayor saldo' }] : []),
           { value: 'ltv', label: 'Mayor LTV' },
           { value: 'inactive', label: 'Sin visitas 30d' },
         ].map((s) => (
@@ -122,7 +124,7 @@ export default function CustomersPage() {
                 <p className="text-xs text-coffee-medium">{c.phone || c.email || c.cardNumber}</p>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs text-coffee-light">{c.totalVisits} visitas</span>
-                  <span className="text-xs text-coffee-light">Saldo: {c.balanceMXN}</span>
+                  {tenant.topupEnabled && <span className="text-xs text-coffee-light">Saldo: {c.balanceMXN}</span>}
                   {c.ltvCentavos > 0 && (
                     <span className="text-xs font-medium text-coffee-brand">LTV {c.ltvMXN}</span>
                   )}

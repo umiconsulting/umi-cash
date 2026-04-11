@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { formatMXN } from '@/lib/currency';
+import { useTenant } from '@/context/TenantContext';
 import { formatDateTimeMX, formatDateShortMX } from '@/lib/intl';
 import type { CardState } from '@/types/api';
 
@@ -216,6 +217,7 @@ function WalletButtons({ token, slug }: { token: string; slug: string }) {
 
 export default function CardPage() {
   const { slug } = useParams<{ slug: string }>();
+  const tenant = useTenant();
   const token = useAuth();
   const [card, setCard] = useState<CardState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -287,10 +289,12 @@ export default function CardPage() {
                 ¡Buenas, {firstName}!
               </h1>
             </div>
-            <div className="text-right">
-              <p className="text-coffee-pale/50 text-[10px] uppercase tracking-widest">Saldo</p>
-              <p className="text-2xl font-bold nums">{card.balanceMXN}</p>
-            </div>
+            {tenant.topupEnabled && (
+              <div className="text-right">
+                <p className="text-coffee-pale/50 text-[10px] uppercase tracking-widest">Saldo</p>
+                <p className="text-2xl font-bold nums">{card.balanceMXN}</p>
+              </div>
+            )}
           </div>
 
           {card.pendingRewards > 0 && (
@@ -366,7 +370,7 @@ export default function CardPage() {
           </div>
         )}
 
-        {card.recentTransactions.length > 0 && (
+        {tenant.topupEnabled && card.recentTransactions.length > 0 && (
           <div className="card-surface">
             <h3 className="font-semibold text-coffee-dark mb-3">Movimientos de saldo</h3>
             <div className="space-y-2">
@@ -393,7 +397,7 @@ export default function CardPage() {
         )}
 
         <p className="text-center text-xs text-coffee-light pb-2">
-          Tu saldo nunca vence ·{' '}
+          {tenant.topupEnabled ? 'Tu saldo nunca vence · ' : ''}
           <a href={`/${slug}/terminos`} className="underline">Términos</a>
         </p>
       </div>

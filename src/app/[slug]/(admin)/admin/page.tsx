@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useTenant } from '@/context/TenantContext';
 
 interface DashboardData {
   totalCustomers: number;
@@ -15,6 +16,7 @@ interface DashboardData {
 
 export default function AdminDashboard() {
   const { slug } = useParams<{ slug: string }>();
+  const tenant = useTenant();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,15 +73,17 @@ export default function AdminDashboard() {
       <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-6">Panel de control</h1>
 
       {/* Today's metrics */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className={`grid ${tenant.topupEnabled ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mb-6`}>
         <div className="card-surface text-center">
           <p className="text-2xl font-bold text-coffee-dark">{fmt(data?.visitsToday)}</p>
           <p className="text-xs text-coffee-medium mt-0.5">Visitas hoy</p>
         </div>
-        <div className="card-surface text-center">
-          <p className="text-2xl font-bold text-coffee-dark">{loading ? '...' : (data?.topupsTodayMXN ?? '$0.00')}</p>
-          <p className="text-xs text-coffee-medium mt-0.5">Recargado hoy</p>
-        </div>
+        {tenant.topupEnabled && (
+          <div className="card-surface text-center">
+            <p className="text-2xl font-bold text-coffee-dark">{loading ? '...' : (data?.topupsTodayMXN ?? '$0.00')}</p>
+            <p className="text-xs text-coffee-medium mt-0.5">Recargado hoy</p>
+          </div>
+        )}
         <div className="card-surface text-center">
           <p className={`text-2xl font-bold ${data?.pendingRewards ? 'text-coffee-brand' : 'text-coffee-dark'}`}>
             {fmt(data?.pendingRewards)}
@@ -94,10 +98,12 @@ export default function AdminDashboard() {
           <p className="font-semibold text-coffee-dark">Escanear QR</p>
           <p className="text-xs text-coffee-medium mt-1">Registrar visita</p>
         </Link>
-        <Link href={`/${slug}/admin/topup`} className="card-surface hover:shadow-md transition-shadow">
-          <p className="font-semibold text-coffee-dark">Recargar saldo</p>
-          <p className="text-xs text-coffee-medium mt-1">Agregar saldo regalo</p>
-        </Link>
+        {tenant.topupEnabled && (
+          <Link href={`/${slug}/admin/topup`} className="card-surface hover:shadow-md transition-shadow">
+            <p className="font-semibold text-coffee-dark">Recargar saldo</p>
+            <p className="text-xs text-coffee-medium mt-1">Agregar saldo regalo</p>
+          </Link>
+        )}
         <Link href={`/${slug}/admin/customers`} className="card-surface hover:shadow-md transition-shadow">
           <p className="font-semibold text-coffee-dark">Clientes</p>
           <p className="text-xs text-coffee-medium mt-1">

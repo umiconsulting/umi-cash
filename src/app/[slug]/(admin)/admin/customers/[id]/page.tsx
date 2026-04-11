@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formatMXN, COMMON_TOPUP_AMOUNTS, centavosFromPesos } from '@/lib/currency';
+import { useTenant } from '@/context/TenantContext';
 import { formatDateShortMX, formatDateTimeMX } from '@/lib/intl';
 
 interface CustomerDetail {
@@ -19,6 +20,7 @@ interface CustomerDetail {
 export default function CustomerDetailPage() {
   const { slug, id } = useParams<{ slug: string; id: string }>();
   const router = useRouter();
+  const tenant = useTenant();
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [topupAmount, setTopupAmount] = useState('');
@@ -111,8 +113,8 @@ export default function CustomerDetailPage() {
         <p className="text-coffee-light text-sm">{customer.phone || customer.email || '—'}</p>
         <p className="text-coffee-pale/60 text-xs mt-1">{customer.cardNumber}</p>
         <div className="flex justify-between mt-4">
-          <div><p className="text-coffee-light text-xs">Saldo</p><p className="text-xl font-bold">{customer.balanceMXN}</p></div>
-          <div className="text-right"><p className="text-coffee-light text-xs">Visitas</p><p className="text-xl font-bold">{customer.visitsThisCycle}/{customer.visitsRequired}</p></div>
+          {tenant.topupEnabled && <div><p className="text-coffee-light text-xs">Saldo</p><p className="text-xl font-bold">{customer.balanceMXN}</p></div>}
+          <div className={tenant.topupEnabled ? 'text-right' : ''}><p className="text-coffee-light text-xs">Visitas</p><p className="text-xl font-bold">{customer.visitsThisCycle}/{customer.visitsRequired}</p></div>
         </div>
       </div>
 
@@ -120,7 +122,7 @@ export default function CustomerDetailPage() {
         <div className="card-surface text-center col-span-2 border-coffee-brand/20" style={{ borderColor: 'color-mix(in srgb, var(--color-accent) 25%, transparent)' }}>
           <p className="text-xs text-coffee-medium mb-0.5 uppercase tracking-wide">Valor de vida (LTV)</p>
           <p className="text-3xl font-bold text-coffee-dark">{customer.ltvMXN}</p>
-          <p className="text-xs text-coffee-light mt-1">Total gastado en tienda · Recargado: {customer.totalTopupMXN}</p>
+          <p className="text-xs text-coffee-light mt-1">Total gastado en tienda{tenant.topupEnabled ? ` · Recargado: ${customer.totalTopupMXN}` : ''}</p>
         </div>
         <div className="card-surface text-center"><p className="text-2xl font-bold text-coffee-dark">{customer.totalVisits}</p><p className="text-xs text-coffee-medium">Total visitas</p></div>
         <div className="card-surface text-center"><p className="text-2xl font-bold text-coffee-dark">{customer.pendingRewards}</p><p className="text-xs text-coffee-medium">Recompensas</p></div>
@@ -132,23 +134,25 @@ export default function CustomerDetailPage() {
         </div>
       )}
 
-      <div className="card-surface mb-4">
-        <h3 className="font-semibold text-coffee-dark mb-3">Recargar saldo</h3>
-        <form onSubmit={handleTopUp} className="space-y-3">
-          <div className="grid grid-cols-4 gap-2">
-            {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => (
-              <button key={centavos} type="button" onClick={() => setTopupAmount(String(centavos / 100))}
-                className={`py-2 rounded-xl text-sm font-medium transition-colors ${topupAmount === String(centavos / 100) ? 'bg-coffee-dark text-white' : 'bg-coffee-pale text-coffee-medium'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input type="number" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} placeholder="Otro monto" className="input-field flex-1" min="1" max="10000" />
-            <button type="submit" disabled={topupLoading || !topupAmount} className="btn-primary">{topupLoading ? '...' : 'Recargar'}</button>
-          </div>
-        </form>
-      </div>
+      {tenant.topupEnabled && (
+        <div className="card-surface mb-4">
+          <h3 className="font-semibold text-coffee-dark mb-3">Recargar saldo</h3>
+          <form onSubmit={handleTopUp} className="space-y-3">
+            <div className="grid grid-cols-4 gap-2">
+              {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => (
+                <button key={centavos} type="button" onClick={() => setTopupAmount(String(centavos / 100))}
+                  className={`py-2 rounded-xl text-sm font-medium transition-colors ${topupAmount === String(centavos / 100) ? 'bg-coffee-dark text-white' : 'bg-coffee-pale text-coffee-medium'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input type="number" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} placeholder="Otro monto" className="input-field flex-1" min="1" max="10000" />
+              <button type="submit" disabled={topupLoading || !topupAmount} className="btn-primary">{topupLoading ? '...' : 'Recargar'}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {customer.pendingRewards > 0 && (
         <div className="card-surface border-2 border-coffee-brand/30 mb-4">
@@ -203,7 +207,7 @@ export default function CustomerDetailPage() {
         </div>
       )}
 
-      {customer.recentTransactions?.length > 0 && (
+      {tenant.topupEnabled && customer.recentTransactions?.length > 0 && (
         <div className="card-surface">
           <h3 className="font-semibold text-coffee-dark mb-3">Movimientos de saldo</h3>
           <div className="space-y-2">

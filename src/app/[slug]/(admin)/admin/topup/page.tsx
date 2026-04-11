@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useTenant } from '@/context/TenantContext';
 import { COMMON_TOPUP_AMOUNTS, centavosFromPesos, formatMXN } from '@/lib/currency';
 
 interface CustomerSearchResult {
@@ -29,6 +30,14 @@ function decodeQRCardId(jwt: string): string | null {
 
 export default function TopUpPage() {
   const { slug } = useParams<{ slug: string }>();
+  const router = useRouter();
+  const tenant = useTenant();
+
+  // Redirect if topup is disabled for this tenant
+  useEffect(() => {
+    if (!tenant.topupEnabled) router.replace(`/${slug}/admin`);
+  }, [tenant.topupEnabled, slug, router]);
+
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<CustomerSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
