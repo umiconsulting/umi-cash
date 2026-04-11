@@ -25,6 +25,7 @@ interface TenantEditData {
   topupEnabled: boolean;
   openHour: number | null;
   closeHour: number | null;
+  timezone: string;
   subscriptionStatus: string;
   trialEndsAt: string | null;
   rewardConfig: { visitsRequired: number; rewardName: string } | null;
@@ -49,6 +50,7 @@ export default function EditTenantPage() {
     topupEnabled: true,
     openHour: '',
     closeHour: '',
+    timezone: 'America/Mexico_City',
     subscriptionStatus: 'ACTIVE',
     rewardName: '',
     visitsRequired: 10,
@@ -88,6 +90,7 @@ export default function EditTenantPage() {
           topupEnabled: d.topupEnabled,
           openHour: d.openHour != null ? String(d.openHour) : '',
           closeHour: d.closeHour != null ? String(d.closeHour) : '',
+          timezone: d.timezone || 'America/Mexico_City',
           subscriptionStatus: d.subscriptionStatus,
           rewardName: d.rewardConfig?.rewardName ?? 'Bebida gratis',
           visitsRequired: d.rewardConfig?.visitsRequired ?? 10,
@@ -350,7 +353,7 @@ export default function EditTenantPage() {
               </button>
             </label>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Horario apertura</label>
                 <select value={form.openHour} onChange={(e) => setForm({ ...form, openHour: e.target.value })}
@@ -371,6 +374,12 @@ export default function EditTenantPage() {
                     <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Zona horaria</label>
+                <input type="text" value={form.timezone} readOnly
+                  className="w-full border border-gray-100 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed" />
+                <p className="text-xs text-gray-400 mt-1">Auto-detectada por coordenadas</p>
               </div>
             </div>
           </div>

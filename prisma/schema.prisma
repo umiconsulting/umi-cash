@@ -27,6 +27,7 @@ model Tenant {
   promoDays      String?                   // Comma-separated day numbers (0=Sun..6=Sat), null = all days
   openHour           Int?                       // Business open hour (0-23), null = no enforcement
   closeHour          Int?                       // Business close hour (0-23), null = no enforcement
+  timezone           String   @default("America/Mexico_City") // IANA timezone for business hours
   topupEnabled       Boolean  @default(true)   // false = hide monedero/balance features
   selfRegistration   Boolean  @default(true)
   subscriptionStatus String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL

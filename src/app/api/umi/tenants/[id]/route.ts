@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { verifyUmiSession } from '@/lib/umi-auth';
 import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
+import { find as findTimezone } from 'geo-tz';
 
 const LocationUpdateSchema = z.object({
   id: z.string().optional(),
@@ -24,6 +25,7 @@ const UpdateTenantSchema = z.object({
   topupEnabled: z.boolean().optional(),
   openHour: z.number().int().min(0).max(23).optional().nullable(),
   closeHour: z.number().int().min(0).max(23).optional().nullable(),
+  // timezone is auto-derived from location coordinates — not manually settable
   rewardName: z.string().min(2).max(100).optional(),
   visitsRequired: z.number().int().min(1).max(50).optional(),
   locations: z.array(LocationUpdateSchema).optional(),
@@ -55,6 +57,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     topupEnabled: tenant.topupEnabled,
     openHour: tenant.openHour,
     closeHour: tenant.closeHour,
+    timezone: tenant.timezone,
     subscriptionStatus: tenant.subscriptionStatus,
     trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
     rewardConfig: tenant.rewardConfigs[0]
@@ -139,6 +142,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
               longitude: loc.longitude ?? null,
               isActive: true,
             },
+          });
+        }
+      }
+
+      // Auto-derive timezone from first location with coordinates
+      const firstLocWithCoords = data.locations.find((l) => l.latitude != null && l.longitude != null);
+      if (firstLocWithCoords && firstLocWithCoords.latitude != null && firstLocWithCoords.longitude != null) {
+        const tzResults = findTimezone(firstLocWithCoords.latitude, firstLocWithCoords.longitude);
+        if (tzResults.length > 0) {
+          await prisma.tenant.update({
+            where: { id: params.id },
+            data: { timezone: tzResults[0] },
           });
         }
       }
