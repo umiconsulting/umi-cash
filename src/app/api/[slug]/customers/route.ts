@@ -8,7 +8,7 @@ import { randomBytes } from 'crypto';
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().min(7).max(20),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           tenantId: tenant.id,
           name: data.name,
           phone: data.phone,
-          birthDate: data.birthDate ? new Date(data.birthDate + 'T00:00:00') : undefined,
+          birthDate: new Date(data.birthDate + 'T00:00:00'),
           role: 'CUSTOMER',
         },
       });

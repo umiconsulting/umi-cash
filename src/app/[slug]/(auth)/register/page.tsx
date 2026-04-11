@@ -139,7 +139,7 @@ export default function RegisterPage() {
       const res = await fetch(`/api/${slug}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone: fullPhone, ...(birthDate && { birthDate }) }),
+        body: JSON.stringify({ name, phone: fullPhone, birthDate }),
       });
 
       const data = await res.json();
@@ -246,8 +246,8 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Fecha de nacimiento <span className="font-normal text-coffee-light">(opcional)</span></label>
-            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="input-field" max={new Date().toISOString().split('T')[0]} />
+            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Fecha de nacimiento</label>
+            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="input-field" max={new Date().toISOString().split('T')[0]} required />
           </div>
 
           <div>
@@ -298,7 +298,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button type="submit" disabled={loading || !name || !localPhone || !privacyAccepted} className="btn-primary w-full">
+          <button type="submit" disabled={loading || !name || !birthDate || !localPhone || !privacyAccepted} className="btn-primary w-full">
             {loading ? 'Creando tu tarjeta...' : 'Crear mi tarjeta gratis'}
           </button>
         </form>
