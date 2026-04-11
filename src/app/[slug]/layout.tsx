@@ -12,15 +12,20 @@ export default async function TenantLayout({
   const tenant = await getTenant(params.slug);
   if (!tenant) notFound();
 
+  // Defense-in-depth: sanitize colors even though DB schema validates on write
+  const safeHex = (c: string) => /^#[0-9A-Fa-f]{6}$/.test(c) ? c : '#333333';
+  const primary = safeHex(tenant.primaryColor);
+  const secondary = tenant.secondaryColor ? safeHex(tenant.secondaryColor) : primary;
+
   const cssVars = `
     :root {
-      --color-brand:        ${tenant.primaryColor};
-      --color-brand-dark:   ${darken(tenant.primaryColor)};
-      --color-ink:          ${veryDark(tenant.primaryColor)};
-      --color-ink-light:    ${muted(tenant.primaryColor)};
-      --color-accent:       ${tenant.secondaryColor ?? tenant.primaryColor};
-      --color-surface:      ${lightSurface(tenant.primaryColor)};
-      --color-surface-dark: ${darkSurface(tenant.primaryColor)};
+      --color-brand:        ${primary};
+      --color-brand-dark:   ${darken(primary)};
+      --color-ink:          ${veryDark(primary)};
+      --color-ink-light:    ${muted(primary)};
+      --color-accent:       ${secondary};
+      --color-surface:      ${lightSurface(primary)};
+      --color-surface-dark: ${darkSurface(primary)};
     }
   `;
 

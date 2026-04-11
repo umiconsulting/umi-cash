@@ -22,11 +22,26 @@ function WalletAddButtons({ token, slug }: { token: string; slug: string }) {
   async function handleApple() {
     setAppleLoading(true);
     try {
-      // Open directly so iOS Safari handles the .pkpass natively
-      window.location.href = `/api/${slug}/passes/apple?token=${encodeURIComponent(token)}`;
+      const res = await fetch(`/api/${slug}/passes/apple`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || 'Error al guardar en Apple Wallet.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}.pkpass`;
+      a.click();
+      URL.revokeObjectURL(url);
       setAppleAdded(true);
+    } catch {
+      alert('Error al guardar en Apple Wallet.');
     } finally {
-      setTimeout(() => setAppleLoading(false), 2000);
+      setAppleLoading(false);
     }
   }
 
@@ -42,7 +57,11 @@ function WalletAddButtons({ token, slug }: { token: string; slug: string }) {
         return;
       }
       const { saveUrl } = await res.json();
-      // Navigate directly — window.open gets blocked by popup blockers on Android
+      // Validate domain to prevent open redirect
+      if (!saveUrl || !saveUrl.startsWith('https://pay.google.com/')) {
+        alert('URL de Google Wallet no válida.');
+        return;
+      }
       window.location.href = saveUrl;
       setGoogleAdded(true);
     } finally {

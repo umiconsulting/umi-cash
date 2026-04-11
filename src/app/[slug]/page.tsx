@@ -44,8 +44,9 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
   const filled = '●'.repeat(exampleVisits);
   const empty = '○'.repeat(visitsRequired - exampleVisits);
 
-  const primary = tenant.primaryColor;
-  const accent = tenant.secondaryColor || primary;
+  const safeHex = (c: string) => /^#[0-9A-Fa-f]{6}$/.test(c) ? c : '#333333';
+  const primary = safeHex(tenant.primaryColor);
+  const accent = safeHex(tenant.secondaryColor || tenant.primaryColor);
 
   return (
     <main

@@ -9,16 +9,7 @@ import { getTenant } from '@/lib/tenant';
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
   try {
-    // Accept token from query param (for direct browser navigation on iOS Safari)
-    // or from Authorization header
-    let user = await requireAuth()(req);
-    if (!user) {
-      const token = req.nextUrl.searchParams.get('token');
-      if (token) {
-        const { verifyAccessToken } = await import('@/lib/auth');
-        user = await verifyAccessToken(token);
-      }
-    }
+    const user = await requireAuth()(req);
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
     const tenant = await getTenant(params.slug);

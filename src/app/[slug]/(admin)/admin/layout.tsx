@@ -114,15 +114,47 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    const storedRole = localStorage.getItem('userRole');
-    if (!token || !['STAFF', 'ADMIN'].includes(storedRole || '')) {
+    if (!token) {
       window.location.href = `/${slug}/admin-login`;
       return;
     }
-    setRole(storedRole);
+    // Verify token server-side — never trust localStorage role
     fetch(`/api/${slug}/admin/stats`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(r => { if (r.status === 402) setSuspended(true); }).catch(() => {});
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (r) => {
+        if (r.status === 401 || r.status === 403) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userRole');
+          window.location.href = `/${slug}/admin-login`;
+          return;
+        }
+        if (r.status === 402) {
+          setSuspended(true);
+        }
+        const data = await r.json().catch(() => null);
+        // Use server-verified role, falling back to localStorage only for display
+        const verifiedRole = data?.role;
+        if (verifiedRole && ['STAFF', 'ADMIN'].includes(verifiedRole)) {
+          setRole(verifiedRole);
+          localStorage.setItem('userRole', verifiedRole);
+        } else {
+          // Fallback: use localStorage but server already validated the token
+          const storedRole = localStorage.getItem('userRole');
+          if (['STAFF', 'ADMIN'].includes(storedRole || '')) {
+            setRole(storedRole);
+          } else {
+            window.location.href = `/${slug}/admin-login`;
+          }
+        }
+      })
+      .catch(() => {
+        // Network error — use cached role if available
+        const storedRole = localStorage.getItem('userRole');
+        if (['STAFF', 'ADMIN'].includes(storedRole || '')) {
+          setRole(storedRole);
+        }
+      });
   }, [slug]);
 
   // Close sheet on route change

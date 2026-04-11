@@ -187,6 +187,10 @@ function WalletButtons({ token, slug }: { token: string; slug: string }) {
         return;
       }
       const { saveUrl } = await res.json();
+      if (!saveUrl || !saveUrl.startsWith('https://pay.google.com/')) {
+        alert('URL de Google Wallet no válida.');
+        return;
+      }
       window.location.href = saveUrl;
     } finally {
       setGoogleLoading(false);

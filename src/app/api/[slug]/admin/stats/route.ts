@@ -38,6 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   ]);
 
   return NextResponse.json({
+    role: staff.role,
     visitsToday,
     topupsTodayCount: topupsToday._count,
     topupsTodayMXN: formatMXN(topupsToday._sum.amountCentavos ?? 0),
