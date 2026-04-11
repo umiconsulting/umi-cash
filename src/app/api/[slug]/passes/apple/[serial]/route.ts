@@ -56,6 +56,7 @@ export async function GET(
       passStyle: tenant.passStyle,
       promoMessage: tenant.promoMessage,
       locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
+      topupEnabled: tenant.topupEnabled,
     });
 
     return new NextResponse(buffer as unknown as BodyInit, {

@@ -63,6 +63,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       passStyle: tenant.passStyle,
       promoMessage: tenant.promoMessage,
       locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
+      topupEnabled: tenant.topupEnabled,
     });
 
     if (!card.applePassSerial) {

@@ -74,6 +74,7 @@ export interface PassData {
   stampEmptyUrl?: string | null; // Custom empty stamp image URL
   promoMessage?: string | null; // Current promotion text — triggers notification on change
   locations?: { latitude: number; longitude: number; relevantText?: string }[];
+  topupEnabled?: boolean; // false = hide balance from pass
 }
 
 export async function generateApplePass(data: PassData): Promise<{
@@ -223,8 +224,10 @@ export async function generateApplePass(data: PassData): Promise<{
 
   const remaining = data.visitsRequired - data.visitsThisCycle;
 
-  // Balance header for all styles — changeMessage triggers lock screen notification
-  pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight', changeMessage: 'Tu saldo cambió a %@' });
+  // Balance header — only shown when topup/monedero is enabled
+  if (data.topupEnabled !== false) {
+    pass.headerFields.push({ key: 'balance', label: 'SALDO', value: formatMXN(data.balanceCentavos), textAlignment: 'PKTextAlignmentRight', changeMessage: 'Tu saldo cambió a %@' });
+  }
 
   if (data.passStyle === 'stamps') {
     // Stamps style (Kalala): remaining stamps + pending rewards
@@ -261,7 +264,9 @@ export async function generateApplePass(data: PassData): Promise<{
   pass.backFields.push({
     key: 'terms',
     label: 'Términos y condiciones',
-    value: `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`,
+    value: data.topupEnabled !== false
+      ? `Válido únicamente en ${tenantName}. El saldo no es reembolsable en efectivo. Las recompensas deben canjearse en tienda. El saldo no expira.`
+      : `Válido únicamente en ${tenantName}. Las recompensas deben canjearse en tienda.`,
   });
   pass.backFields.push({
     key: 'developer',
