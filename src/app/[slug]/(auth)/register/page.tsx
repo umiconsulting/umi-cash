@@ -42,7 +42,8 @@ function WalletAddButtons({ token, slug }: { token: string; slug: string }) {
         return;
       }
       const { saveUrl } = await res.json();
-      window.open(saveUrl, '_blank');
+      // Navigate directly — window.open gets blocked by popup blockers on Android
+      window.location.href = saveUrl;
       setGoogleAdded(true);
     } finally {
       setGoogleLoading(false);

@@ -187,7 +187,7 @@ function WalletButtons({ token, slug }: { token: string; slug: string }) {
         return;
       }
       const { saveUrl } = await res.json();
-      window.open(saveUrl, '_blank');
+      window.location.href = saveUrl;
     } finally {
       setGoogleLoading(false);
     }
