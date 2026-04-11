@@ -67,7 +67,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error('[Apple Pass Update]', err);
+    console.error('[Apple Pass Update]', err instanceof Error ? err.message : String(err));
     return new NextResponse(null, { status: 500 });
   }
 }

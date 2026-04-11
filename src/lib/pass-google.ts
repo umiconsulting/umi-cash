@@ -220,7 +220,7 @@ export async function updateGoogleWalletObject(data: GooglePassData): Promise<vo
       }
     );
   } catch (err) {
-    console.error('[Google Wallet] Update failed:', err);
+    console.error('[Google Wallet] Update failed:', err instanceof Error ? err.message : String(err));
     // Non-fatal: pass will update on next open
   }
 }

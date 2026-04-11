@@ -55,6 +55,12 @@ export default function CustomersPage() {
     const res = await fetch(`/api/${slug}/admin/export`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) { alert('Error al exportar'); return; }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('text/csv') && !contentType.includes('application/octet-stream')) {
+      alert('Respuesta inesperada del servidor');
+      return;
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

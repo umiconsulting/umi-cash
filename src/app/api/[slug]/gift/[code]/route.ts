@@ -12,10 +12,12 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // GET — fetch gift card info (public but minimal — only shows if valid and redeemed status)
 export async function GET(req: NextRequest, { params }: { params: { slug: string; code: string } }) {
-  // Rate limit lookups to prevent code enumeration
+  // Rate limit lookups to prevent code enumeration — per-IP + per-code
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   const rl = rateLimit(`gift-lookup:${ip}`, 10, 15 * 60 * 1000);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+  const codeRl = rateLimit(`gift-code:${params.code.toUpperCase()}`, 5, 15 * 60 * 1000);
+  if (!codeRl.allowed) return rateLimitResponse(codeRl.resetAt);
 
   const tenant = await getTenant(params.slug);
   if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
@@ -45,10 +47,12 @@ const RedeemSchema = z.object({
 
 // POST — redeem gift card
 export async function POST(req: NextRequest, { params }: { params: { slug: string; code: string } }) {
-  // Rate limit redemption attempts to prevent brute-force code guessing
+  // Rate limit redemption — per-IP + per-code
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   const rl = rateLimit(`gift-redeem:${ip}`, 5, 15 * 60 * 1000);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+  const codeRl = rateLimit(`gift-redeem-code:${params.code.toUpperCase()}`, 3, 15 * 60 * 1000);
+  if (!codeRl.allowed) return rateLimitResponse(codeRl.resetAt);
 
   const tenant = await getTenant(params.slug);
   if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
@@ -155,7 +159,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: err.errors[0]?.message ?? 'Datos inválidos' }, { status: 400 });
     }
-    console.error('[GiftCard:redeem]', err);
+    console.error('[GiftCard:redeem]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al canjear' }, { status: 500 });
   }
 }

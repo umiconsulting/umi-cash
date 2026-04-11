@@ -19,20 +19,18 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      for (const role of ['ADMIN', 'STAFF'] as const) {
-        const res = await fetch(`/api/${slug}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier: email, password, role }),
-        });
+      const res = await fetch(`/api/${slug}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: email, password }),
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          localStorage.setItem('accessToken', data.accessToken);
-          localStorage.setItem('userRole', data.user.role);
-          window.location.href = `/${slug}/admin`;
-          return;
-        }
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('userRole', data.user.role);
+        window.location.href = `/${slug}/admin`;
+        return;
       }
 
       setError('Credenciales inválidas');

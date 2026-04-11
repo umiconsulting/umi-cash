@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, slug: tenant.slug }, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: err.errors[0].message }, { status: 400 });
-    console.error('[CreateTenant]', err);
+    console.error('[CreateTenant]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al crear tenant' }, { status: 500 });
   }
 }

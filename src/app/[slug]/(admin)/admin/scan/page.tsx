@@ -9,7 +9,6 @@ import { useTenant } from '@/context/TenantContext';
 interface CardPreview {
   cardId: string;
   cardNumber: string;
-  qrPayload: string;
   customer: { name: string | null };
   card: {
     visitsThisCycle: number;
@@ -37,6 +36,7 @@ export default function ScanPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastScannedRef = useRef<string>('');
+  const lastPayloadRef = useRef<string>('');
 
   const [manualInput, setManualInput] = useState('');
   const [scanning, setScanning] = useState(false);
@@ -147,6 +147,7 @@ export default function ScanPage() {
 
       const data = await res.json();
       if (res.ok) {
+        lastPayloadRef.current = payload;
         setPreview(data);
         stopCamera();
       } else {
@@ -179,7 +180,7 @@ export default function ScanPage() {
       const res = await fetch(`/api/${slug}/admin/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ qrPayload: preview.qrPayload, action: 'VISIT' }),
+        body: JSON.stringify({ qrPayload: lastPayloadRef.current, action: 'VISIT' }),
       });
       const data = await res.json();
       setResult({ success: res.ok, message: data.message ?? data.error });
@@ -202,7 +203,7 @@ export default function ScanPage() {
       const res = await fetch(`/api/${slug}/admin/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ qrPayload: preview.qrPayload, action: 'REDEEM' }),
+        body: JSON.stringify({ qrPayload: lastPayloadRef.current, action: 'REDEEM' }),
       });
       const data = await res.json();
       setResult({ success: res.ok, message: data.message ?? data.error });

@@ -81,7 +81,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({
       cardId: card.id,
       cardNumber: card.cardNumber,
-      qrPayload,                       // echo back so the client can pass it to the action endpoint
       customer: { name: card.user.name },
       card: {
         visitsThisCycle: card.visitsThisCycle,
@@ -96,7 +95,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
-    console.error('[Preview]', err);
+    console.error('[Preview]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al leer la tarjeta' }, { status: 500 });
   }
 }

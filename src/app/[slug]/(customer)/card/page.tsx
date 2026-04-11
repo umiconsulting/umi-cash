@@ -5,12 +5,14 @@ import { useParams } from 'next/navigation';
 import { formatMXN } from '@/lib/currency';
 import { useTenant } from '@/context/TenantContext';
 import { formatDateTimeMX, formatDateShortMX } from '@/lib/intl';
+import { isTokenValid } from '@/lib/token';
 import type { CardState } from '@/types/api';
 
 function useAuth() {
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
-    setToken(localStorage.getItem('accessToken'));
+    const stored = localStorage.getItem('accessToken');
+    setToken(isTokenValid(stored) ? stored : null);
   }, []);
   return token;
 }

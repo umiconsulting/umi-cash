@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useTenant } from '@/context/TenantContext';
+import { isTokenValid } from '@/lib/token';
 
 function IconHome({ active }: { active: boolean }) {
   return (
@@ -114,7 +115,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
-    if (!token) {
+    if (!token || !isTokenValid(token)) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('userRole');
       window.location.href = `/${slug}/admin-login`;
       return;
     }

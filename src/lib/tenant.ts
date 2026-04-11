@@ -47,7 +47,7 @@ export async function requireActiveSubscription(
           data: { subscriptionStatus: 'SUSPENDED', suspendedAt: new Date() },
         });
       } catch (err) {
-        console.error('[Tenant] Failed to auto-suspend expired trial:', err);
+        console.error('[Tenant] Failed to auto-suspend expired trial:', err instanceof Error ? err.message : String(err));
       }
     }
     return NextResponse.json(

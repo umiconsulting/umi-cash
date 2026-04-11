@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
         await sendApplePushUpdateForTenant(tenant.id);
         console.log('[settings] Push complete');
       } catch (err) {
-        console.error('[settings] Push update failed:', err);
+        console.error('[settings] Push update failed:', err instanceof Error ? err.message : String(err));
       }
     }
 

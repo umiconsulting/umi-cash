@@ -135,7 +135,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     if (err instanceof LimitError) return NextResponse.json({ error: err.message }, { status: 429 });
-    console.error('[TopUp]', err);
+    console.error('[TopUp]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al recargar' }, { status: 500 });
   }
 }

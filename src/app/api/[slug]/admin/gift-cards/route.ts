@@ -99,7 +99,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: err.errors[0]?.message ?? 'Datos inválidos' }, { status: 400 });
     }
-    console.error('[GiftCard:create]', err);
+    console.error('[GiftCard:create]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al crear tarjeta de regalo' }, { status: 500 });
   }
 }

@@ -184,7 +184,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
-    console.error('[Scan]', err);
+    console.error('[Scan]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al procesar escaneo' }, { status: 500 });
   }
 }

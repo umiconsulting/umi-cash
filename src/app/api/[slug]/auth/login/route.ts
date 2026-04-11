@@ -8,7 +8,6 @@ import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 const LoginSchema = z.object({
   identifier: z.string().min(1).max(200),
   password: z.string().min(1).max(200),
-  role: z.enum(['STAFF', 'ADMIN']),
 });
 
 function setRefreshCookie(response: NextResponse, refreshToken: string, slug: string) {
@@ -31,14 +30,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
   try {
     const body = await req.json();
-    const { identifier, password, role } = LoginSchema.parse(body);
+    const { identifier, password } = LoginSchema.parse(body);
 
     // Per-account lockout: 5 failed attempts per email per 15 min (prevents distributed brute force)
     const accountRl = rateLimit(`login-account:${params.slug}:${identifier.toLowerCase()}`, 5, 15 * 60 * 1000);
     if (!accountRl.allowed) return rateLimitResponse(accountRl.resetAt);
 
+    // Check both staff roles in one query — no role hint from client
     const user = await prisma.user.findFirst({
-      where: { tenantId: tenant.id, email: identifier, role },
+      where: { tenantId: tenant.id, email: identifier, role: { in: ['STAFF', 'ADMIN'] } },
     });
     if (!user || !user.passwordHash) {
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
@@ -57,7 +57,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
-    console.error('[Login]', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[Login]', msg);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

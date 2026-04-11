@@ -94,7 +94,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: err.errors[0].message }, { status: 400 });
-    console.error('[Register]', err);
+    console.error('[Register]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al registrar' }, { status: 500 });
   }
 }

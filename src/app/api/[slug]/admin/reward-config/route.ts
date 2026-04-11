@@ -81,13 +81,13 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
     try {
       await sendApplePushUpdateForTenant(tenant.id);
     } catch (err) {
-      console.error('[reward-config] Push update failed:', err);
+      console.error('[reward-config] Push update failed:', err instanceof Error ? err.message : String(err));
     }
 
     return NextResponse.json({ newConfig });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: err.errors[0].message }, { status: 400 });
-    console.error('[reward-config PUT]', err);
+    console.error('[reward-config PUT]', err instanceof Error ? err.message : String(err));
     const message = err instanceof Error ? err.message : 'Error al actualizar';
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateGoogleWalletURL, isGoogleWalletConfigured } from '@/lib/pass-google';
 import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
+import { logError } from '@/lib/log';
 import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
 import { getTenant } from '@/lib/tenant';
 
@@ -55,8 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     return NextResponse.json({ saveUrl });
   } catch (err) {
-    console.error('[Google Pass]', err instanceof Error ? err.message : err);
-    console.error('[Google Pass] Stack:', err instanceof Error ? err.stack : '');
+    logError('Google Pass', err);
     return NextResponse.json({ error: 'Error generando pase. Intenta de nuevo.' }, { status: 500 });
   }
 }

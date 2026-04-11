@@ -106,7 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     if (err instanceof InsufficientBalanceError) return NextResponse.json({ error: err.message }, { status: 400 });
-    console.error('[Purchase]', err);
+    console.error('[Purchase]', err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: 'Error al procesar pago' }, { status: 500 });
   }
 }

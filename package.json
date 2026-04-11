@@ -24,7 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "jsqr": "^1.4.0",
     "libphonenumber-js": "^1.11.4",
-    "next": "14.2.5",
+    "next": "^14.2.35",
     "passkit-generator": "^3.3.1",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
