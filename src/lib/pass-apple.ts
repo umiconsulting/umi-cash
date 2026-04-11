@@ -165,19 +165,28 @@ export async function generateApplePass(data: PassData): Promise<{
     pass.addBuffer('logo@3x.png', logo3x);
   }
 
-  // Icons: logo on colored background, or solid color fallback
+  // Icons: use tenant-specific pre-made icons if available, otherwise auto-generate
   const iconSizes = [
-    { name: 'icon.png', size: 29, logoSize: 20 },
-    { name: 'icon@2x.png', size: 58, logoSize: 40 },
-    { name: 'icon@3x.png', size: 87, logoSize: 60 },
+    { name: 'icon.png', file: 'icon', size: 29, logoSize: 20 },
+    { name: 'icon@2x.png', file: 'icon@2x', size: 58, logoSize: 40 },
+    { name: 'icon@3x.png', file: 'icon@3x', size: 87, logoSize: 60 },
   ];
-  for (const { name, size, logoSize } of iconSizes) {
-    const base = sharp({ create: { width: size, height: size, channels: 4, background: iconBg } });
-    if (logoBuf) {
-      const logoResized = await sharp(logoBuf).resize({ width: logoSize, height: logoSize, fit: 'inside' }).png().toBuffer();
-      pass.addBuffer(name, await base.composite([{ input: logoResized, gravity: 'centre' }]).png().toBuffer());
+  for (const { name, file, size, logoSize } of iconSizes) {
+    // Try tenant-specific pre-made icon first
+    const customIconPath = path.join(process.cwd(), 'public', 'logos', `${tenantSlug}-${file}.png`);
+    let customIcon: Buffer | null = null;
+    try { customIcon = fs.readFileSync(customIconPath); } catch {}
+
+    if (customIcon) {
+      pass.addBuffer(name, await sharp(customIcon).resize(size, size).png().toBuffer());
     } else {
-      pass.addBuffer(name, await base.png().toBuffer());
+      const base = sharp({ create: { width: size, height: size, channels: 4, background: iconBg } });
+      if (logoBuf) {
+        const logoResized = await sharp(logoBuf).resize({ width: logoSize, height: logoSize, fit: 'inside' }).png().toBuffer();
+        pass.addBuffer(name, await base.composite([{ input: logoResized, gravity: 'centre' }]).png().toBuffer());
+      } else {
+        pass.addBuffer(name, await base.png().toBuffer());
+      }
     }
   }
 
