@@ -188,8 +188,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json(updated);
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: err.errors[0].message }, { status: 400 });
-    console.error('[UpdateTenant]', String(err));
-    return NextResponse.json({ error: 'Error al actualizar tenant' }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[UpdateTenant]', msg);
+    return NextResponse.json({ error: `Error al actualizar tenant: ${msg}` }, { status: 500 });
   }
 }
 
