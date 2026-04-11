@@ -129,8 +129,10 @@ export default function EditTenantPage() {
         selfRegistration: form.selfRegistration,
         topupEnabled: form.topupEnabled,
         subscriptionStatus: form.subscriptionStatus,
-        rewardName: form.rewardName,
-        visitsRequired: form.visitsRequired,
+        // Only send reward fields if changed from what was loaded
+        ...(data?.rewardConfig && (form.rewardName !== data.rewardConfig.rewardName || form.visitsRequired !== data.rewardConfig.visitsRequired)
+          ? { rewardName: form.rewardName, visitsRequired: form.visitsRequired }
+          : {}),
         locations: validLocations,
       }),
     });
