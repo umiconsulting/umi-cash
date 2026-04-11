@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
-  const suspended = requireActiveSubscription(tenant);
+  const suspended = await requireActiveSubscription(tenant);
   if (suspended) return suspended;
 
   try {
@@ -74,6 +74,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       return NextResponse.json({ error: 'No puedes escanear tu propia tarjeta' }, { status: 403 });
     }
 
+    // Warn on out-of-hours scans based on tenant business hours
+    const localHour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'America/Mexico_City', hour: 'numeric', hour12: false }));
+    const openH = tenant.openHour ?? 6;
+    const closeH = tenant.closeHour ?? 23;
+    const isAfterHours = localHour < openH || localHour >= closeH;
+    if (isAfterHours) {
+      console.warn(`[Scan] After-hours scan by staff ${staff.sub} for card ${card.id} at hour ${localHour} (open: ${openH}-${closeH})`);
+    }
+
     // 1 visit per card per rolling 24-hour window (abuse prevention)
     if (action === SCAN_ACTIONS.VISIT) {
       const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -93,6 +102,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     if (action === SCAN_ACTIONS.REDEEM) {
       if (card.pendingRewards <= 0) {
         return NextResponse.json({ error: 'No hay recompensas pendientes para canjear' }, { status: 400 });
+      }
+
+      // Idempotency: reject if same card was redeemed in last 30 seconds (prevents network retry double-redeem)
+      const recentRedemption = await prisma.rewardRedemption.findFirst({
+        where: { cardId: card.id, redeemedAt: { gte: new Date(Date.now() - 30 * 1000) } },
+      });
+      if (recentRedemption) {
+        return NextResponse.json({ error: 'Recompensa ya canjeada. Espera un momento si deseas canjear otra.' }, { status: 429 });
       }
 
       const updatedCard = await prisma.$transaction(async (tx) => {
@@ -160,6 +177,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       action: SCAN_ACTIONS.VISIT,
       message,
       rewardEarned,
+      afterHours: isAfterHours,
       customer: { name: updatedCard.user.name, cardNumber: updatedCard.cardNumber },
       card: buildCardSummary(updatedCard, visitsRequired),
     });

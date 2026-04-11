@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { formatMXN } from './currency';
 import { generateStampStrip } from './strip-generator';
-import { generatePassSerial, generateRandomToken } from './auth';
+import { generatePassSerial, generateRandomToken, signWalletBarcode } from './auth';
 
 const PASSES_DIR = path.join(process.cwd(), 'passes', 'apple');
 const TEMPLATE_DIR = path.join(PASSES_DIR, 'template.pass');
@@ -214,9 +214,10 @@ export async function generateApplePass(data: PassData): Promise<{
     if (stripBuf) pass.addBuffer('strip@2x.png', stripBuf);
   }
 
-  // Set barcode
+  // Set barcode with HMAC-signed card number to prevent forged scans
+  const signedBarcode = signWalletBarcode(data.cardNumber);
   pass.setBarcodes({
-    message: data.cardNumber,
+    message: signedBarcode,
     format: 'PKBarcodeFormatQR',
     messageEncoding: 'iso-8859-1',
     altText: data.cardNumber,

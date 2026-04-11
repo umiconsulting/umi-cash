@@ -23,6 +23,8 @@ interface TenantEditData {
   cardPrefix: string;
   selfRegistration: boolean;
   topupEnabled: boolean;
+  openHour: number | null;
+  closeHour: number | null;
   subscriptionStatus: string;
   trialEndsAt: string | null;
   rewardConfig: { visitsRequired: number; rewardName: string } | null;
@@ -45,6 +47,8 @@ export default function EditTenantPage() {
     secondaryColor: '',
     selfRegistration: true,
     topupEnabled: true,
+    openHour: '',
+    closeHour: '',
     subscriptionStatus: 'ACTIVE',
     rewardName: '',
     visitsRequired: 10,
@@ -82,6 +86,8 @@ export default function EditTenantPage() {
           secondaryColor: d.secondaryColor ?? '',
           selfRegistration: d.selfRegistration,
           topupEnabled: d.topupEnabled,
+          openHour: d.openHour != null ? String(d.openHour) : '',
+          closeHour: d.closeHour != null ? String(d.closeHour) : '',
           subscriptionStatus: d.subscriptionStatus,
           rewardName: d.rewardConfig?.rewardName ?? 'Bebida gratis',
           visitsRequired: d.rewardConfig?.visitsRequired ?? 10,
@@ -128,6 +134,8 @@ export default function EditTenantPage() {
         secondaryColor: form.secondaryColor || null,
         selfRegistration: form.selfRegistration,
         topupEnabled: form.topupEnabled,
+        openHour: form.openHour !== '' ? parseInt(form.openHour as string) : null,
+        closeHour: form.closeHour !== '' ? parseInt(form.closeHour as string) : null,
         subscriptionStatus: form.subscriptionStatus,
         // Only send reward fields if changed from what was loaded
         ...(data?.rewardConfig && (form.rewardName !== data.rewardConfig.rewardName || form.visitsRequired !== data.rewardConfig.visitsRequired)
@@ -341,6 +349,30 @@ export default function EditTenantPage() {
                 <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${form.topupEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </label>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Horario apertura</label>
+                <select value={form.openHour} onChange={(e) => setForm({ ...form, openHour: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+                  <option value="">Sin configurar</option>
+                  {Array.from({ length: 24 }).map((_, h) => (
+                    <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Escaneos fuera de horario se marcan como sospechosos</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Horario cierre</label>
+                <select value={form.closeHour} onChange={(e) => setForm({ ...form, closeHour: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white">
+                  <option value="">Sin configurar</option>
+                  {Array.from({ length: 24 }).map((_, h) => (
+                    <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {error && <p className="text-sm text-red-600 text-center">{error}</p>}

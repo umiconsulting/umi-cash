@@ -225,7 +225,7 @@ export default function CardPage() {
 
   useEffect(() => {
     if (!token) {
-      if (typeof window !== 'undefined') window.location.href = `/${slug}/login`;
+      if (typeof window !== 'undefined') window.location.href = `/${slug}/register`;
       return;
     }
 
@@ -237,7 +237,7 @@ export default function CardPage() {
       signal: controller.signal,
     })
       .then((r) => {
-        if (r.status === 401) { window.location.href = `/${slug}/login`; return null; }
+        if (r.status === 401) { window.location.href = `/${slug}/register`; return null; }
         return r.json();
       })
       .then((data) => { if (data) setCard(data); })

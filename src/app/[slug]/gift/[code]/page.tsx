@@ -5,13 +5,9 @@ import { useParams } from 'next/navigation';
 
 interface GiftCardInfo {
   code: string;
-  amountMXN: string;
-  amountCentavos: number;
-  senderName: string | null;
-  recipientName: string | null;
-  message: string | null;
   isRedeemed: boolean;
   tenantName: string;
+  hasMessage: boolean;
 }
 
 export default function GiftRedeemPage() {
@@ -102,13 +98,10 @@ export default function GiftRedeemPage() {
       <div className="loyalty-card text-white px-6 py-10 text-center">
         <div className="max-w-sm mx-auto relative z-10">
           <p className="text-white/70 text-sm mb-1">{info.tenantName}</p>
-          <p className="text-5xl font-bold mb-1">{info.amountMXN}</p>
+          <p className="text-4xl mb-1">🎁</p>
           <p className="text-white/80 text-lg">Tarjeta de regalo</p>
-          {info.senderName && (
-            <p className="text-white/70 text-sm mt-3">De: {info.senderName}</p>
-          )}
-          {info.message && (
-            <p className="text-white/80 text-sm mt-2 italic">"{info.message}"</p>
+          {info.hasMessage && (
+            <p className="text-white/70 text-sm mt-3">Incluye un mensaje personal</p>
           )}
         </div>
       </div>
@@ -188,7 +181,7 @@ export default function GiftRedeemPage() {
             )}
 
             <button type="submit" disabled={loading || !contact.trim()} className="btn-primary w-full">
-              {loading ? 'Canjeando...' : `Canjear ${info.amountMXN}`}
+              {loading ? 'Canjeando...' : 'Canjear regalo'}
             </button>
           </form>
         )}

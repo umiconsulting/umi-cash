@@ -22,6 +22,8 @@ const UpdateTenantSchema = z.object({
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   selfRegistration: z.boolean().optional(),
   topupEnabled: z.boolean().optional(),
+  openHour: z.number().int().min(0).max(23).optional().nullable(),
+  closeHour: z.number().int().min(0).max(23).optional().nullable(),
   rewardName: z.string().min(2).max(100).optional(),
   visitsRequired: z.number().int().min(1).max(50).optional(),
   locations: z.array(LocationUpdateSchema).optional(),
@@ -51,6 +53,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     cardPrefix: tenant.cardPrefix,
     selfRegistration: tenant.selfRegistration,
     topupEnabled: tenant.topupEnabled,
+    openHour: tenant.openHour,
+    closeHour: tenant.closeHour,
     subscriptionStatus: tenant.subscriptionStatus,
     trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
     rewardConfig: tenant.rewardConfigs[0]
@@ -88,6 +92,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         ...(data.secondaryColor !== undefined && { secondaryColor: data.secondaryColor }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
         ...(data.topupEnabled !== undefined && { topupEnabled: data.topupEnabled }),
+        ...(data.openHour !== undefined && { openHour: data.openHour }),
+        ...(data.closeHour !== undefined && { closeHour: data.closeHour }),
         ...(data.subscriptionStatus !== undefined && {
           subscriptionStatus: data.subscriptionStatus,
           suspendedAt: data.subscriptionStatus === 'SUSPENDED' ? new Date() : null,

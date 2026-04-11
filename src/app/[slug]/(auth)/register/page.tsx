@@ -144,38 +144,21 @@ export default function RegisterPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 409) {
-          // Phone already registered — auto-login and show wallet buttons
-          const loginRes = await fetch(`/api/${slug}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier: fullPhone, role: 'CUSTOMER' }),
-          });
-          const loginData = await loginRes.json();
-          if (loginRes.ok) {
-            localStorage.setItem('accessToken', loginData.accessToken);
-            localStorage.setItem('userRole', loginData.user.role);
-            setSuccess({ name: loginData.user.name?.split(' ')[0] || 'tú', token: loginData.accessToken });
-          } else {
-            setError(data.error || 'Error al registrarse');
-          }
+        if (res.status === 409 && data.accessToken) {
+          // Phone already registered — server returns token directly
+          localStorage.setItem('accessToken', data.accessToken);
+          localStorage.setItem('userRole', data.user.role);
+          setSuccess({ name: data.user.name?.split(' ')[0] || 'tú', token: data.accessToken });
         } else {
           setError(data.error || 'Error al registrarse');
         }
         return;
       }
 
-      const loginRes = await fetch(`/api/${slug}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: fullPhone, role: 'CUSTOMER' }),
-      });
-
-      const loginData = await loginRes.json();
-      if (loginRes.ok) {
-        localStorage.setItem('accessToken', loginData.accessToken);
-        localStorage.setItem('userRole', loginData.user.role);
-        setSuccess({ name: name.split(' ')[0], token: loginData.accessToken });
+      if (data.accessToken) {
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('userRole', data.user.role);
+        setSuccess({ name: name.split(' ')[0], token: data.accessToken });
       } else {
         setError('Cuenta creada. Escanea tu QR en tienda o contacta al personal.');
       }

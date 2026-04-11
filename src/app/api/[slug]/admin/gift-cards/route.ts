@@ -19,9 +19,9 @@ const CreateSchema = z.object({
 });
 
 function generateGiftCode(): string {
-  // Format: XXXX-XXXX-XXXX-XXXX (16 hex chars, uppercase) — 8 bytes of entropy
-  const hex = generateRandomToken(8).toUpperCase();
-  return `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}`;
+  // Format: XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX (32 hex chars, uppercase) — 16 bytes / 128 bits of entropy
+  const hex = generateRandomToken(16).toUpperCase();
+  return `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 24)}-${hex.slice(24, 28)}-${hex.slice(28, 32)}`;
 }
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
-  const suspended = requireActiveSubscription(tenant);
+  const suspended = await requireActiveSubscription(tenant);
   if (suspended) return suspended;
 
   try {

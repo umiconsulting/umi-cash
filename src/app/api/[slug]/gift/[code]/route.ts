@@ -8,9 +8,15 @@ import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helper
 import { sendApplePushUpdate } from '@/lib/push-apple';
 import { updateGoogleWalletObject } from '@/lib/pass-google';
 import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
-// GET — fetch gift card info (public, no auth needed)
-export async function GET(_req: NextRequest, { params }: { params: { slug: string; code: string } }) {
+// GET — fetch gift card info (public but minimal — only shows if valid and redeemed status)
+export async function GET(req: NextRequest, { params }: { params: { slug: string; code: string } }) {
+  // Rate limit lookups to prevent code enumeration
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const rl = rateLimit(`gift-lookup:${ip}`, 10, 15 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
   const tenant = await getTenant(params.slug);
   if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
 
@@ -20,15 +26,12 @@ export async function GET(_req: NextRequest, { params }: { params: { slug: strin
 
   if (!giftCard) return NextResponse.json({ error: 'Código no válido' }, { status: 404 });
 
+  // Only expose minimal info — don't leak amount/sender to unauthenticated users
   return NextResponse.json({
     code: giftCard.code,
-    amountMXN: formatMXN(giftCard.amountCentavos),
-    amountCentavos: giftCard.amountCentavos,
-    senderName: giftCard.senderName,
-    recipientName: giftCard.recipientName,
-    message: giftCard.message,
     isRedeemed: giftCard.isRedeemed,
     tenantName: tenant.name,
+    hasMessage: !!giftCard.message,
   });
 }
 
@@ -42,6 +45,11 @@ const RedeemSchema = z.object({
 
 // POST — redeem gift card
 export async function POST(req: NextRequest, { params }: { params: { slug: string; code: string } }) {
+  // Rate limit redemption attempts to prevent brute-force code guessing
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const rl = rateLimit(`gift-redeem:${ip}`, 5, 15 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
   const tenant = await getTenant(params.slug);
   if (!tenant) return NextResponse.json({ error: 'Tenant no encontrado' }, { status: 404 });
 
@@ -60,19 +68,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       return NextResponse.json({ error: 'Esta tarjeta de regalo ha expirado' }, { status: 400 });
     }
 
-    // Find the customer's loyalty card
-    // Normalize phone: strip spaces/dashes/parens, then try exact + +52 prefix variants
+    // Find the customer's loyalty card using normalized E.164 phone
     let user;
     if (phone) {
-      const stripped = phone.replace(/[\s\-().]/g, '');
-      // Try the input as-is, with +52 prefix, and without country code
-      const variants = Array.from(new Set([
-        phone.trim(),
-        stripped,
-        stripped.startsWith('+52') ? stripped.slice(3) : `+52${stripped}`,
-      ]));
+      const normalizedPhone = phone.startsWith('+')
+        ? '+' + phone.slice(1).replace(/\D/g, '')
+        : phone.replace(/\D/g, '');
       user = await prisma.user.findFirst({
-        where: { tenantId: tenant.id, phone: { in: variants } },
+        where: { tenantId: tenant.id, phone: normalizedPhone },
         include: { card: true },
       });
     } else {

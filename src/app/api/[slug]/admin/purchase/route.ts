@@ -34,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
-  const suspended = requireActiveSubscription(tenant);
+  const suspended = await requireActiveSubscription(tenant);
   if (suspended) return suspended;
 
   try {

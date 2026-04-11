@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { createHash, randomBytes, timingSafeEqual, scryptSync } from 'crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual, scryptSync } from 'crypto';
 import { NextRequest } from 'next/server';
 import { prisma } from './prisma';
 
@@ -63,9 +63,21 @@ export async function verifyRefreshToken(token: string): Promise<{ sub: string }
   }
 }
 
+// Opportunistic session cleanup — runs at most once per 10 minutes
+let lastSessionCleanup = 0;
+function maybeCleanExpiredSessions() {
+  const now = Date.now();
+  if (now - lastSessionCleanup < 10 * 60 * 1000) return;
+  lastSessionCleanup = now;
+  prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } })
+    .then((r) => { if (r.count > 0) console.log(`[Auth] Cleaned ${r.count} expired sessions`); })
+    .catch(() => {});
+}
+
 export async function getAuthUser(req: NextRequest): Promise<JWTPayload | null> {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return null;
+  maybeCleanExpiredSessions();
   return verifyAccessToken(authHeader.slice(7));
 }
 
@@ -136,6 +148,32 @@ export async function signQRPayload(cardId: string, qrToken: string): Promise<st
     .sign(QR_SECRET);
 }
 
+/**
+ * Sign a card number for use in wallet barcodes (Apple/Google Wallet).
+ * Format: "cardNumber.hmac" — HMAC prevents forging scans with guessed card numbers.
+ */
+export function signWalletBarcode(cardNumber: string): string {
+  const secret = process.env.APP_QR_SECRET;
+  if (!secret) throw new Error('Missing APP_QR_SECRET');
+  const hmac = createHmac('sha256', secret).update(cardNumber).digest('hex').slice(0, 16);
+  return `${cardNumber}.${hmac}`;
+}
+
+function verifyWalletBarcode(payload: string): string | null {
+  const secret = process.env.APP_QR_SECRET;
+  if (!secret) return null;
+  const dotIndex = payload.lastIndexOf('.');
+  if (dotIndex === -1) return null;
+  const cardNumber = payload.slice(0, dotIndex);
+  const providedHmac = payload.slice(dotIndex + 1);
+  if (!cardNumber || !providedHmac) return null;
+  const expectedHmac = createHmac('sha256', secret).update(cardNumber).digest('hex').slice(0, 16);
+  // Constant-time comparison
+  if (providedHmac.length !== expectedHmac.length) return null;
+  if (!timingSafeEqual(Buffer.from(providedHmac), Buffer.from(expectedHmac))) return null;
+  return cardNumber;
+}
+
 export async function verifyQRPayload(
   payload: string
 ): Promise<{ cardId: string; qrToken: string; isWalletScan: boolean } | null> {
@@ -144,6 +182,12 @@ export async function verifyQRPayload(
     const data = p as { sub: string; tok: string; type: string };
     return { cardId: data.sub, qrToken: data.tok, isWalletScan: false };
   } catch {
+    // Try HMAC-signed wallet barcode (new format: "CARD-123.hmac")
+    const cardNumber = verifyWalletBarcode(payload);
+    if (cardNumber) {
+      return { cardId: cardNumber, qrToken: '', isWalletScan: true };
+    }
+    // Legacy: accept bare card number format for already-issued passes (will be phased out)
     if (/^[A-Z]+-\d+$/.test(payload)) {
       return { cardId: payload, qrToken: '', isWalletScan: true };
     }

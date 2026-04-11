@@ -12,6 +12,8 @@ import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 
 // Staff top-up limit: $5,000 MXN per day per staff member
 const STAFF_DAILY_TOPUP_LIMIT = 500_000;
+// Per-card top-up limit: $5,000 MXN per day (prevents coordinated staff abuse)
+const CARD_DAILY_TOPUP_LIMIT = 500_000;
 
 class LimitError extends Error {
   constructor(message: string) {
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
 
-  const suspended = requireActiveSubscription(tenant);
+  const suspended = await requireActiveSubscription(tenant);
   if (suspended) return suspended;
 
   try {
@@ -65,6 +67,16 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       const todaySum = staffTodayTotal._sum.amountCentavos ?? 0;
       if (todaySum + amountCentavos > STAFF_DAILY_TOPUP_LIMIT) {
         throw new LimitError(`Límite diario de recargas alcanzado (máx. ${formatMXN(STAFF_DAILY_TOPUP_LIMIT)} por día). Contacta al administrador.`);
+      }
+
+      // Per-card daily amount limit (prevents coordinated staff abuse on a single card)
+      const cardTodayTotal = await tx.transaction.aggregate({
+        _sum: { amountCentavos: true },
+        where: { cardId: card.id, type: TRANSACTION_TYPES.TOPUP, createdAt: { gte: dayStart } },
+      });
+      const cardTodaySum = cardTodayTotal._sum.amountCentavos ?? 0;
+      if (cardTodaySum + amountCentavos > CARD_DAILY_TOPUP_LIMIT) {
+        throw new LimitError(`Esta tarjeta ya alcanzó su límite diario de recarga (máx. ${formatMXN(CARD_DAILY_TOPUP_LIMIT)}). Contacta al administrador.`);
       }
 
       // Same card cannot receive more than 3 top-ups per day (anti-fraud)

@@ -16,6 +16,7 @@
 
 import { SignJWT } from 'jose';
 import { formatMXN } from './currency';
+import { signWalletBarcode } from './auth';
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || '';
 const CLASS_ID_PREFIX = process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v1';
@@ -125,7 +126,7 @@ function getLoyaltyObject(data: GooglePassData) {
     ],
     barcode: {
       type: 'QR_CODE',
-      value: data.cardNumber,
+      value: signWalletBarcode(data.cardNumber),
       alternateText: `Tarjeta ${data.cardNumber}`,
     },
     infoModuleData: {
