@@ -255,7 +255,7 @@ export async function generateApplePass(data: PassData): Promise<{
   // Promotion field on back — changeMessage still triggers lock screen notification
   pass.backFields.push({
     key: 'promo',
-    label: 'Promoción',
+    label: 'Promoción especial',
     value: data.promoMessage || 'Sin promoción activa',
     changeMessage: '%@',
   });
