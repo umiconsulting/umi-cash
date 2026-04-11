@@ -45,63 +45,54 @@ interface AnalyticsData {
   profitability: Profitability;
 }
 
-function SkeletonBar() {
-  return <div className="h-4 bg-coffee-pale rounded animate-pulse" />;
+function KpiCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
+  return (
+    <div className="bg-white rounded-2xl p-4">
+      <p className="text-xs text-coffee-medium leading-tight mb-1.5">{label}</p>
+      <p className={`text-2xl font-bold ${accent ? 'text-coffee-brand' : 'text-coffee-dark'}`}>{value}</p>
+      {sub && <p className="text-xs text-coffee-medium mt-0.5">{sub}</p>}
+    </div>
+  );
 }
 
-interface BarChartItem {
-  label: string;
-  count: number;
+function LoadingKpi() {
+  return (
+    <div className="bg-white rounded-2xl p-4">
+      <div className="h-3 bg-coffee-pale rounded animate-pulse w-2/3 mb-2" />
+      <div className="h-7 bg-coffee-pale rounded animate-pulse w-1/2" />
+    </div>
+  );
 }
 
-function BarChart({
-  data,
-  color,
-  showEvery,
-}: {
-  data: BarChartItem[];
-  color: string;
-  showEvery: number;
-}) {
+function SkeletonBlock() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-6 bg-coffee-pale rounded animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+/** Vertical bar chart optimized for mobile — shows last 7 days prominently */
+function VisitChart({ data, color }: { data: { label: string; sublabel: string; count: number }[]; color: string }) {
   const maxCount = Math.max(...data.map((d) => d.count), 1);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '80px', width: '100%' }}>
+    <div className="flex items-end gap-1" style={{ height: '140px' }}>
       {data.map((d, i) => {
-        const heightPct = (d.count / maxCount) * 100;
-        const showLabel = i % showEvery === 0;
-
+        const heightPct = Math.max((d.count / maxCount) * 100, d.count > 0 ? 4 : 0);
         return (
-          <div
-            key={i}
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', minWidth: 0 }}
-            title={`${d.label}: ${d.count}`}
-          >
-            <div
-              style={{
-                width: '100%',
-                height: `${heightPct}%`,
-                minHeight: d.count > 0 ? '2px' : '0',
-                backgroundColor: color,
-                borderRadius: '2px 2px 0 0',
-                transition: 'height 0.3s',
-              }}
-            />
-            {showLabel && (
-              <span
-                style={{
-                  fontSize: '9px',
-                  color: '#9E897A',
-                  marginTop: '2px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '100%',
-                }}
-              >
-                {d.label}
-              </span>
+          <div key={i} className="flex-1 flex flex-col items-center justify-end h-full min-w-0">
+            {d.count > 0 && (
+              <span className="text-[10px] font-semibold text-coffee-dark mb-1">{d.count}</span>
             )}
+            <div
+              className="w-full rounded-t-md transition-all duration-300"
+              style={{ height: `${heightPct}%`, backgroundColor: color, minWidth: '4px' }}
+            />
+            <span className="text-[10px] text-coffee-medium mt-1.5 leading-none">{d.sublabel}</span>
+            <span className="text-[9px] text-coffee-light leading-none">{d.label}</span>
           </div>
         );
       })}
@@ -109,21 +100,26 @@ function BarChart({
   );
 }
 
-function KpiCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="card-surface text-center">
-      <p className="text-xl font-bold text-coffee-dark">{value}</p>
-      {sub && <p className="text-xs text-coffee-brand font-medium">{sub}</p>}
-      <p className="text-xs text-coffee-medium mt-0.5 leading-tight">{label}</p>
-    </div>
-  );
-}
+/** Horizontal bar chart — best for mobile, easy to read labels and values */
+function HorizontalBarChart({ data, color }: { data: { label: string; count: number }[]; color: string }) {
+  const maxCount = Math.max(...data.map((d) => d.count), 1);
 
-function LoadingKpi() {
   return (
-    <div className="card-surface">
-      <div className="h-7 bg-coffee-pale rounded animate-pulse mb-1" />
-      <div className="h-3 bg-coffee-pale rounded animate-pulse w-3/4 mx-auto" />
+    <div className="space-y-2">
+      {data.map((d, i) => (
+        <div key={i}>
+          <div className="flex justify-between text-xs mb-0.5">
+            <span className="text-coffee-medium">{d.label}</span>
+            <span className="font-semibold text-coffee-dark">{d.count}</span>
+          </div>
+          <div className="w-full bg-coffee-pale/50 rounded-full h-2">
+            <div
+              className="h-2 rounded-full transition-all duration-500"
+              style={{ width: `${Math.max((d.count / maxCount) * 100, d.count > 0 ? 4 : 0)}%`, backgroundColor: color }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -151,82 +147,63 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  // Format abbreviated dates for x-axis of visitsByDay
+  const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const MONTH_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  const visitDaysWithLabel = (data?.visitsByDay ?? []).map((v) => {
+
+  // Show last 14 days for the visit chart (fits well on mobile)
+  const recentVisits = (data?.visitsByDay ?? []).slice(-14).map((v) => {
     const d = new Date(v.date + 'T00:00:00');
-    return { label: `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`, count: v.count };
+    return { label: `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`, sublabel: DAY_NAMES[d.getDay()], count: v.count };
   });
+
+  // Weeks chart data
+  const weeksData = (data?.newCustomersByWeek ?? []).map((w) => ({ label: w.week, count: w.count }));
 
   const brandColor = tenant.primaryColor;
 
+  // Summary stats for the visits
+  const totalVisits30d = (data?.visitsByDay ?? []).reduce((sum, v) => sum + v.count, 0);
+  const totalVisits7d = (data?.visitsByDay ?? []).slice(-7).reduce((sum, v) => sum + v.count, 0);
+
   return (
-    <div className="p-4 max-w-lg mx-auto">
+    <div className="p-4 max-w-lg mx-auto pb-24">
       <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-6">Analíticas</h1>
 
       {error && (
         <div className="bg-red-50 text-red-700 rounded-xl p-3 mb-4 text-sm">{error}</div>
       )}
 
-      {/* KPI Row */}
+      {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         {loading ? (
-          <>
-            <LoadingKpi />
-            <LoadingKpi />
-            <LoadingKpi />
-            <LoadingKpi />
-          </>
+          <><LoadingKpi /><LoadingKpi /><LoadingKpi /><LoadingKpi /></>
         ) : (
           <>
-            <KpiCard label="Saldo total en circulación" value={data?.totalBalance ?? '$0.00'} />
-            <KpiCard label="Recargas este mes" value={data?.topupsThisMonth ?? '$0.00'} />
-            <KpiCard label="Recompensas canjeadas (mes)" value={data?.rewardsRedeemedThisMonth ?? 0} />
-            <KpiCard
-              label="Tasa de retención"
-              value={`${data?.retentionRate ?? 0}%`}
-              sub={`Prom. ${data?.avgVisitsPerCustomer ?? 0} vis/cliente`}
-            />
+            <KpiCard label="Visitas (30 días)" value={totalVisits30d} sub={`${totalVisits7d} esta semana`} />
+            <KpiCard label="Tasa de retención" value={`${data?.retentionRate ?? 0}%`} sub={`${data?.avgVisitsPerCustomer ?? 0} vis/cliente`} />
+            {tenant.topupEnabled && <KpiCard label="Saldo en circulación" value={data?.totalBalance ?? '$0.00'} />}
+            <KpiCard label="Recompensas (mes)" value={data?.rewardsRedeemedThisMonth ?? 0} sub={tenant.topupEnabled && data?.topupsThisMonth ? `${data.topupsThisMonth} recargado` : undefined} />
           </>
         )}
       </div>
 
-      {/* Visitas por día */}
+      {/* Visitas por día — last 14 days */}
       <div className="card-surface mb-4">
-        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-3">
-          Visitas por día — últimos 30 días
+        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-4">
+          Visitas — últimos 14 días
         </p>
-        {loading ? (
-          <div className="space-y-1">
-            <SkeletonBar />
-            <SkeletonBar />
-            <SkeletonBar />
-          </div>
-        ) : (
-          <BarChart
-            data={visitDaysWithLabel}
-            color={brandColor}
-            showEvery={5}
-          />
-        )}
+        {loading ? <SkeletonBlock /> : <VisitChart data={recentVisits} color={brandColor} />}
       </div>
 
-      {/* Nuevos clientes por semana */}
+      {/* Nuevos clientes por semana — horizontal bars */}
       <div className="card-surface mb-4">
-        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-3">
-          Nuevos clientes por semana — últimas 8 semanas
+        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-4">
+          Nuevos clientes por semana
         </p>
-        {loading ? (
-          <div className="space-y-1">
-            <SkeletonBar />
-            <SkeletonBar />
-          </div>
+        {loading ? <SkeletonBlock /> : weeksData.length === 0 ? (
+          <p className="text-sm text-coffee-medium text-center py-4">Sin datos aún</p>
         ) : (
-          <BarChart
-            data={(data?.newCustomersByWeek ?? []).map((w) => ({ label: w.week, count: w.count }))}
-            color={brandColor}
-            showEvery={1}
-          />
+          <HorizontalBarChart data={weeksData} color={brandColor} />
         )}
       </div>
 
@@ -236,40 +213,36 @@ export default function AnalyticsPage() {
           Rentabilidad del programa
         </p>
         {loading ? (
-          <div className="space-y-2">
-            <SkeletonBar />
-            <SkeletonBar />
-            <SkeletonBar />
-          </div>
+          <SkeletonBlock />
         ) : !data?.profitability.rewardCostConfigured ? (
           <div className="text-center py-3">
             <p className="text-sm text-coffee-medium">Configura el costo del regalo en</p>
-            <a href={`/${slug}/admin/rewards`} className="text-sm font-medium text-coffee-brand underline">Recompensas → Costo del regalo</a>
-            <p className="text-sm text-coffee-medium mt-1">para ver la rentabilidad por ciclo.</p>
+            <a href={`/${slug}/admin/rewards`} className="text-sm font-medium text-coffee-brand underline">Recompensas</a>
+            <p className="text-sm text-coffee-medium mt-1">para ver la rentabilidad.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <div className="flex justify-between text-sm">
               <span className="text-coffee-medium">Ticket promedio</span>
               <span className="font-semibold text-coffee-dark">{data.profitability.avgTicketMXN}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-coffee-medium">Ingresos por ciclo ({data.profitability.visitsRequired} vis.)</span>
+              <span className="text-coffee-medium">Ingresos/ciclo ({data.profitability.visitsRequired} vis.)</span>
               <span className="font-semibold text-coffee-dark">{data.profitability.revenuePerCycleMXN}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-coffee-medium">Costo del regalo</span>
-              <span className="font-semibold text-red-600">−{data.profitability.rewardCostMXN}</span>
+              <span className="font-semibold text-red-600">-{data.profitability.rewardCostMXN}</span>
             </div>
-            <div className="h-px bg-coffee-pale my-1" />
-            <div className="flex justify-between text-sm items-center">
-              <span className="font-semibold text-coffee-dark">Margen por ciclo</span>
+            <div className="h-px bg-coffee-pale" />
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-semibold text-coffee-dark">Margen por ciclo</span>
               <div className="text-right">
-                <span className={`font-bold text-base ${(data.profitability.marginPercent ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`font-bold text-lg ${(data.profitability.marginPercent ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {data.profitability.marginPerCycleMXN}
                 </span>
                 {data.profitability.marginPercent !== null && (
-                  <p className="text-xs text-coffee-medium">{data.profitability.marginPercent}% del ciclo</p>
+                  <p className="text-xs text-coffee-medium">{data.profitability.marginPercent}%</p>
                 )}
               </div>
             </div>
@@ -296,21 +269,15 @@ export default function AnalyticsPage() {
               <Link
                 key={c.id}
                 href={`/${slug}/admin/customers/${c.id}`}
-                className="flex items-center gap-3 py-2 px-1 rounded-xl hover:bg-coffee-pale transition-colors"
+                className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-coffee-pale transition-colors"
               >
                 <span
+                  className="flex items-center justify-center text-xs font-bold flex-shrink-0 rounded-full"
                   style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
+                    width: '26px',
+                    height: '26px',
                     backgroundColor: i === 0 ? '#C9993B' : i === 1 ? '#9E9E9E' : i === 2 ? '#A0673A' : '#EAE0D3',
                     color: i < 3 ? 'white' : '#6B5C52',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    flexShrink: 0,
                   }}
                 >
                   {i + 1}
@@ -323,7 +290,6 @@ export default function AnalyticsPage() {
                   <p className="text-sm font-bold text-coffee-dark">{c.totalVisits} vis.</p>
                   <p className="text-xs text-coffee-medium">{c.balanceMXN}</p>
                 </div>
-                <span className="text-coffee-light ml-1">›</span>
               </Link>
             ))}
           </div>
