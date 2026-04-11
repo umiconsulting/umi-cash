@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 import { verifyUmiSession } from '@/lib/umi-auth';
 import { randomBytes } from 'crypto';
-import { find as findTimezone } from 'geo-tz';
+import tzlookup from 'tz-lookup';
 
 const LocationSchema = z.object({
   name: z.string().min(1).max(100),
@@ -101,9 +101,9 @@ export async function POST(req: NextRequest) {
       if (data.locations) {
         const locWithCoords = data.locations.find(l => l.latitude != null && l.longitude != null);
         if (locWithCoords && locWithCoords.latitude != null && locWithCoords.longitude != null) {
-          const tzResults = findTimezone(locWithCoords.latitude, locWithCoords.longitude);
-          if (tzResults.length > 0) {
-            await tx.tenant.update({ where: { id: newTenant.id }, data: { timezone: tzResults[0] } });
+          const tz = tzlookup(locWithCoords.latitude, locWithCoords.longitude);
+          if (tz) {
+            await tx.tenant.update({ where: { id: newTenant.id }, data: { timezone: tz } });
           }
         }
       }

@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { verifyUmiSession } from '@/lib/umi-auth';
 import { sendApplePushUpdateForTenant } from '@/lib/push-apple';
-import { find as findTimezone } from 'geo-tz';
+import tzlookup from 'tz-lookup';
 
 const LocationUpdateSchema = z.object({
   id: z.string().optional(),
@@ -150,11 +150,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       // Auto-derive timezone from first location with coordinates
       const firstLocWithCoords = data.locations.find((l) => l.latitude != null && l.longitude != null);
       if (firstLocWithCoords && firstLocWithCoords.latitude != null && firstLocWithCoords.longitude != null) {
-        const tzResults = findTimezone(firstLocWithCoords.latitude, firstLocWithCoords.longitude);
-        if (tzResults.length > 0) {
+        const tz = tzlookup(firstLocWithCoords.latitude, firstLocWithCoords.longitude);
+        if (tz) {
           await prisma.tenant.update({
             where: { id: params.id },
-            data: { timezone: tzResults[0] },
+            data: { timezone: tz },
           });
         }
       }
