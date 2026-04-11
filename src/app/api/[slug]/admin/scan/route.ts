@@ -84,15 +84,22 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       console.warn(`[Scan] After-hours scan by staff ${staff.sub} for card ${card.id} at hour ${localHour} (open: ${openH}-${closeH})`);
     }
 
-    // 1 visit per card per rolling 24-hour window (abuse prevention)
+    // 1 visit per card per calendar day in tenant timezone
     if (action === SCAN_ACTIONS.VISIT) {
-      const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD
+      const startOfDay = new Date(`${todayStr}T00:00:00`);
+      // Convert local midnight to UTC by offsetting
+      const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+      const utcNow = new Date();
+      const offsetMs = utcNow.getTime() - localNow.getTime();
+      const startOfDayUTC = new Date(startOfDay.getTime() + offsetMs);
+
       const recentVisit = await prisma.visit.findFirst({
-        where: { cardId: card.id, scannedAt: { gte: since24h } },
+        where: { cardId: card.id, scannedAt: { gte: startOfDayUTC } },
       });
       if (recentVisit) {
         return NextResponse.json({
-          error: 'Ya se registró una visita en las últimas 24 horas',
+          error: 'Ya se registró una visita hoy',
         }, { status: 429 });
       }
     }

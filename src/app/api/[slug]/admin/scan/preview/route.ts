@@ -71,10 +71,16 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const rewardConfig = await getActiveRewardConfig(tenant.id);
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
-    // Check 24-hour rolling visit limit
-    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Check if already visited today (calendar day in tenant timezone)
+    const tz = tenant.timezone || 'America/Mexico_City';
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    const startOfDay = new Date(`${todayStr}T00:00:00`);
+    const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+    const offsetMs = new Date().getTime() - localNow.getTime();
+    const startOfDayUTC = new Date(startOfDay.getTime() + offsetMs);
+
     const recentVisit = await prisma.visit.findFirst({
-      where: { cardId: card.id, scannedAt: { gte: since24h } },
+      where: { cardId: card.id, scannedAt: { gte: startOfDayUTC } },
       orderBy: { scannedAt: 'desc' },
     });
 
