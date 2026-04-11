@@ -19,7 +19,7 @@ import { formatMXN } from './currency';
 import { signWalletBarcode } from './auth';
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || '';
-const CLASS_ID_PREFIX = process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v1';
+const CLASS_ID_PREFIX = process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v2';
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://your-domain.com';
 
@@ -173,6 +173,7 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     aud: 'google',
     typ: 'savetowallet',
     iat: Math.floor(Date.now() / 1000),
+    origins: [APP_URL],
     payload: {
       loyaltyClasses: [getLoyaltyClass(data.tenantName || 'Umi Cash', data.primaryColor || '#B5605A', data.tenantSlug, data.logoUrl)],
       loyaltyObjects: [getLoyaltyObject(data)],
