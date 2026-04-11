@@ -21,6 +21,7 @@ const UpdateTenantSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color inválido').optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   selfRegistration: z.boolean().optional(),
+  topupEnabled: z.boolean().optional(),
   rewardName: z.string().min(2).max(100).optional(),
   visitsRequired: z.number().int().min(1).max(50).optional(),
   locations: z.array(LocationUpdateSchema).optional(),
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     secondaryColor: tenant.secondaryColor,
     cardPrefix: tenant.cardPrefix,
     selfRegistration: tenant.selfRegistration,
+    topupEnabled: tenant.topupEnabled,
     subscriptionStatus: tenant.subscriptionStatus,
     trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
     rewardConfig: tenant.rewardConfigs[0]
@@ -85,6 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         ...(data.primaryColor !== undefined && { primaryColor: data.primaryColor }),
         ...(data.secondaryColor !== undefined && { secondaryColor: data.secondaryColor }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
+        ...(data.topupEnabled !== undefined && { topupEnabled: data.topupEnabled }),
         ...(data.subscriptionStatus !== undefined && {
           subscriptionStatus: data.subscriptionStatus,
           suspendedAt: data.subscriptionStatus === 'SUSPENDED' ? new Date() : null,

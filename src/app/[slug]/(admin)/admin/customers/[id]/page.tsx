@@ -119,11 +119,13 @@ export default function CustomerDetailPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="card-surface text-center col-span-2 border-coffee-brand/20" style={{ borderColor: 'color-mix(in srgb, var(--color-accent) 25%, transparent)' }}>
-          <p className="text-xs text-coffee-medium mb-0.5 uppercase tracking-wide">Valor de vida (LTV)</p>
-          <p className="text-3xl font-bold text-coffee-dark">{customer.ltvMXN}</p>
-          <p className="text-xs text-coffee-light mt-1">Total gastado en tienda{tenant.topupEnabled ? ` · Recargado: ${customer.totalTopupMXN}` : ''}</p>
-        </div>
+        {tenant.topupEnabled && (
+          <div className="card-surface text-center col-span-2 border-coffee-brand/20" style={{ borderColor: 'color-mix(in srgb, var(--color-accent) 25%, transparent)' }}>
+            <p className="text-xs text-coffee-medium mb-0.5 uppercase tracking-wide">Valor de vida (LTV)</p>
+            <p className="text-3xl font-bold text-coffee-dark">{customer.ltvMXN}</p>
+            <p className="text-xs text-coffee-light mt-1">Total gastado en tienda · Recargado: {customer.totalTopupMXN}</p>
+          </div>
+        )}
         <div className="card-surface text-center"><p className="text-2xl font-bold text-coffee-dark">{customer.totalVisits}</p><p className="text-xs text-coffee-medium">Total visitas</p></div>
         <div className="card-surface text-center"><p className="text-2xl font-bold text-coffee-dark">{customer.pendingRewards}</p><p className="text-xs text-coffee-medium">Recompensas</p></div>
       </div>

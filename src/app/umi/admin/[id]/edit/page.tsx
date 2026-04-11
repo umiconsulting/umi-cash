@@ -22,6 +22,7 @@ interface TenantEditData {
   secondaryColor: string | null;
   cardPrefix: string;
   selfRegistration: boolean;
+  topupEnabled: boolean;
   subscriptionStatus: string;
   trialEndsAt: string | null;
   rewardConfig: { visitsRequired: number; rewardName: string } | null;
@@ -43,6 +44,7 @@ export default function EditTenantPage() {
     primaryColor: '#B5605A',
     secondaryColor: '',
     selfRegistration: true,
+    topupEnabled: true,
     subscriptionStatus: 'ACTIVE',
     rewardName: '',
     visitsRequired: 10,
@@ -79,6 +81,7 @@ export default function EditTenantPage() {
           primaryColor: d.primaryColor,
           secondaryColor: d.secondaryColor ?? '',
           selfRegistration: d.selfRegistration,
+          topupEnabled: d.topupEnabled,
           subscriptionStatus: d.subscriptionStatus,
           rewardName: d.rewardConfig?.rewardName ?? 'Bebida gratis',
           visitsRequired: d.rewardConfig?.visitsRequired ?? 10,
@@ -124,6 +127,7 @@ export default function EditTenantPage() {
         primaryColor: form.primaryColor,
         secondaryColor: form.secondaryColor || null,
         selfRegistration: form.selfRegistration,
+        topupEnabled: form.topupEnabled,
         subscriptionStatus: form.subscriptionStatus,
         rewardName: form.rewardName,
         visitsRequired: form.visitsRequired,
@@ -322,6 +326,17 @@ export default function EditTenantPage() {
               <button type="button" onClick={() => setForm({ ...form, selfRegistration: !form.selfRegistration })}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${form.selfRegistration ? 'bg-green-500' : 'bg-gray-300'}`}>
                 <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${form.selfRegistration ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </label>
+
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Monedero (saldo)</p>
+                <p className="text-xs text-gray-400 mt-0.5">Recargas de saldo, cobros y balance en wallet</p>
+              </div>
+              <button type="button" onClick={() => setForm({ ...form, topupEnabled: !form.topupEnabled })}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${form.topupEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${form.topupEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </label>
           </div>
