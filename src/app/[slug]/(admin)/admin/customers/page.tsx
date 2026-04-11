@@ -127,6 +127,7 @@ export default function CustomersPage() {
                   )}
                 </div>
                 <p className="text-xs text-coffee-medium">{c.phone || c.email || c.cardNumber}</p>
+                {c.device && <p className="text-[10px] text-coffee-light">{c.device}{c.os ? ` · ${c.os}` : ''}</p>}
                 <div className="flex items-center gap-3 mt-1">
                   <span className="text-xs text-coffee-light">{c.totalVisits} visitas</span>
                   {tenant.topupEnabled && <span className="text-xs text-coffee-light">Saldo: {c.balanceMXN}</span>}

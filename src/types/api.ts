@@ -47,6 +47,8 @@ export interface AdminCustomer {
   name: string | null;
   phone: string | null;
   email: string | null;
+  device: string | null;
+  os: string | null;
   cardNumber: string;
   cardId: string;
   balanceMXN: string;

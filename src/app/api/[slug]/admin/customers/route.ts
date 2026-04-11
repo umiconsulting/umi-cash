@@ -38,10 +38,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     transactions: { where: { type: 'PURCHASE' as const }, select: { amountCentavos: true } },
   };
 
-  function toCustomer(u: { id: string; name: string | null; phone: string | null; email: string | null; createdAt: Date; card: { id: string; cardNumber: string; balanceCentavos: number; totalVisits: number; visitsThisCycle: number; pendingRewards: number; visits: { scannedAt: Date }[]; transactions: { amountCentavos: number }[] } | null }) {
+  function toCustomer(u: { id: string; name: string | null; phone: string | null; email: string | null; device: string | null; os: string | null; createdAt: Date; card: { id: string; cardNumber: string; balanceCentavos: number; totalVisits: number; visitsThisCycle: number; pendingRewards: number; visits: { scannedAt: Date }[]; transactions: { amountCentavos: number }[] } | null }) {
     const ltvCentavos = (u.card?.transactions ?? []).reduce((sum, t) => sum + Math.abs(t.amountCentavos), 0);
     return {
       id: u.id, name: u.name, phone: u.phone, email: u.email,
+      device: u.device, os: u.os,
       cardNumber: u.card?.cardNumber ?? '',
       cardId: u.card?.id ?? '',
       balanceMXN: formatMXN(u.card?.balanceCentavos ?? 0),

@@ -54,7 +54,7 @@ export async function GET(
   const totalTopupCentavos = topupAgg._sum.amountCentavos ?? 0;
 
   return NextResponse.json({
-    id: targetUser.id, name: targetUser.name, phone: targetUser.phone, email: targetUser.email,
+    id: targetUser.id, name: targetUser.name, phone: targetUser.phone, email: targetUser.email, device: targetUser.device, os: targetUser.os,
     birthDate: targetUser.birthDate?.toISOString().split('T')[0] ?? null,
     cardNumber: card.cardNumber, cardId: card.id,
     balanceMXN: formatMXN(card.balanceCentavos), balanceCentavos: card.balanceCentavos,

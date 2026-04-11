@@ -68,6 +68,8 @@ model User {
   birthDate    DateTime? @db.Date
   role         String   @default("CUSTOMER") // CUSTOMER | STAFF | ADMIN
   passwordHash String?
+  device       String?  // e.g. "iPhone", "Samsung Galaxy S24", "Desktop"
+  os           String?  // e.g. "iOS 17.4", "Android 14", "Windows 11"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

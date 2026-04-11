@@ -7,7 +7,7 @@ import { useTenant } from '@/context/TenantContext';
 import { formatDateShortMX, formatDateTimeMX } from '@/lib/intl';
 
 interface CustomerDetail {
-  id: string; name: string | null; phone: string | null; email: string | null; birthDate: string | null;
+  id: string; name: string | null; phone: string | null; email: string | null; device: string | null; os: string | null; birthDate: string | null;
   cardNumber: string; cardId: string; balanceMXN: string; balanceCentavos: number;
   totalVisits: number; visitsThisCycle: number; visitsRequired: number; pendingRewards: number;
   lastVisit: string | null; createdAt: string;
@@ -111,6 +111,7 @@ export default function CustomerDetailPage() {
         <p className="text-coffee-light text-xs uppercase tracking-widest">Cliente</p>
         <h2 className="font-display text-xl font-bold mt-1">{customer.name || 'Sin nombre'}</h2>
         <p className="text-coffee-light text-sm">{customer.phone || customer.email || '—'}</p>
+        {customer.device && <p className="text-coffee-pale/40 text-xs mt-0.5">{customer.device}{customer.os ? ` · ${customer.os}` : ''}</p>}
         {customer.birthDate && <p className="text-coffee-pale/60 text-xs mt-0.5">{new Date(customer.birthDate + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })}</p>}
         <p className="text-coffee-pale/60 text-xs mt-1">{customer.cardNumber}</p>
         <div className="flex justify-between mt-4">

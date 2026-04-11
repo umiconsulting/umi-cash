@@ -6,6 +6,7 @@ import { createSession } from '@/lib/auth';
 import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { createHash, randomBytes } from 'crypto';
+import { parseUserAgent } from '@/lib/user-agent';
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -55,6 +56,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       }, { status: 409 });
     }
 
+    const { device, os } = parseUserAgent(ua);
+
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
@@ -63,6 +66,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           phone: normalizedPhone,
           birthDate: new Date(data.birthDate + 'T00:00:00'),
           role: 'CUSTOMER',
+          device,
+          os,
         },
       });
 
