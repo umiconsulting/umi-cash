@@ -113,6 +113,7 @@ export default function RegisterPage() {
   const { slug } = useParams<{ slug: string }>();
   const tenant = useTenant();
   const [name, setName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [dialCode, setDialCode] = useState('52');
   const [localPhone, setLocalPhone] = useState('');
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -138,7 +139,7 @@ export default function RegisterPage() {
       const res = await fetch(`/api/${slug}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone: fullPhone }),
+        body: JSON.stringify({ name, phone: fullPhone, ...(birthDate && { birthDate }) }),
       });
 
       const data = await res.json();
@@ -242,6 +243,11 @@ export default function RegisterPage() {
           <div>
             <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Nombre completo</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="María García" className="input-field" required autoComplete="name" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Fecha de nacimiento <span className="font-normal text-coffee-light">(opcional)</span></label>
+            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="input-field" max={new Date().toISOString().split('T')[0]} />
           </div>
 
           <div>

@@ -55,6 +55,7 @@ export async function GET(
 
   return NextResponse.json({
     id: targetUser.id, name: targetUser.name, phone: targetUser.phone, email: targetUser.email,
+    birthDate: targetUser.birthDate?.toISOString().split('T')[0] ?? null,
     cardNumber: card.cardNumber, cardId: card.id,
     balanceMXN: formatMXN(card.balanceCentavos), balanceCentavos: card.balanceCentavos,
     totalVisits: card.totalVisits, visitsThisCycle: card.visitsThisCycle,
