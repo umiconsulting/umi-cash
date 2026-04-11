@@ -1,6 +1,24 @@
 import { NextResponse } from 'next/server';
 import { prisma } from './prisma';
 
+/** Returns the promoMessage only if the promotion is currently active based on schedule */
+export function getActivePromo(tenant: {
+  promoMessage: string | null;
+  promoStartsAt: Date | null;
+  promoEndsAt: Date | null;
+  promoDays: string | null;
+}): string | null {
+  if (!tenant.promoMessage) return null;
+  const now = new Date();
+  if (tenant.promoStartsAt && now < tenant.promoStartsAt) return null;
+  if (tenant.promoEndsAt && now > tenant.promoEndsAt) return null;
+  if (tenant.promoDays) {
+    const allowedDays = tenant.promoDays.split(',').map(Number);
+    if (!allowedDays.includes(now.getDay())) return null;
+  }
+  return tenant.promoMessage;
+}
+
 export async function getTenant(slug: string) {
   return prisma.tenant.findUnique({
     where: { slug },

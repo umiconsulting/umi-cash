@@ -11,6 +11,9 @@ interface TenantSettings {
   logoUrl: string | null;
   stripImageUrl: string | null;
   promoMessage: string | null;
+  promoStartsAt: string | null;
+  promoEndsAt: string | null;
+  promoDays: string | null;
   selfRegistration: boolean;
   cardPrefix: string;
   slug: string;
@@ -31,6 +34,9 @@ export default function SettingsPage() {
     logoUrl: '',
     stripImageUrl: '',
     promoMessage: '',
+    promoStartsAt: '',
+    promoEndsAt: '',
+    promoDays: '' as string,
     selfRegistration: true,
   });
 
@@ -51,6 +57,9 @@ export default function SettingsPage() {
       logoUrl: data.logoUrl ?? '',
       stripImageUrl: data.stripImageUrl ?? '',
       promoMessage: data.promoMessage ?? '',
+      promoStartsAt: data.promoStartsAt ? data.promoStartsAt.slice(0, 16) : '',
+      promoEndsAt: data.promoEndsAt ? data.promoEndsAt.slice(0, 16) : '',
+      promoDays: data.promoDays ?? '',
       selfRegistration: data.selfRegistration,
     });
     setLoading(false);
@@ -64,7 +73,12 @@ export default function SettingsPage() {
     const res = await fetch(`/api/${slug}/admin/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        promoStartsAt: form.promoStartsAt ? new Date(form.promoStartsAt).toISOString() : null,
+        promoEndsAt: form.promoEndsAt ? new Date(form.promoEndsAt).toISOString() : null,
+        promoDays: form.promoDays || null,
+      }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -148,23 +162,79 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Promotions */}
+        {/* Special Promotion */}
         <div className="card-surface space-y-4">
-          <h2 className="font-semibold text-coffee-dark text-sm">Promoción en Wallet</h2>
-          <p className="text-xs text-coffee-medium -mt-2">Los usuarios recibirán una notificación en su celular cuando cambies este mensaje.</p>
+          <h2 className="font-semibold text-coffee-dark text-sm">Promoción especial</h2>
+          <p className="text-xs text-coffee-medium -mt-2">Los usuarios recibirán una notificación en su celular cuando actives una promoción.</p>
 
           <div>
-            <label className="block text-sm font-medium text-coffee-dark mb-1.5">Mensaje de promoción</label>
+            <label className="block text-sm font-medium text-coffee-dark mb-1.5">Mensaje de la promoción</label>
             <input
               type="text"
               value={form.promoMessage}
               onChange={(e) => setForm({ ...form, promoMessage: e.target.value })}
               className="input-field"
-              placeholder="Ej: 2x1 en bebidas este viernes"
+              placeholder="Ej: 2x1 en bebidas frías"
               maxLength={200}
             />
-            <p className="text-xs text-coffee-light mt-1">Déjalo vacío para quitar la promoción</p>
+            <p className="text-xs text-coffee-light mt-1">Déjalo vacío para desactivar la promoción</p>
           </div>
+
+          {form.promoMessage && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-coffee-dark mb-1.5">Inicia</label>
+                  <input
+                    type="datetime-local"
+                    value={form.promoStartsAt}
+                    onChange={(e) => setForm({ ...form, promoStartsAt: e.target.value })}
+                    className="input-field"
+                  />
+                  <p className="text-xs text-coffee-light mt-1">Vacío = ya activa</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-coffee-dark mb-1.5">Expira</label>
+                  <input
+                    type="datetime-local"
+                    value={form.promoEndsAt}
+                    onChange={(e) => setForm({ ...form, promoEndsAt: e.target.value })}
+                    className="input-field"
+                  />
+                  <p className="text-xs text-coffee-light mt-1">Vacío = sin expiración</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-coffee-dark mb-2">Días válidos</label>
+                <div className="flex gap-1.5">
+                  {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day, i) => {
+                    const selected = form.promoDays ? form.promoDays.split(',').includes(String(i)) : false;
+                    const allEmpty = !form.promoDays;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          const current = form.promoDays ? form.promoDays.split(',').filter(Boolean) : [];
+                          const next = selected
+                            ? current.filter((d) => d !== String(i))
+                            : [...current, String(i)];
+                          setForm({ ...form, promoDays: next.join(',') });
+                        }}
+                        className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          selected ? 'bg-coffee-dark text-white' : allEmpty ? 'bg-coffee-pale/60 text-coffee-medium' : 'bg-coffee-pale/30 text-coffee-light'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-coffee-light mt-1.5">Sin selección = todos los días</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Branding */}

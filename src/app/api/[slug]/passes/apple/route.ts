@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateApplePass, isAppleWalletConfigured } from '@/lib/pass-apple';
 import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
+import { getActivePromo } from '@/lib/tenant';
 import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
 import { getTenant } from '@/lib/tenant';
 
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       logoUrl: tenant.logoUrl,
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
-      promoMessage: tenant.promoMessage,
+      promoMessage: getActivePromo(tenant),
       locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
       topupEnabled: tenant.topupEnabled,
     });

@@ -14,7 +14,7 @@ import { prisma } from '@/lib/prisma';
 import { generateApplePass, isAppleWalletConfigured } from '@/lib/pass-apple';
 import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
 import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
-import { getTenant } from '@/lib/tenant';
+import { getTenant, getActivePromo } from '@/lib/tenant';
 
 function matchRoute(segments: string[]): { handler: string; params: Record<string, string> } | null {
   // POST /log
@@ -196,7 +196,7 @@ async function handleGetPass(req: NextRequest, slug: string, serial: string) {
       logoUrl: tenant.logoUrl,
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
-      promoMessage: tenant.promoMessage,
+      promoMessage: getActivePromo(tenant),
       locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
       topupEnabled: tenant.topupEnabled,
     });

@@ -15,6 +15,9 @@ const SettingsSchema = z.object({
   stripImageUrl: z.string().max(500).optional().or(z.literal('')),
   passStyle: z.enum(['default', 'stamps']).optional(),
   promoMessage: z.string().max(200).optional().or(z.literal('')),
+  promoStartsAt: z.string().datetime().optional().nullable(),
+  promoEndsAt: z.string().datetime().optional().nullable(),
+  promoDays: z.string().max(20).optional().nullable(),
   selfRegistration: z.boolean().optional(),
 });
 
@@ -36,6 +39,9 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     stripImageUrl: tenant.stripImageUrl,
     passStyle: tenant.passStyle,
     promoMessage: tenant.promoMessage,
+    promoStartsAt: tenant.promoStartsAt?.toISOString() ?? null,
+    promoEndsAt: tenant.promoEndsAt?.toISOString() ?? null,
+    promoDays: tenant.promoDays,
     selfRegistration: tenant.selfRegistration,
     cardPrefix: tenant.cardPrefix,
     slug: tenant.slug,
@@ -66,6 +72,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
         ...(data.stripImageUrl !== undefined && { stripImageUrl: data.stripImageUrl || null }),
         ...(data.passStyle !== undefined && { passStyle: data.passStyle }),
         ...(data.promoMessage !== undefined && { promoMessage: data.promoMessage || null }),
+        ...(data.promoStartsAt !== undefined && { promoStartsAt: data.promoStartsAt ? new Date(data.promoStartsAt) : null }),
+        ...(data.promoEndsAt !== undefined && { promoEndsAt: data.promoEndsAt ? new Date(data.promoEndsAt) : null }),
+        ...(data.promoDays !== undefined && { promoDays: data.promoDays || null }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
       },
     });

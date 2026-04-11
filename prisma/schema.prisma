@@ -22,6 +22,9 @@ model Tenant {
   stripImageUrl  String?                   // URL to custom strip/banner image for wallet pass
   passStyle      String   @default("default") // "default" (balance+member+stamps) or "stamps" (remaining+rewards)
   promoMessage   String?                   // Current promotion — changing this triggers wallet notification
+  promoStartsAt  DateTime?                 // When the promotion becomes active
+  promoEndsAt    DateTime?                 // When the promotion expires
+  promoDays      String?                   // Comma-separated day numbers (0=Sun..6=Sat), null = all days
   topupEnabled       Boolean  @default(true)   // false = hide monedero/balance features
   selfRegistration   Boolean  @default(true)
   subscriptionStatus String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
