@@ -131,6 +131,34 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<SuccessState | null>(null);
+  const [isAndroid, setIsAndroid] = useState(false);
+
+  useEffect(() => {
+    setIsAndroid(/Android/i.test(navigator.userAgent));
+  }, []);
+
+  if (isAndroid) {
+    return (
+      <main className="min-h-screen bg-coffee-cream flex flex-col">
+        <div className="loyalty-card text-white px-6 py-12 text-center">
+          <div className="max-w-sm mx-auto relative z-10">
+            <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-3">{tenant.name}</p>
+            <h1 className="font-display text-2xl font-bold">Próximamente en Android</h1>
+            <p className="text-coffee-light text-sm mt-2">Por ahora, solo disponible para iPhone.</p>
+          </div>
+        </div>
+        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
+          <div className="card-surface text-center space-y-3">
+            <p className="text-sm text-coffee-medium">Estamos terminando la integración con Google Wallet. Pronto podrás crear tu tarjeta desde Android.</p>
+            <p className="text-xs text-coffee-light">Si tienes un iPhone, abre este enlace desde ahí para registrarte.</p>
+          </div>
+          <p className="text-center text-xs text-coffee-light mt-6">
+            <Link href={`/${slug}`} className="underline">← Volver</Link>
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
