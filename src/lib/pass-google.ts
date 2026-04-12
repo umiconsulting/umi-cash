@@ -1,11 +1,12 @@
 /**
  * Google Wallet loyalty pass generation.
  *
- * Classes are pre-created via the REST API (see setup script).
+ * Classes are pre-created via the REST API.
  * The JWT save URL only contains the loyalty object.
  */
 
 import { SignJWT } from 'jose';
+import { formatMXN } from './currency';
 import { signWalletBarcode } from './auth';
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || '';
@@ -36,6 +37,7 @@ export interface GooglePassData {
   tenantSlug?: string;
   primaryColor?: string;
   logoUrl?: string | null;
+  topupEnabled?: boolean;
 }
 
 function getClassId(tenantSlug?: string): string {
@@ -46,7 +48,41 @@ function getLoyaltyObject(data: GooglePassData) {
   const remaining = data.visitsRequired - data.visitsThisCycle;
   const objectId = `${ISSUER_ID}.card_${data.cardId}`;
 
-  return {
+  // Stamp progress: ● for filled, ○ for empty
+  const filled = '●'.repeat(data.visitsThisCycle);
+  const empty = '○'.repeat(remaining);
+  const stampProgress = `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})`;
+
+  // Build text modules to match Apple pass fields
+  const textModules: { header: string; body: string; id: string }[] = [
+    {
+      header: 'MIEMBRO',
+      body: data.customerName || 'Cliente',
+      id: 'member_name',
+    },
+    {
+      header: data.rewardName.toUpperCase(),
+      body: stampProgress,
+      id: 'stamp_progress',
+    },
+  ];
+
+  // Reward status
+  if (data.pendingRewards > 0) {
+    textModules.push({
+      header: 'RECOMPENSAS DISPONIBLES',
+      body: `${data.pendingRewards} recompensa${data.pendingRewards > 1 ? 's' : ''} — ¡canjéala en tienda!`,
+      id: 'pending_rewards',
+    });
+  } else {
+    textModules.push({
+      header: 'PRÓXIMA RECOMPENSA',
+      body: `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`,
+      id: 'next_reward',
+    });
+  }
+
+  const object: Record<string, unknown> = {
     id: objectId,
     classId: getClassId(data.tenantSlug),
     state: 'active',
@@ -63,14 +99,29 @@ function getLoyaltyObject(data: GooglePassData) {
       value: signWalletBarcode(data.cardNumber),
       alternateText: data.cardNumber,
     },
-    textModulesData: [
-      {
-        header: 'Recompensa',
-        body: data.pendingRewards > 0
-          ? `${data.pendingRewards} disponible${data.pendingRewards > 1 ? 's' : ''}`
-          : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`,
-      },
-    ],
+    textModulesData: textModules,
+    infoModuleData: {
+      labelValueRows: [
+        {
+          columns: [
+            { label: 'Visitas totales', value: String(data.totalVisits) },
+            {
+              label: 'Miembro desde',
+              value: new Intl.DateTimeFormat('es-MX', {
+                month: 'long',
+                year: 'numeric',
+                timeZone: 'America/Mexico_City',
+              }).format(new Date(data.memberSince)),
+            },
+          ],
+        },
+        {
+          columns: [
+            { label: 'Tarjeta', value: data.cardNumber },
+          ],
+        },
+      ],
+    },
     linksModuleData: {
       uris: [
         {
@@ -81,6 +132,21 @@ function getLoyaltyObject(data: GooglePassData) {
       ],
     },
   };
+
+  // Balance — only when topup/monedero is enabled (matches Apple pass)
+  if (data.topupEnabled !== false) {
+    object.secondaryLoyaltyPoints = {
+      balance: {
+        money: {
+          currencyCode: 'MXN',
+          micros: String(data.balanceCentavos * 10_000),
+        },
+      },
+      label: 'Saldo',
+    };
+  }
+
+  return object;
 }
 
 export async function generateGoogleWalletURL(data: GooglePassData): Promise<string> {
@@ -99,9 +165,6 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
   );
 
   const loyaltyObject = getLoyaltyObject(data);
-
-  console.log('[Google Wallet] Class ID:', loyaltyObject.classId);
-  console.log('[Google Wallet] Object ID:', loyaltyObject.id);
 
   const payload = {
     iss: SERVICE_ACCOUNT_EMAIL,

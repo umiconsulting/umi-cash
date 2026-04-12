@@ -48,6 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       tenantSlug: params.slug,
       primaryColor: tenant.primaryColor,
       logoUrl: tenant.logoUrl,
+      topupEnabled: tenant.topupEnabled,
     });
 
     if (!card.googlePassObjectId) {
