@@ -210,12 +210,10 @@ function WalletButtons({ token, slug }: { token: string; slug: string }) {
         </button>
       )}
       {(isAndroid || !isApple) && (
-        <button onClick={handleGoogle} disabled={googleLoading} className="google-wallet-btn w-full justify-center">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-1.25 17.292l-4.5-4.364 1.386-1.388 3.116 3.020 6.861-6.836 1.387 1.388-8.25 8.18z" />
-          </svg>
-          {googleLoading ? 'Guardando...' : 'Guardar en Google Wallet'}
-        </button>
+        <div className="text-center py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
+          <p className="text-sm text-gray-600 font-medium">Google Wallet — próximamente</p>
+          <p className="text-xs text-gray-400 mt-1">Estamos en proceso de aprobación.</p>
+        </div>
       )}
     </div>
   );
