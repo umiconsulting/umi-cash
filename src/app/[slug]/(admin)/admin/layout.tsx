@@ -114,18 +114,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const sheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token || !isTokenValid(token)) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userRole');
-      window.location.href = `/${slug}/admin-login`;
-      return;
-    }
-    // Verify token server-side — never trust localStorage role
-    fetch(`/api/${slug}/admin/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (r) => {
+    async function initAuth() {
+      let token = localStorage.getItem('accessToken');
+
+      // If token is expired, try refreshing before giving up
+      if (!token || !isTokenValid(token)) {
+        try {
+          const refreshRes = await fetch(`/api/${slug}/auth/refresh`, { method: 'POST' });
+          if (refreshRes.ok) {
+            const { accessToken } = await refreshRes.json();
+            localStorage.setItem('accessToken', accessToken);
+            token = accessToken;
+          }
+        } catch { /* refresh failed */ }
+      }
+
+      if (!token || !isTokenValid(token)) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userRole');
+        window.location.href = `/${slug}/admin-login`;
+        return;
+      }
+
+      // Verify token server-side — never trust localStorage role
+      try {
+        const r = await fetch(`/api/${slug}/admin/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (r.status === 401 || r.status === 403) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('userRole');
@@ -136,13 +151,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setSuspended(true);
         }
         const data = await r.json().catch(() => null);
-        // Use server-verified role, falling back to localStorage only for display
         const verifiedRole = data?.role;
         if (verifiedRole && ['STAFF', 'ADMIN'].includes(verifiedRole)) {
           setRole(verifiedRole);
           localStorage.setItem('userRole', verifiedRole);
         } else {
-          // Fallback: use localStorage but server already validated the token
           const storedRole = localStorage.getItem('userRole');
           if (['STAFF', 'ADMIN'].includes(storedRole || '')) {
             setRole(storedRole);
@@ -150,14 +163,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             window.location.href = `/${slug}/admin-login`;
           }
         }
-      })
-      .catch(() => {
+      } catch {
         // Network error — use cached role if available
         const storedRole = localStorage.getItem('userRole');
         if (['STAFF', 'ADMIN'].includes(storedRole || '')) {
           setRole(storedRole);
         }
-      });
+      }
+    }
+    initAuth();
   }, [slug]);
 
   // Close sheet on route change

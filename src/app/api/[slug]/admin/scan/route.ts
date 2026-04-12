@@ -188,7 +188,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       ? `¡${updatedCard.user.name ?? 'Cliente'} ganó una recompensa! ${rewardName} disponible.`
       : `✓ Visita #${updatedCard.totalVisits} registrada. ${remaining} visita${remaining !== 1 ? 's' : ''} para ${rewardName}.`;
 
-    triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor);
+    await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor);
 
     return NextResponse.json({
       success: true,
