@@ -1,17 +1,8 @@
 /**
  * Google Wallet loyalty pass generation.
  *
- * SETUP REQUIRED:
- * 1. Google Cloud project: https://console.cloud.google.com
- * 2. Enable "Google Wallet API" in APIs & Services
- * 3. Create a Service Account with "Google Wallet Object Issuer" role
- * 4. Download the service account JSON key
- * 5. Apply for Google Wallet Issuer access: https://pay.google.com/business/console
- * 6. Set environment variables:
- *    GOOGLE_SERVICE_ACCOUNT_EMAIL
- *    GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
- *    GOOGLE_WALLET_ISSUER_ID
- *    GOOGLE_WALLET_CLASS_ID
+ * Classes are pre-created via the REST API (see setup script).
+ * The JWT save URL only contains the loyalty object.
  */
 
 import { SignJWT } from 'jose';
@@ -51,26 +42,6 @@ function getClassId(tenantSlug?: string): string {
   return `${ISSUER_ID}.${tenantSlug ? `${tenantSlug}_${CLASS_ID_PREFIX}` : CLASS_ID_PREFIX}`;
 }
 
-function getLoyaltyClass(data: GooglePassData) {
-  const logoUri = data.logoUrl
-    ? (data.logoUrl.startsWith('http') ? data.logoUrl : `${APP_URL}${data.logoUrl}`)
-    : `${APP_URL}/logos/kalala-logo.png`;
-
-  return {
-    id: getClassId(data.tenantSlug),
-    issuerName: data.tenantName || 'Umi Cash',
-    programName: `Lealtad ${data.tenantName || 'Umi Cash'}`,
-    programLogo: {
-      sourceUri: { uri: logoUri },
-      contentDescription: {
-        defaultValue: { language: 'es-MX', value: `${data.tenantName} logo` },
-      },
-    },
-    hexBackgroundColor: data.primaryColor || '#B5605A',
-    reviewStatus: 'UNDER_REVIEW',
-  };
-}
-
 function getLoyaltyObject(data: GooglePassData) {
   const remaining = data.visitsRequired - data.visitsThisCycle;
   const objectId = `${ISSUER_ID}.card_${data.cardId}`;
@@ -78,15 +49,17 @@ function getLoyaltyObject(data: GooglePassData) {
   return {
     id: objectId,
     classId: getClassId(data.tenantSlug),
-    state: 'ACTIVE',
+    state: 'active',
     accountId: data.cardNumber,
     accountName: data.customerName || 'Cliente',
     loyaltyPoints: {
-      balance: { int: data.visitsThisCycle },
+      balance: {
+        string: String(data.visitsThisCycle),
+      },
       label: `Visitas (meta: ${data.visitsRequired})`,
     },
     barcode: {
-      type: 'QR_CODE',
+      type: 'qrCode',
       value: signWalletBarcode(data.cardNumber),
       alternateText: data.cardNumber,
     },
@@ -96,15 +69,14 @@ function getLoyaltyObject(data: GooglePassData) {
         body: data.pendingRewards > 0
           ? `${data.pendingRewards} disponible${data.pendingRewards > 1 ? 's' : ''}`
           : `${remaining} visita${remaining !== 1 ? 's' : ''} para ${data.rewardName}`,
-        id: 'reward_progress',
       },
     ],
     linksModuleData: {
       uris: [
         {
+          kind: 'walletobjects#uri',
           uri: `${APP_URL}/${data.tenantSlug || ''}/card`,
           description: 'Ver mi tarjeta',
-          id: 'card_link',
         },
       ],
     },
@@ -126,12 +98,10 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     ['sign']
   );
 
-  const loyaltyClass = getLoyaltyClass(data);
   const loyaltyObject = getLoyaltyObject(data);
 
-  console.log('[Google Wallet] Class ID:', loyaltyClass.id);
+  console.log('[Google Wallet] Class ID:', loyaltyObject.classId);
   console.log('[Google Wallet] Object ID:', loyaltyObject.id);
-  console.log('[Google Wallet] Logo URI:', loyaltyClass.programLogo.sourceUri.uri);
 
   const payload = {
     iss: SERVICE_ACCOUNT_EMAIL,
@@ -140,7 +110,6 @@ export async function generateGoogleWalletURL(data: GooglePassData): Promise<str
     iat: Math.floor(Date.now() / 1000),
     origins: [APP_URL],
     payload: {
-      loyaltyClasses: [loyaltyClass],
       loyaltyObjects: [loyaltyObject],
     },
   };
