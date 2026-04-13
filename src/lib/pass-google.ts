@@ -9,10 +9,10 @@ import { SignJWT } from 'jose';
 import { formatMXN } from './currency';
 import { signWalletBarcode } from './auth';
 
-const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || '';
-const CLASS_ID_PREFIX = process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v2';
-const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cash.umiconsulting.co';
+const ISSUER_ID = (process.env.GOOGLE_WALLET_ISSUER_ID || '').trim();
+const CLASS_ID_PREFIX = (process.env.GOOGLE_WALLET_CLASS_ID || 'loyalty_v2').trim();
+const SERVICE_ACCOUNT_EMAIL = (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '').trim();
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://cash.umiconsulting.co').trim();
 
 export function isGoogleWalletConfigured(): boolean {
   return !!(
