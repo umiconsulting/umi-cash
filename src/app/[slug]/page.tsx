@@ -71,7 +71,7 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
           >
             Crear mi tarjeta gratis →
           </Link>
-          <p className="text-white/40 text-xs mt-3">Disponible para iPhone. Android próximamente.</p>
+          <p className="text-white/40 text-xs mt-3">Disponible para iPhone y Android.</p>
         </div>
       </div>
 
@@ -252,7 +252,7 @@ export default async function TenantLandingPage({ params }: { params: { slug: st
         <p className="text-xs text-coffee-light mt-4">
           Gratis para siempre · Sin tarjeta de crédito · Sin descargar apps
         </p>
-        <p className="text-xs text-coffee-light/60 mt-1">Disponible para iPhone. Android próximamente.</p>
+        <p className="text-xs text-coffee-light/60 mt-1">Disponible para iPhone y Android.</p>
       </section>
 
       {/* Footer */}
