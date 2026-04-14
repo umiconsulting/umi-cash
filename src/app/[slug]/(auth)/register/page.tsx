@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTenant } from '@/context/TenantContext';
@@ -57,7 +57,6 @@ function WalletAddButtons({ token, slug }: { token: string; slug: string }) {
         return;
       }
       const { saveUrl } = await res.json();
-      // Validate domain to prevent open redirect
       if (!saveUrl || !saveUrl.startsWith('https://pay.google.com/')) {
         alert('URL de Google Wallet no válida.');
         return;
@@ -129,9 +128,60 @@ const COUNTRY_CODES = [
   { dial: '1',   flag: '🇩🇴', name: 'Rep. Dominicana' },
 ];
 
+type Step = 'form' | 'otp' | 'success';
+
+function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  function handleInput(index: number, digit: string) {
+    if (!/^\d?$/.test(digit)) return;
+    const arr = value.split('');
+    arr[index] = digit;
+    const next = arr.join('').slice(0, 6);
+    onChange(next);
+    if (digit && index < 5) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  }
+
+  function handleKeyDown(index: number, e: React.KeyboardEvent) {
+    if (e.key === 'Backspace' && !value[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    onChange(pasted);
+    inputsRef.current[Math.min(pasted.length, 5)]?.focus();
+  }
+
+  return (
+    <div className="flex gap-2 justify-center">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <input
+          key={i}
+          ref={(el) => { inputsRef.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={value[i] || ''}
+          onChange={(e) => handleInput(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={handlePaste}
+          className="w-11 h-13 text-center text-xl font-bold rounded-xl border border-coffee-pale bg-white text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-brand"
+          autoComplete="one-time-code"
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function RegisterPage() {
   const { slug } = useParams<{ slug: string }>();
   const tenant = useTenant();
+  const [step, setStep] = useState<Step>('form');
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [dialCode, setDialCode] = useState('52');
@@ -140,7 +190,27 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<SuccessState | null>(null);
-  async function handleRegister(e: React.FormEvent) {
+
+  // OTP state
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
+
+  // Resend countdown
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const t = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendTimer]);
+
+  function getFullPhone() {
+    const digits = localPhone.replace(/\D/g, '');
+    return `+${dialCode}${digits}`;
+  }
+
+  async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -152,24 +222,98 @@ export default function RegisterPage() {
       return;
     }
 
-    const fullPhone = `+${dialCode}${digits}`;
+    try {
+      const res = await fetch(`/api/${slug}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: getFullPhone() }),
+      });
 
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Error al enviar código');
+        return;
+      }
+
+      setStep('otp');
+      setResendTimer(45);
+    } catch {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp() {
+    if (otpCode.length !== 6) return;
+    setOtpLoading(true);
+    setOtpError('');
+
+    try {
+      const res = await fetch(`/api/${slug}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: getFullPhone(), code: otpCode }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setOtpError(data.error || 'Código incorrecto');
+        return;
+      }
+
+      setVerificationToken(data.verificationToken);
+      // Immediately register with the verification token
+      await handleRegister(data.verificationToken);
+    } catch {
+      setOtpError('Error de conexión');
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    setOtpError('');
+    setOtpCode('');
+    setResendTimer(45);
+
+    try {
+      const res = await fetch(`/api/${slug}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: getFullPhone() }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setOtpError(data.error || 'Error al reenviar');
+      }
+    } catch {
+      setOtpError('Error de conexión');
+    }
+  }
+
+  async function handleRegister(token: string) {
     try {
       const res = await fetch(`/api/${slug}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone: fullPhone, birthDate }),
+        body: JSON.stringify({
+          name,
+          phone: getFullPhone(),
+          birthDate,
+          verificationToken: token,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 409 && data.accessToken) {
-          // Phone already registered — server returns token directly
           localStorage.setItem('accessToken', data.accessToken);
           localStorage.setItem('userRole', data.user.role);
           setSuccess({ name: data.user.name?.split(' ')[0] || 'tú', token: data.accessToken });
         } else {
-          setError(data.error || 'Error al registrarse');
+          setOtpError(data.error || 'Error al registrarse');
         }
         return;
       }
@@ -179,12 +323,10 @@ export default function RegisterPage() {
         localStorage.setItem('userRole', data.user.role);
         setSuccess({ name: name.split(' ')[0], token: data.accessToken });
       } else {
-        setError('Cuenta creada. Escanea tu QR en tienda o contacta al personal.');
+        setOtpError('Cuenta creada. Escanea tu QR en tienda o contacta al personal.');
       }
     } catch {
-      setError('Error de conexión');
-    } finally {
-      setLoading(false);
+      setOtpError('Error de conexión');
     }
   }
 
@@ -230,6 +372,59 @@ export default function RegisterPage() {
     );
   }
 
+  // OTP verification step
+  if (step === 'otp') {
+    return (
+      <main className="min-h-screen bg-coffee-cream flex flex-col">
+        <div className="loyalty-card text-white px-6 py-12 text-center">
+          <div className="max-w-sm mx-auto relative z-10">
+            <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-3">{tenant.name}</p>
+            <h1 className="font-display text-2xl font-bold">Verifica tu teléfono</h1>
+            <p className="text-coffee-light text-sm mt-1">Enviamos un código de 6 dígitos a</p>
+            <p className="text-white font-medium text-sm mt-1">{getFullPhone()}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full space-y-6">
+          <div className="space-y-4">
+            <OtpInput value={otpCode} onChange={setOtpCode} />
+
+            {otpError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                <p className="text-red-600 text-sm text-center">{otpError}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleVerifyOtp}
+              disabled={otpLoading || otpCode.length !== 6}
+              className="btn-primary w-full"
+            >
+              {otpLoading ? 'Verificando...' : 'Verificar y crear tarjeta'}
+            </button>
+          </div>
+
+          <div className="text-center space-y-2">
+            {resendTimer > 0 ? (
+              <p className="text-xs text-coffee-light">Reenviar código en {resendTimer}s</p>
+            ) : (
+              <button onClick={handleResend} className="text-xs text-coffee-dark underline font-medium">
+                Reenviar código
+              </button>
+            )}
+
+            <button
+              onClick={() => { setStep('form'); setOtpCode(''); setOtpError(''); }}
+              className="block mx-auto text-xs text-coffee-light underline"
+            >
+              ← Cambiar número
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-coffee-cream flex flex-col">
       <div className="loyalty-card text-white px-6 py-12 text-center">
@@ -241,7 +436,7 @@ export default function RegisterPage() {
       </div>
 
       <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleSendOtp} className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Nombre completo</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="María García" className="input-field" required autoComplete="name" />
@@ -301,7 +496,7 @@ export default function RegisterPage() {
           )}
 
           <button type="submit" disabled={loading || !name || !birthDate || !localPhone || !privacyAccepted} className="btn-primary w-full">
-            {loading ? 'Creando tu tarjeta...' : 'Crear mi tarjeta gratis'}
+            {loading ? 'Enviando código...' : 'Verificar teléfono'}
           </button>
         </form>
 

@@ -69,6 +69,7 @@ model User {
   passwordHash String?
   device       String?  // e.g. "iPhone", "Samsung Galaxy S24", "Desktop"
   os           String?  // e.g. "iOS 17.4", "Android 14", "Windows 11"
+  phoneVerifiedAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -94,6 +95,19 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
+}
+
+model OtpVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  tenantId  String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, tenantId])
 }
 
 // ─── Loyalty Card ─────────────────────────────────────────────────────────────

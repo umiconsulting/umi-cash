@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
 import { generateCardNumber } from '@/lib/qr';
 import { createSession } from '@/lib/auth';
@@ -7,11 +8,15 @@ import { getTenant, requireActiveSubscription } from '@/lib/tenant';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { createHash, randomBytes } from 'crypto';
 import { parseUserAgent } from '@/lib/user-agent';
+import { isTwilioConfigured } from '@/lib/twilio';
+
+const VERIFICATION_SECRET = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET);
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().min(7).max(20),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  verificationToken: z.string().optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -45,6 +50,21 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       ? '+' + data.phone.slice(1).replace(/\D/g, '')
       : data.phone.replace(/\D/g, '');
 
+    // Verify phone ownership via OTP (if Twilio is configured)
+    if (isTwilioConfigured()) {
+      if (!data.verificationToken) {
+        return NextResponse.json({ error: 'Debes verificar tu teléfono primero' }, { status: 400 });
+      }
+      try {
+        const { payload } = await jwtVerify(data.verificationToken, VERIFICATION_SECRET);
+        if (payload.phone !== normalizedPhone || payload.tenantId !== tenant.id || payload.purpose !== 'phone-verification') {
+          return NextResponse.json({ error: 'Token de verificación inválido' }, { status: 400 });
+        }
+      } catch {
+        return NextResponse.json({ error: 'Token de verificación expirado. Verifica tu teléfono de nuevo.' }, { status: 400 });
+      }
+    }
+
     const existing = await prisma.user.findUnique({ where: { tenantId_phone: { tenantId: tenant.id, phone: normalizedPhone } } });
     if (existing) {
       // Return session for existing user so register page can show wallet buttons
@@ -66,6 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           phone: normalizedPhone,
           birthDate: new Date(data.birthDate + 'T00:00:00'),
           role: 'CUSTOMER',
+          phoneVerifiedAt: isTwilioConfigured() ? new Date() : null,
           device,
           os,
         },
