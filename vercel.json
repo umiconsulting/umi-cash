@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/birthday-rewards",
-      "schedule": "0 13 1 * *"
+      "schedule": "0 13 * * *"
     },
     {
       "path": "/api/cron/expire-birthday-rewards",

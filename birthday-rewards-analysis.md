@@ -198,7 +198,7 @@ Twilio number: ~$1 USD/month. Birthday rewards add zero SMS cost since they use 
   - `status` — enum: `ACTIVE | REDEEMED | EXPIRED`
 
 ### Cron/scheduled job (Vercel Cron)
-- **1st of every month at 7:00 AM CST** (`0 13 1 * *` UTC): Find all customers whose birth month = current month → create reward + update wallet pass (triggers lock-screen notification)
+- **Daily at 7:00 AM CST** (`0 13 * * *` UTC): Find all customers whose birth month = current month and haven't received a reward this year → create reward + update wallet pass (triggers lock-screen notification). Running daily ensures customers who register mid-month still receive their reward.
 - **Daily at midnight CST** (`0 6 * * *` UTC): Expire rewards where `expiresAt` has passed (end of birthday month) → update wallet pass to remove birthday field
 
 
