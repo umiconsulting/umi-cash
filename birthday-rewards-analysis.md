@@ -19,7 +19,7 @@
 
 ### Core Flow
 
-1. **Trigger:** Cron job runs daily at 7 AM CST. For each tenant with `birthdayRewardEnabled = true`, it finds customers whose birthday matches today's date (month + day).
+1. **Trigger:** Cron job runs on the **1st of every month** at 7 AM CST. For each tenant with `birthdayRewardEnabled = true`, it finds all customers whose birth month matches the current month.
 2. **Notification:** The customer's Apple/Google Wallet pass is updated with a birthday reward field — this automatically triggers a lock-screen notification. No SMS needed; the wallet push is free and sufficient.
 3. **Wallet message example:**
    > *"¡Feliz cumpleaños, María! 🎂 Tienes un regalo especial en El Gran Ribera — canjéalo una sola vez durante este mes."*
@@ -198,7 +198,7 @@ Twilio number: ~$1 USD/month. Birthday rewards add zero SMS cost since they use 
   - `status` — enum: `ACTIVE | REDEEMED | EXPIRED`
 
 ### Cron/scheduled job (Vercel Cron)
-- **Daily at 7:00 AM CST** (`0 13 * * *` UTC): Check all tenants for birthday-eligible customers → create reward + update wallet pass (triggers lock-screen notification)
+- **1st of every month at 7:00 AM CST** (`0 13 1 * *` UTC): Find all customers whose birth month = current month → create reward + update wallet pass (triggers lock-screen notification)
 - **Daily at midnight CST** (`0 6 * * *` UTC): Expire rewards where `expiresAt` has passed (end of birthday month) → update wallet pass to remove birthday field
 
 

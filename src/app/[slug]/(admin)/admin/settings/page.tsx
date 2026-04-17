@@ -325,7 +325,7 @@ export default function SettingsPage() {
         {/* Birthday Rewards */}
         <div className="card-surface space-y-4">
           <h2 className="font-semibold text-coffee-dark text-sm">Recompensas de cumpleaños</h2>
-          <p className="text-xs text-coffee-medium -mt-2">El cliente recibe una notificación en su wallet el día de su cumpleaños con un regalo canjeable una sola vez durante ese mes.</p>
+          <p className="text-xs text-coffee-medium -mt-2">El cliente recibe una notificación en su wallet el 1° de su mes de cumpleaños con un regalo canjeable una sola vez durante ese mes.</p>
 
           <label className="flex items-center justify-between cursor-pointer">
             <div>

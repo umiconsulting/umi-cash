@@ -21,14 +21,9 @@ export async function GET(req: NextRequest) {
     const tz = tenant.timezone || 'America/Mexico_City';
     const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
     const month = localNow.getMonth() + 1; // 1–12
-    const day = localNow.getDate();
     const year = localNow.getFullYear();
 
-    // On Feb 28 in non-leap years, also issue to Feb 29 birthdays.
-    // Use -1 as the sentinel (no real day will match).
-    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    const extraDay = month === 2 && day === 28 && !isLeapYear ? 29 : -1;
-
+    // Issue on the 1st of the birthday month so customers have the full month to redeem
     type EligibleRow = { cardId: string };
     const eligibleCards = await prisma.$queryRaw<EligibleRow[]>`
       SELECT lc.id AS "cardId"
@@ -38,7 +33,6 @@ export async function GET(req: NextRequest) {
         AND u."birthDate" IS NOT NULL
         AND u.role = 'CUSTOMER'
         AND EXTRACT(MONTH FROM u."birthDate") = ${month}
-        AND EXTRACT(DAY FROM u."birthDate") IN (${day}, ${extraDay})
         AND NOT EXISTS (
           SELECT 1 FROM "BirthdayReward" br
           WHERE br."loyaltyCardId" = lc.id
