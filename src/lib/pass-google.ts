@@ -38,6 +38,7 @@ export interface GooglePassData {
   primaryColor?: string;
   logoUrl?: string | null;
   topupEnabled?: boolean;
+  birthdayRewardName?: string | null;
 }
 
 function getClassId(tenantSlug?: string): string {
@@ -66,6 +67,15 @@ function getLoyaltyObject(data: GooglePassData) {
       id: 'stamp_progress',
     },
   ];
+
+  // Birthday reward
+  if (data.birthdayRewardName) {
+    textModules.push({
+      header: 'REGALO DE CUMPLEANOS',
+      body: `${data.birthdayRewardName} — canjéalo una sola vez durante este mes`,
+      id: 'birthday_reward',
+    });
+  }
 
   // Reward status
   if (data.pendingRewards > 0) {

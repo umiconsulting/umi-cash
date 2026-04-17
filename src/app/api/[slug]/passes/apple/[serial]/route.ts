@@ -28,9 +28,12 @@ export async function GET(
   const tenant = await getTenant(params.slug);
   if (!tenant) return new NextResponse(null, { status: 404 });
 
-  const [rewardConfig, locations] = await Promise.all([
+  const [rewardConfig, locations, activeBirthdayReward] = await Promise.all([
     getActiveRewardConfig(card.tenantId),
     prisma.location.findMany({ where: { tenantId: tenant.id, isActive: true, latitude: { not: null }, longitude: { not: null } } }),
+    prisma.birthdayReward.findFirst({
+      where: { loyaltyCardId: card.id, status: 'ACTIVE', expiresAt: { gte: new Date() } },
+    }),
   ]);
   const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
@@ -55,6 +58,7 @@ export async function GET(
       stripImageUrl: tenant.stripImageUrl,
       passStyle: tenant.passStyle,
       promoMessage: getActivePromo(tenant),
+      birthdayRewardName: activeBirthdayReward ? tenant.birthdayRewardName : null,
       locations: locations.map((l) => ({ latitude: l.latitude!, longitude: l.longitude!, relevantText: `¡Bienvenido a ${tenant.name}!` })),
       topupEnabled: tenant.topupEnabled,
     });

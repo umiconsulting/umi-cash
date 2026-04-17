@@ -23,12 +23,15 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     }, { status: 503 });
   }
 
-  const [card, rewardConfig] = await Promise.all([
-    prisma.loyaltyCard.findUnique({ where: { userId: user.sub }, include: { user: true } }),
-    getActiveRewardConfig(tenant.id),
-  ]);
-
+  const card = await prisma.loyaltyCard.findUnique({ where: { userId: user.sub }, include: { user: true } });
   if (!card) return NextResponse.json({ error: 'Tarjeta no encontrada' }, { status: 404 });
+
+  const [rewardConfig, activeBirthdayReward] = await Promise.all([
+    getActiveRewardConfig(tenant.id),
+    prisma.birthdayReward.findFirst({
+      where: { loyaltyCardId: card.id, status: 'ACTIVE', expiresAt: { gte: new Date() } },
+    }),
+  ]);
 
   const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
@@ -49,6 +52,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       primaryColor: tenant.primaryColor,
       logoUrl: tenant.logoUrl,
       topupEnabled: tenant.topupEnabled,
+      birthdayRewardName: activeBirthdayReward ? tenant.birthdayRewardName : null,
     });
 
     if (!card.googlePassObjectId) {

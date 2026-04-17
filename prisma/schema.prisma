@@ -32,14 +32,17 @@ model Tenant {
   subscriptionStatus String   @default("ACTIVE") // ACTIVE | SUSPENDED | TRIAL
   suspendedAt        DateTime?
   trialEndsAt        DateTime?
+  birthdayRewardEnabled Boolean @default(false)
+  birthdayRewardName    String  @default("Regalo de cumpleaños")
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  users         User[]
-  cards         LoyaltyCard[]
-  rewardConfigs RewardConfig[]
-  locations     Location[]
-  giftCards     GiftCard[]
+  users           User[]
+  cards           LoyaltyCard[]
+  rewardConfigs   RewardConfig[]
+  locations       Location[]
+  giftCards       GiftCard[]
+  birthdayRewards BirthdayReward[]
 }
 
 model Location {
@@ -152,6 +155,7 @@ model LoyaltyCard {
   rewardRedemptions   RewardRedemption[]
   applePushTokens     ApplePushToken[]
   redeemedGiftCards   GiftCard[]
+  birthdayRewards     BirthdayReward[]
 
   @@index([tenantId])
 }
@@ -259,6 +263,27 @@ model GiftCard {
   @@index([tenantId])
   @@index([code])
   @@index([tenantId, isRedeemed])
+}
+
+// ─── Birthday Rewards ─────────────────────────────────────────────────────────
+
+model BirthdayReward {
+  id            String    @id @default(cuid())
+  tenantId      String
+  loyaltyCardId String
+  year          Int                        // calendar year, e.g. 2026
+  issuedAt      DateTime  @default(now())
+  expiresAt     DateTime                  // last day of birthday month at 23:59:59
+  redeemedAt    DateTime?
+  status        String    @default("ACTIVE") // ACTIVE | REDEEMED | EXPIRED
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  loyaltyCard LoyaltyCard @relation(fields: [loyaltyCardId], references: [id], onDelete: Cascade)
+
+  @@unique([loyaltyCardId, tenantId, year])
+  @@index([tenantId])
+  @@index([loyaltyCardId])
+  @@index([expiresAt, status])
 }
 
 // ─── Apple Wallet Push ────────────────────────────────────────────────────────

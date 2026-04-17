@@ -15,6 +15,8 @@ interface TenantSettings {
   promoEndsAt: string | null;
   promoDays: string | null;
   selfRegistration: boolean;
+  birthdayRewardEnabled: boolean;
+  birthdayRewardName: string;
   cardPrefix: string;
   slug: string;
 }
@@ -38,6 +40,8 @@ export default function SettingsPage() {
     promoEndsAt: '',
     promoDays: '' as string,
     selfRegistration: true,
+    birthdayRewardEnabled: false,
+    birthdayRewardName: 'Regalo de cumpleaños',
   });
 
   useEffect(() => { loadSettings(); }, [slug]);
@@ -61,6 +65,8 @@ export default function SettingsPage() {
       promoEndsAt: data.promoEndsAt ? data.promoEndsAt.slice(0, 16) : '',
       promoDays: data.promoDays ?? '',
       selfRegistration: data.selfRegistration,
+      birthdayRewardEnabled: data.birthdayRewardEnabled,
+      birthdayRewardName: data.birthdayRewardName,
     });
     setLoading(false);
   }
@@ -78,6 +84,7 @@ export default function SettingsPage() {
         promoStartsAt: form.promoStartsAt ? new Date(form.promoStartsAt).toISOString() : null,
         promoEndsAt: form.promoEndsAt ? new Date(form.promoEndsAt).toISOString() : null,
         promoDays: form.promoDays || null,
+        birthdayRewardName: form.birthdayRewardName || 'Regalo de cumpleaños',
       }),
     });
     const data = await res.json();
@@ -313,6 +320,40 @@ export default function SettingsPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Birthday Rewards */}
+        <div className="card-surface space-y-4">
+          <h2 className="font-semibold text-coffee-dark text-sm">Recompensas de cumpleaños</h2>
+          <p className="text-xs text-coffee-medium -mt-2">El cliente recibe una notificación en su wallet el día de su cumpleaños con un regalo canjeable una sola vez durante ese mes.</p>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-coffee-dark">Activar recompensas de cumpleaños</p>
+              <p className="text-xs text-coffee-medium mt-0.5">Requiere que los clientes tengan fecha de nacimiento registrada</p>
+            </div>
+            <div
+              onClick={() => setForm({ ...form, birthdayRewardEnabled: !form.birthdayRewardEnabled })}
+              className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${form.birthdayRewardEnabled ? 'bg-coffee-brand' : 'bg-coffee-pale'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.birthdayRewardEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </div>
+          </label>
+
+          {form.birthdayRewardEnabled && (
+            <div>
+              <label className="block text-sm font-medium text-coffee-dark mb-1.5">Nombre del regalo</label>
+              <input
+                type="text"
+                value={form.birthdayRewardName}
+                onChange={(e) => setForm({ ...form, birthdayRewardName: e.target.value })}
+                className="input-field"
+                placeholder="Ej: Café gratis, Postre de cortesía"
+                maxLength={100}
+              />
+              <p className="text-xs text-coffee-light mt-1">Aparece en la tarjeta wallet y en la pantalla de escaneo</p>
+            </div>
+          )}
         </div>
 
         {/* Options */}

@@ -18,8 +18,9 @@ interface CardPreview {
     balanceCentavos: number;
     rewardName: string;
     visitLimitReached: boolean;
-        lastVisitAt: string | null;
+    lastVisitAt: string | null;
   };
+  birthdayReward: { id: string; rewardName: string } | null;
 }
 
 interface ActionResult {
@@ -204,6 +205,29 @@ export default function ScanPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ qrPayload: lastPayloadRef.current, action: 'REDEEM' }),
+      });
+      const data = await res.json();
+      setResult({ success: res.ok, message: data.message ?? data.error });
+      if (res.ok) setPreview(null);
+    } catch {
+      setResult({ success: false, message: 'Error de conexión' });
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  async function doBirthdayRedeem() {
+    if (!preview?.birthdayReward) return;
+    setProcessing(true);
+    setResult(null);
+    const token = localStorage.getItem('accessToken');
+    if (!token) { setProcessing(false); return; }
+
+    try {
+      const res = await fetch(`/api/${slug}/admin/scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ qrPayload: lastPayloadRef.current, action: 'BIRTHDAY_REDEEM' }),
       });
       const data = await res.json();
       setResult({ success: res.ok, message: data.message ?? data.error });
@@ -548,6 +572,21 @@ export default function ScanPage() {
           ) : (
             /* Action buttons */
             <div className="space-y-2">
+              {/* Birthday reward banner + button */}
+              {preview.birthdayReward && (
+                <div className="rounded-xl bg-amber-50 border-2 border-amber-300 p-3.5">
+                  <p className="text-amber-800 font-bold text-sm mb-0.5">REGALO DE CUMPLEANOS</p>
+                  <p className="text-amber-700 text-xs mb-3">{preview.birthdayReward.rewardName} — un solo canje este mes</p>
+                  <button
+                    onClick={doBirthdayRedeem}
+                    disabled={processing}
+                    className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-900 font-bold text-sm transition-colors disabled:opacity-50"
+                  >
+                    {processing ? 'Procesando...' : 'Canjear regalo'}
+                  </button>
+                </div>
+              )}
+
               {/* Register visit */}
               <button
                 onClick={doVisit}

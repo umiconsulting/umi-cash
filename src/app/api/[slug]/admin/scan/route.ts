@@ -13,7 +13,7 @@ import { sendRewardEarnedEmail } from '@/lib/email';
 
 const ScanSchema = z.object({
   qrPayload: z.string().min(1),
-  action: z.enum([SCAN_ACTIONS.VISIT, SCAN_ACTIONS.REDEEM]),
+  action: z.enum([SCAN_ACTIONS.VISIT, SCAN_ACTIONS.REDEEM, SCAN_ACTIONS.BIRTHDAY_REDEEM]),
 });
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -117,6 +117,37 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const rewardConfig = await getActiveRewardConfig(tenant.id);
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
+    const activeBirthdayReward = await prisma.birthdayReward.findFirst({
+      where: { loyaltyCardId: card.id, status: 'ACTIVE', expiresAt: { gte: new Date() } },
+    });
+
+    if (action === SCAN_ACTIONS.BIRTHDAY_REDEEM) {
+      if (!activeBirthdayReward) {
+        return NextResponse.json({ error: 'No hay regalo de cumpleaños activo' }, { status: 400 });
+      }
+
+      await prisma.birthdayReward.update({
+        where: { id: activeBirthdayReward.id },
+        data: { status: 'REDEEMED', redeemedAt: new Date() },
+      });
+
+      const updatedCard = await prisma.loyaltyCard.update({
+        where: { id: card.id },
+        data: { updatedAt: new Date() },
+        include: { user: true },
+      });
+
+      await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor, null);
+
+      return NextResponse.json({
+        success: true,
+        action: SCAN_ACTIONS.BIRTHDAY_REDEEM,
+        message: `🎂 ¡Regalo de cumpleaños canjeado! ${tenant.birthdayRewardName}`,
+        customer: { name: updatedCard.user.name, cardNumber: updatedCard.cardNumber },
+        card: buildCardSummary(updatedCard, visitsRequired),
+      });
+    }
+
     if (action === SCAN_ACTIONS.REDEEM) {
       if (card.pendingRewards <= 0) {
         return NextResponse.json({ error: 'No hay recompensas pendientes para canjear' }, { status: 400 });
@@ -141,7 +172,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         });
       });
 
-      await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor);
+      await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor, activeBirthdayReward ? tenant.birthdayRewardName : null);
 
       return NextResponse.json({
         success: true,
@@ -149,6 +180,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         message: `✓ Recompensa canjeada: ${rewardName}`,
         customer: { name: updatedCard.user.name, cardNumber: updatedCard.cardNumber },
         card: buildCardSummary(updatedCard, visitsRequired),
+        birthdayReward: activeBirthdayReward ? { id: activeBirthdayReward.id, rewardName: tenant.birthdayRewardName } : null,
       });
     }
 
@@ -188,7 +220,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       ? `¡${updatedCard.user.name ?? 'Cliente'} ganó una recompensa! ${rewardName} disponible.`
       : `✓ Visita #${updatedCard.totalVisits} registrada. ${remaining} visita${remaining !== 1 ? 's' : ''} para ${rewardName}.`;
 
-    await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor);
+    await triggerWalletUpdates(card.id, card.cardNumber, updatedCard, visitsRequired, rewardName, card.createdAt, tenant.name, params.slug, tenant.primaryColor, activeBirthdayReward ? tenant.birthdayRewardName : null);
 
     return NextResponse.json({
       success: true,
@@ -198,6 +230,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       afterHours: isAfterHours,
       customer: { name: updatedCard.user.name, cardNumber: updatedCard.cardNumber },
       card: buildCardSummary(updatedCard, visitsRequired),
+      birthdayReward: activeBirthdayReward ? { id: activeBirthdayReward.id, rewardName: tenant.birthdayRewardName } : null,
     });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
@@ -222,7 +255,8 @@ async function triggerWalletUpdates(
   createdAt: Date,
   tenantName: string,
   tenantSlug: string,
-  primaryColor: string
+  primaryColor: string,
+  birthdayRewardName: string | null,
 ) {
   // Await push inline — waitUntil + http2 is unreliable on Vercel
   await Promise.all([
@@ -240,6 +274,7 @@ async function triggerWalletUpdates(
       tenantName,
       tenantSlug,
       primaryColor,
+      birthdayRewardName,
     }),
   ]).catch((err) => console.warn('[Wallet Update]', err));
 }

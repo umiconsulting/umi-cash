@@ -19,6 +19,8 @@ const SettingsSchema = z.object({
   promoEndsAt: z.string().datetime().optional().nullable(),
   promoDays: z.string().max(20).optional().nullable(),
   selfRegistration: z.boolean().optional(),
+  birthdayRewardEnabled: z.boolean().optional(),
+  birthdayRewardName: z.string().min(1).max(100).optional(),
 });
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -43,6 +45,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     promoEndsAt: tenant.promoEndsAt?.toISOString() ?? null,
     promoDays: tenant.promoDays,
     selfRegistration: tenant.selfRegistration,
+    birthdayRewardEnabled: tenant.birthdayRewardEnabled,
+    birthdayRewardName: tenant.birthdayRewardName,
     cardPrefix: tenant.cardPrefix,
     slug: tenant.slug,
   });
@@ -76,6 +80,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
         ...(data.promoEndsAt !== undefined && { promoEndsAt: data.promoEndsAt ? new Date(data.promoEndsAt) : null }),
         ...(data.promoDays !== undefined && { promoDays: data.promoDays || null }),
         ...(data.selfRegistration !== undefined && { selfRegistration: data.selfRegistration }),
+        ...(data.birthdayRewardEnabled !== undefined && { birthdayRewardEnabled: data.birthdayRewardEnabled }),
+        ...(data.birthdayRewardName !== undefined && { birthdayRewardName: data.birthdayRewardName }),
       },
     });
 

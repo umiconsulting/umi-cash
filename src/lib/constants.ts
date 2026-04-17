@@ -9,6 +9,7 @@ export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export const SCAN_ACTIONS = {
   VISIT: 'VISIT',
   REDEEM: 'REDEEM',
+  BIRTHDAY_REDEEM: 'BIRTHDAY_REDEEM',
 } as const;
 
 export type ScanAction = (typeof SCAN_ACTIONS)[keyof typeof SCAN_ACTIONS];

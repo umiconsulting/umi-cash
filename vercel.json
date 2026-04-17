@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/goal-proximity",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/birthday-rewards",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/expire-birthday-rewards",
+      "schedule": "0 6 * * *"
     }
   ]
 }

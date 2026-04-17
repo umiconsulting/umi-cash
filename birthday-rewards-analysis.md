@@ -15,6 +15,37 @@
 
 ---
 
+## Feature Design: How Birthday Rewards Work in Umi
+
+### Core Flow
+
+1. **Trigger:** Cron job runs daily at 7 AM CST. For each tenant with `birthdayRewardEnabled = true`, it finds customers whose birthday matches today's date (month + day).
+2. **Notification:** The customer's Apple/Google Wallet pass is updated with a birthday reward field — this automatically triggers a lock-screen notification. No SMS needed; the wallet push is free and sufficient.
+3. **Wallet message example:**
+   > *"¡Feliz cumpleaños, María! 🎂 Tienes un regalo especial en El Gran Ribera — canjéalo una sola vez durante este mes."*
+4. **Redemption:** Customer visits the café any time during their birthday month. Staff scans the loyalty pass — the scan screen shows a **"REGALO DE CUMPLEAÑOS"** banner with a one-tap "Canjear" button.
+5. **One-time only:** Once the staff taps "Canjear," the reward is marked redeemed server-side **immediately and permanently**. The wallet pass updates in real time to remove the birthday field. The customer **cannot redeem again** — not at the same visit, not at a different visit within the window, not at a future date.
+6. **Expiry (if unredeemed):** At the end of the customer's birthday month, an expiry cron removes the birthday field from the wallet pass. The reward is gone for this birthday year; it resets next year.
+
+### Key Rules
+
+| Rule | Detail |
+|------|--------|
+| **One gift per birthday year** | Tracked by `birthdayRewardYear` — one redemption allowed per customer per calendar year |
+| **Strictly one-time** | Server enforces: once `redeemedAt` is set, no further redemption is possible regardless of window |
+| **Birthday month window** | Active from birthday (day 1), expires end of the birthday month |
+| **Wallet pass = only notification** | Free lock-screen push via pass update; no SMS for birthday rewards |
+| **Immediate pass update on redemption** | Wallet pass clears birthday field the moment staff redeems — no delay |
+| **Eligibility guards** | Any registered customer with birthday data on file |
+
+### Abuse Scenarios Covered by One-Time Enforcement
+
+- Customer shows pass to multiple staff members → second "Canjear" tap returns an error: *"Este regalo ya fue canjeado"*
+- Customer visits twice in the same week → reward is already gone after first visit
+- Customer tries next year's birthday early → `birthdayRewardYear` must be the current calendar year
+
+---
+
 ## Engagement: When to Notify
 
 | Timing | What | Channel |
@@ -42,7 +73,7 @@
 - **Risk: MEDIUM** — Creating accounts with different birthdays.
 - **Mitigation:**
   - Accounts tied to unique phone numbers (Umi already does this)
-  - Require minimum activity (e.g., 3+ visits) before birthday eligibility
+  - Accounts tied to unique phone numbers (Umi already does this — one account per number)
 
 ### 3. Sharing/transferring rewards
 - **Risk: LOW** — Showing phone to a friend.
@@ -52,8 +83,7 @@
   - One-time server-side redemption — reward disappears after use
 
 ### 4. Recommended minimum requirements before eligibility
-- Account age: **≥ 30 days**
-- Minimum visits: **≥ 3 visits** (or 1 completed stamp cycle)
+- Birthday data on file (collected at registration)
 - Birthday data cannot be changed after registration
 
 ---
@@ -86,9 +116,9 @@
 
 ## Messaging: Twilio Multi-Tenant Architecture
 
-### Why Twilio for Both OTP + Birthday Messages
+### Twilio for OTP Only
 
-Twilio handles SMS auth (OTP) and transactional/marketing messages through the same API. A single Umi Twilio account serves all tenants — multi-tenancy lives in our database, not in Twilio.
+Birthday reward notifications are delivered exclusively via wallet pass updates (free, zero marginal cost). Twilio is used only for SMS OTP authentication. A single Umi Twilio account serves all tenants — multi-tenancy lives in our database, not in Twilio.
 
 ### Sender Identity Options (Mexico)
 
@@ -109,49 +139,31 @@ Twilio handles SMS auth (OTP) and transactional/marketing messages through the s
 3. For each tenant, finds eligible customers with birthday today
 4. Per customer:
    a. Creates BirthdayReward record
-   b. Updates Apple/Google Wallet pass (adds birthday field)
-   c. Sends SMS via shared Twilio number:
+   b. Updates Apple/Google Wallet pass (adds birthday field — triggers free lock-screen notification)
 
    "¡Feliz cumpleaños, María! 🎂 Tu café de cortesía
     te espera en Kalala Café. Muestra tu tarjeta al
     barista. Válido 7 días."
 ```
 
-The Twilio call is tenant-agnostic — tenant context is injected from the database:
-
-```typescript
-await twilioClient.messages.create({
-  to: customer.phone,
-  from: process.env.TWILIO_PHONE_NUMBER, // single shared number
-  body: `¡Feliz cumpleaños, ${firstName}! 🎂 ${tenant.birthdayRewardName} te espera en ${tenant.name}. Muestra tu tarjeta. Válido 7 días.`,
-});
-```
-
-### SMS Cost Estimate (Mexico)
+### SMS Cost Estimate (Mexico — OTP only)
 
 | Volume | Per-SMS cost | Monthly estimate |
 |--------|-------------|-----------------|
-| 100 messages (OTP + birthday) | ~$0.03–0.05 USD | ~$4 USD |
-| 500 messages | | ~$20 USD |
-| 1,000 messages | | ~$40 USD |
+| 100 OTP messages | ~$0.03–0.05 USD | ~$4 USD |
+| 500 OTP messages | | ~$20 USD |
+| 1,000 OTP messages | | ~$40 USD |
 
-Twilio number: ~$1 USD/month. Very affordable for small businesses.
+Twilio number: ~$1 USD/month. Birthday rewards add zero SMS cost since they use wallet pass updates.
 
 ### Notification Channels per Phase
 
 | Phase | Birthday notification | OTP auth |
 |-------|---------------------|----------|
-| **Phase 1 (MVP)** | Wallet pass update (free, triggers iOS/Android lock-screen notification) + SMS via Twilio | SMS via Twilio |
+| **Phase 1 (MVP)** | Wallet pass update (free, triggers iOS/Android lock-screen notification) | SMS via Twilio |
 | **Phase 2** | + WhatsApp Business API (richer, higher open rates) | + WhatsApp OTP option |
 
-**Note on wallet pass updates:** Updating the Apple Wallet pass automatically triggers a lock-screen notification on iOS — no separate push infrastructure needed. Google Wallet also supports similar notifications. This is a **free** channel that already exists in our stack. SMS is the complementary channel for customers who haven't added the pass to their wallet.
-
-### SMS Compliance (Mexico)
-
-- Transactional messages (OTP, birthday rewards for opted-in loyalty members) do **not** require explicit opt-in under Mexican telecom rules — they are part of the service the customer signed up for.
-- Marketing/promotional SMS **does** require opt-in. Birthday messages tied to a loyalty reward are transactional, not promotional.
-- Include opt-out mechanism: `"Responde BAJA para no recibir mensajes."` in the first SMS to each customer.
-- Umi's Aviso de Privacidad must mention SMS communications as a purpose of phone number collection.
+**Note on wallet pass updates:** Updating the Apple Wallet pass automatically triggers a lock-screen notification on iOS — no separate push infrastructure needed. Google Wallet also supports similar notifications. This is a **free** channel that already exists in our stack.
 
 ---
 
@@ -159,12 +171,13 @@ Twilio number: ~$1 USD/month. Very affordable for small businesses.
 
 ### Phase 1 (MVP)
 1. **Admin config per tenant:** Enable/disable birthday rewards, set the reward item name (e.g., "Café gratis", "Postre de cortesía")
-2. **Eligibility rules:** 30-day membership + 3 minimum visits
-3. **7-day window:** Starts on birthday, expires 7 days later
-4. **One-time redemption:** Server-side enforcement, staff taps "Redeem" during scan
-5. **Pass update:** Add "Birthday Reward" field to Apple/Google Wallet pass when active, remove after expiry
-6. **Notification:** Wallet pass update (free lock-screen notification) + SMS via Twilio (shared number, tenant name in message body)
-7. **SMS OTP auth:** Same Twilio account, same shared number
+2. **Eligibility rules:** Any registered customer with birthday data on file
+3. **Birthday month window:** Active from the customer's birthday, expires at end of the birthday month; unredeemed rewards expire silently
+4. **Strictly one-time redemption:** Server sets `redeemedAt` on first "Canjear" tap; any subsequent redemption attempt returns an error — no exceptions
+5. **Pass update on redemption:** Wallet pass birthday field is removed immediately when redeemed (not just at expiry)
+6. **Pass update on birthday:** Add "Birthday Reward" field to Apple/Google Wallet pass at 7 AM CST on birthday — triggers free lock-screen notification
+7. **`birthdayRewardYear` tracking:** Prevents double-issuance within the same calendar year
+8. **SMS OTP auth:** Twilio used for OTP only — birthday rewards use wallet pass notifications (free)
 
 ### Phase 2 (Future)
 - WhatsApp Business API for birthday messages (richer, higher open rates)
@@ -175,13 +188,19 @@ Twilio number: ~$1 USD/month. Very affordable for small businesses.
 - Surprise & delight random rewards
 
 ### Database changes needed
-- `Tenant`: `birthdayRewardEnabled`, `birthdayRewardName`, `birthdayRewardMinDays`, `birthdayRewardMinVisits`
-- `LoyaltyCard` or new `BirthdayReward` table: `birthdayRewardYear` (track which year was redeemed), `redeemedAt`
+- `Tenant`: `birthdayRewardEnabled`, `birthdayRewardName`
+- New `BirthdayReward` table (one row per customer per year):
+  - `id`, `loyaltyCardId`, `tenantId`
+  - `birthdayRewardYear` — calendar year (e.g., 2026); enforces one reward per year via unique constraint on `(loyaltyCardId, tenantId, birthdayRewardYear)`
+  - `issuedAt` — when the reward was created and pass was updated
+  - `expiresAt` — last day of the birthday month (e.g., birthday May 31 → expires May 31; birthday May 5 → expires May 31)
+  - `redeemedAt` — null until redeemed; once set, redemption is closed permanently
+  - `status` — enum: `ACTIVE | REDEEMED | EXPIRED`
 
 ### Cron/scheduled job (Vercel Cron)
-- **Daily at 7:00 AM CST** (`0 13 * * *` UTC): Check all tenants for birthday-eligible customers → create reward + update wallet pass + send SMS
-- **Daily at midnight CST** (`0 6 * * *` UTC): Expire rewards past the 7-day window → update wallet pass to remove birthday field
-- Reminder SMS on day 3 post-birthday if unredeemed
+- **Daily at 7:00 AM CST** (`0 13 * * *` UTC): Check all tenants for birthday-eligible customers → create reward + update wallet pass (triggers lock-screen notification)
+- **Daily at midnight CST** (`0 6 * * *` UTC): Expire rewards where `expiresAt` has passed (end of birthday month) → update wallet pass to remove birthday field
+
 
 ### Staff UX
 - Scan screen shows banner: **"REGALO DE CUMPLEAÑOS — [reward name]"** when active
@@ -195,7 +214,6 @@ Twilio number: ~$1 USD/month. Very affordable for small businesses.
 1. **We currently store full birthDate** — should we migrate to month+day only? (Privacy benefit, but may want age verification later)
 2. **Cron jobs on Vercel** — need Vercel Cron for the daily birthday check (already available, 1/day is fine for Hobby plan, up to 2 crons)
 3. **Pass update volume** — if 50 customers have birthdays in a month, that's ~2 pass updates/day for the birthday check. Minimal load.
-4. **What if customer registers ON their birthday?** — 30-day rule means they wait until next year. This is intentional and prevents gaming.
+4. **What if customer registers ON their birthday?** — They are immediately eligible and will receive the reward that same day if the cron has not yet run, or next year if it already ran.
 5. **What about Feb 29 birthdays?** — Treat as March 1 in non-leap years.
-6. **Twilio number selection** — need a Mexican mobile number (+52) for best deliverability. Twilio offers these.
-7. **SMS delivery in rural Mexico** — some carriers may have delays. Wallet pass update is the primary channel; SMS is supplementary.
+6. **Customers without a wallet pass** — rare edge case; they won't receive the birthday notification. Consider a Phase 2 WhatsApp nudge for this segment.

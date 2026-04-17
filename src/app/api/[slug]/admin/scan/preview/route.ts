@@ -68,7 +68,12 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       return NextResponse.json({ error: 'No puedes escanear tu propia tarjeta' }, { status: 403 });
     }
 
-    const rewardConfig = await getActiveRewardConfig(tenant.id);
+    const [rewardConfig, activeBirthdayReward] = await Promise.all([
+      getActiveRewardConfig(tenant.id),
+      prisma.birthdayReward.findFirst({
+        where: { loyaltyCardId: card.id, status: 'ACTIVE', expiresAt: { gte: new Date() } },
+      }),
+    ]);
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
     // Check if already visited today (calendar day in tenant timezone)
@@ -98,6 +103,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         visitLimitReached: !!recentVisit,
         lastVisitAt: recentVisit?.scannedAt ?? null,
       },
+      birthdayReward: activeBirthdayReward
+        ? { id: activeBirthdayReward.id, rewardName: tenant.birthdayRewardName }
+        : null,
     });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });

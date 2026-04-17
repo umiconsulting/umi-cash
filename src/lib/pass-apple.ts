@@ -73,6 +73,7 @@ export interface PassData {
   stampFilledUrl?: string | null; // Custom filled stamp image URL
   stampEmptyUrl?: string | null; // Custom empty stamp image URL
   promoMessage?: string | null; // Current promotion text — triggers notification on change
+  birthdayRewardName?: string | null; // if set, active birthday reward is shown on pass
   locations?: { latitude: number; longitude: number; relevantText?: string }[];
   topupEnabled?: boolean; // false = hide balance from pass
 }
@@ -250,6 +251,16 @@ export async function generateApplePass(data: PassData): Promise<{
     const empty = '○'.repeat(data.visitsRequired - data.visitsThisCycle);
     pass.secondaryFields.push({ key: 'memberName', label: 'MIEMBRO', value: data.customerName });
     pass.secondaryFields.push({ key: 'stamps', label: data.rewardName.toUpperCase(), value: `${filled}${empty} (${data.visitsThisCycle}/${data.visitsRequired})`, changeMessage: 'Progreso actualizado: %@' });
+  }
+
+  // Birthday reward — shown on front of pass with lock-screen notification
+  if (data.birthdayRewardName) {
+    pass.auxiliaryFields.push({
+      key: 'birthdayReward',
+      label: 'REGALO DE CUMPLEANOS',
+      value: data.birthdayRewardName,
+      changeMessage: '¡Feliz cumpleaños! Tu regalo te espera: %@',
+    });
   }
 
   // Back fields
