@@ -33,7 +33,7 @@ export async function signAccessToken(userId: string, role: string, tenantId: st
   return new SignJWT({ sub: userId, role, tenantId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('15m')
+    .setExpirationTime('12h')
     .sign(ACCESS_SECRET);
 }
 
