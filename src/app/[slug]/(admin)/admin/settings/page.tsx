@@ -112,13 +112,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-2">Configuración</h1>
-      <p className="text-coffee-medium text-sm mb-6">Información y apariencia de tu negocio</p>
+    <div className="px-5 py-6 max-w-lg mx-auto">
+      <div className="u-fade-up mb-6">
+        <div className="u-eyebrow mb-2">Preferencias</div>
+        <h1 className="u-display" style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: 0 }}>
+          Configuración
+        </h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--color-ink-light)' }}>Información y apariencia de tu negocio</p>
+      </div>
 
       <form onSubmit={handleSave} className="space-y-4">
         {/* Business info */}
-        <div className="card-surface space-y-4">
+        <div className="u-surface p-5 space-y-4">
           <h2 className="font-semibold text-coffee-dark text-sm">Información del negocio</h2>
 
           <div>
@@ -127,7 +132,7 @@ export default function SettingsPage() {
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="input-field"
+              className="u-input"
               maxLength={100}
               required
             />
@@ -139,7 +144,7 @@ export default function SettingsPage() {
               type="text"
               value={form.city}
               onChange={(e) => setForm({ ...form, city: e.target.value })}
-              className="input-field"
+              className="u-input"
               placeholder="Culiacán, Sinaloa"
               maxLength={100}
             />
@@ -151,7 +156,7 @@ export default function SettingsPage() {
               type="text"
               value={form.logoUrl}
               onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
-              className="input-field"
+              className="u-input"
               placeholder="/logos/mi-logo.png o https://..."
             />
           </div>
@@ -163,14 +168,14 @@ export default function SettingsPage() {
               type="text"
               value={form.stripImageUrl}
               onChange={(e) => setForm({ ...form, stripImageUrl: e.target.value })}
-              className="input-field"
+              className="u-input"
               placeholder="/logos/mi-strip.png o https://..."
             />
           </div>
         </div>
 
         {/* Special Promotion */}
-        <div className="card-surface space-y-4">
+        <div className="u-surface p-5 space-y-4">
           <h2 className="font-semibold text-coffee-dark text-sm">Promoción especial</h2>
           <p className="text-xs text-coffee-medium -mt-2">Los usuarios recibirán una notificación en su celular cuando actives una promoción.</p>
 
@@ -180,7 +185,7 @@ export default function SettingsPage() {
               type="text"
               value={form.promoMessage}
               onChange={(e) => setForm({ ...form, promoMessage: e.target.value })}
-              className="input-field"
+              className="u-input"
               placeholder="Ej: 2x1 en bebidas frías"
               maxLength={200}
             />
@@ -196,7 +201,7 @@ export default function SettingsPage() {
                     type="datetime-local"
                     value={form.promoStartsAt}
                     onChange={(e) => setForm({ ...form, promoStartsAt: e.target.value })}
-                    className="input-field"
+                    className="u-input"
                   />
                   <p className="text-xs text-coffee-light mt-1">Vacío = ya activa</p>
                 </div>
@@ -206,7 +211,7 @@ export default function SettingsPage() {
                     type="datetime-local"
                     value={form.promoEndsAt}
                     onChange={(e) => setForm({ ...form, promoEndsAt: e.target.value })}
-                    className="input-field"
+                    className="u-input"
                   />
                   <p className="text-xs text-coffee-light mt-1">Vacío = sin expiración</p>
                 </div>
@@ -245,7 +250,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Branding */}
-        <div className="card-surface space-y-4">
+        <div className="u-surface p-5 space-y-4">
           <h2 className="font-semibold text-coffee-dark text-sm">Apariencia</h2>
 
           <div className="grid grid-cols-2 gap-4">
@@ -262,7 +267,7 @@ export default function SettingsPage() {
                   type="text"
                   value={form.primaryColor}
                   onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) setForm({ ...form, primaryColor: e.target.value }); }}
-                  className="input-field font-mono"
+                  className="u-input font-mono"
                   placeholder="#B5605A"
                   maxLength={7}
                 />
@@ -284,7 +289,7 @@ export default function SettingsPage() {
                   type="text"
                   value={form.secondaryColor}
                   onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) setForm({ ...form, secondaryColor: e.target.value }); }}
-                  className="input-field font-mono"
+                  className="u-input font-mono"
                   placeholder="Sin color"
                   maxLength={7}
                 />
@@ -323,7 +328,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Birthday Rewards */}
-        <div className="card-surface space-y-4">
+        <div className="u-surface p-5 space-y-4">
           <h2 className="font-semibold text-coffee-dark text-sm">Recompensas de cumpleaños</h2>
           <p className="text-xs text-coffee-medium -mt-2">El cliente recibe una notificación en su wallet el primer día del mes de su cumpleaños con un regalo canjeable una vez durante este mes.</p>
 
@@ -347,7 +352,7 @@ export default function SettingsPage() {
                 type="text"
                 value={form.birthdayRewardName}
                 onChange={(e) => setForm({ ...form, birthdayRewardName: e.target.value })}
-                className="input-field"
+                className="u-input"
                 placeholder="Ej: Café gratis, Postre de cortesía"
                 maxLength={100}
               />
@@ -357,7 +362,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Options */}
-        <div className="card-surface space-y-4">
+        <div className="u-surface p-5 space-y-4">
           <h2 className="font-semibold text-coffee-dark text-sm">Opciones</h2>
 
           <label className="flex items-center justify-between cursor-pointer">
@@ -376,7 +381,7 @@ export default function SettingsPage() {
           <div>
             <label className="block text-sm font-medium text-coffee-dark mb-1">Prefijo de tarjeta</label>
             <p className="text-xs text-coffee-medium mb-1.5">Se asigna al crear la cuenta — no se puede cambiar después</p>
-            <input type="text" value={settings?.cardPrefix ?? ''} className="input-field font-mono bg-coffee-pale/50" readOnly />
+            <input type="text" value={settings?.cardPrefix ?? ''} className="u-input font-mono bg-coffee-pale/50" readOnly />
           </div>
         </div>
 
@@ -384,7 +389,7 @@ export default function SettingsPage() {
           <p className={`text-center text-sm font-medium ${isSuccess ? 'text-green-700' : 'text-red-700'}`}>{message}</p>
         )}
 
-        <button type="submit" disabled={saving} className="btn-primary w-full">
+        <button type="submit" disabled={saving} className="u-btn u-btn-primary w-full">
           {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
       </form>

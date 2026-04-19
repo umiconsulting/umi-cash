@@ -25,59 +25,79 @@ export default async function UmiMasterAdmin() {
   const activeCount = tenants.filter((t) => t.subscriptionStatus === 'ACTIVE').length;
   const suspendedCount = tenants.filter((t) => t.subscriptionStatus === 'SUSPENDED').length;
 
+  const UMI = { navy: '#223979', blue: '#7692CB', surface: '#F5F7FC', surfaceDark: '#D4DFEF', ink: '#1A1F33', inkLight: '#5A6378' };
+
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen" style={{ background: UMI.surface }}>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="px-6 py-4" style={{ background: '#fff', borderBottom: `1px solid ${UMI.surfaceDark}` }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm transition-colors">
-              ← Umi Cash
-            </Link>
-            <span className="text-gray-200">/</span>
-            <p className="font-semibold text-gray-900">Master Admin</p>
+            <svg width="28" height="28" viewBox="0 0 120 80" fill="none" aria-hidden>
+              <path d="M30 22 L60 4 L90 22" stroke={UMI.navy} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+              <text x="60" y="68" textAnchor="middle" fontFamily='"Domus", "Quicksand", system-ui, sans-serif' fontSize="38" fontWeight="600" fill={UMI.navy} letterSpacing="-1">umi</text>
+            </svg>
+            <div className="flex items-baseline gap-2">
+              <span className="u-display" style={{ fontSize: 18, fontWeight: 600, color: UMI.navy, letterSpacing: '-0.01em' }}>Umi Cash</span>
+              <span className="u-eyebrow" style={{ color: UMI.blue, fontSize: 10 }}>Master Admin</span>
+            </div>
           </div>
           <LogoutButton />
         </div>
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-10">
+        <div className="u-fade-up mb-8">
+          <div className="u-eyebrow mb-2" style={{ color: UMI.blue }}>Panel interno · {tenants.length} cafeterías</div>
+          <h1 className="u-display" style={{ fontSize: 34, fontWeight: 600, letterSpacing: '-0.02em', color: UMI.navy, margin: 0 }}>
+            Buen día
+          </h1>
+        </div>
+
         {/* Stats summary */}
-        <div className="grid grid-cols-4 gap-4 mb-10">
+        <div className="u-fade-up d1 grid grid-cols-4 gap-4 mb-10">
           {[
             { label: 'Cafeterías', value: tenants.length },
-            { label: 'Activas', value: activeCount },
+            { label: 'Activas', value: activeCount, accent: true },
             { label: 'Suspendidas', value: suspendedCount },
             { label: 'Usuarios totales', value: totalUsers },
-          ].map(({ label, value }) => (
-            <div key={label} className="bg-white rounded-2xl border border-gray-200 px-5 py-4">
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="text-sm text-gray-400 mt-0.5">{label}</p>
+          ].map(({ label, value, accent }) => (
+            <div key={label} className="rounded-2xl px-5 py-4" style={{ background: '#fff', border: `1px solid ${UMI.surfaceDark}` }}>
+              <p className="u-stat-num" style={{ fontSize: 32, color: accent ? UMI.navy : UMI.ink }}>{value}</p>
+              <p className="u-eyebrow mt-1.5" style={{ color: UMI.inkLight, fontSize: 10 }}>{label}</p>
             </div>
           ))}
         </div>
 
         {/* Tenant table */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-900">Cafeterías</h2>
-          <Link href="/umi/admin/new" className="text-sm bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-gray-700 transition-colors">
+        <div className="u-fade-up d2 flex items-center justify-between mb-4">
+          <h2 className="u-display" style={{ fontSize: 20, fontWeight: 600, color: UMI.ink, margin: 0 }}>Cafeterías</h2>
+          <Link
+            href="/umi/admin/new"
+            className="u-btn"
+            style={{ background: UMI.navy, color: '#fff', height: 40, padding: '0 16px', fontSize: 13 }}
+          >
             + Nueva cafetería
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="u-fade-up d3 rounded-2xl overflow-hidden" style={{ background: '#fff', border: `1px solid ${UMI.surfaceDark}` }}>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Negocio</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Slug / Prefijo</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Usuarios</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Tarjetas</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Estado</th>
+              <tr style={{ borderBottom: `1px solid ${UMI.surfaceDark}` }}>
+                {['Negocio', 'Slug / Prefijo', 'Usuarios', 'Tarjetas', 'Estado'].map((h, i) => (
+                  <th
+                    key={h}
+                    className={`px-4 py-3 u-eyebrow ${i === 2 || i === 3 ? 'text-right' : 'text-left'}`}
+                    style={{ color: UMI.inkLight, fontSize: 10 }}
+                  >
+                    {h}
+                  </th>
+                ))}
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y" style={{ borderColor: UMI.surfaceDark }}>
               {tenants.map((tenant) => {
                 let trialDaysRemaining: number | null = null;
                 if (tenant.subscriptionStatus === 'TRIAL' && tenant.trialEndsAt) {
@@ -92,8 +112,8 @@ export default async function UmiMasterAdmin() {
           </table>
         </div>
 
-        <p className="text-xs text-gray-400 mt-4 text-center">
-          MRR estimado: <span className="font-semibold text-gray-600">${(activeCount * 350).toLocaleString('es-MX')} MXN/mes</span>
+        <p className="text-xs mt-4 text-center" style={{ color: UMI.inkLight }}>
+          MRR estimado: <span className="font-semibold" style={{ color: UMI.navy }}>${(activeCount * 350).toLocaleString('es-MX')} MXN/mes</span>
           {' '}· {activeCount} cliente{activeCount !== 1 ? 's' : ''} activo{activeCount !== 1 ? 's' : ''} × $350
         </p>
       </div>

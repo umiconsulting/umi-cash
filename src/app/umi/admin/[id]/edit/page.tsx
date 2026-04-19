@@ -159,33 +159,39 @@ export default function EditTenantPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen" style={{ background: '#F5F7FC' }}>
         <div className="max-w-2xl mx-auto px-6 py-10 animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded-xl w-1/3" />
-          <div className="h-64 bg-gray-200 rounded-2xl" />
+          <div className="h-8 rounded-xl w-1/3" style={{ background: '#D4DFEF' }} />
+          <div className="h-64 rounded-2xl" style={{ background: '#D4DFEF' }} />
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <main className="min-h-screen" style={{ background: '#F5F7FC' }}>
+      <header className="px-6 py-4" style={{ background: '#fff', borderBottom: '1px solid #D4DFEF' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/umi/admin" className="text-gray-400 hover:text-gray-700 text-sm transition-colors">
+          <Link href="/umi/admin" className="text-sm transition-colors" style={{ color: '#5A6378' }}>
             ← Master Admin
           </Link>
-          <span className="text-gray-200">/</span>
-          <p className="font-semibold text-gray-900">{data?.name}</p>
+          <span style={{ color: '#D4DFEF' }}>/</span>
+          <p className="font-semibold" style={{ color: '#223979' }}>{data?.name}</p>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="u-fade-up mb-8">
+          <div className="u-eyebrow mb-2" style={{ color: '#7692CB' }}>Configuración · {data?.slug}</div>
+          <h1 className="u-display" style={{ fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em', color: '#223979', margin: 0 }}>
+            Editar cafetería
+          </h1>
+        </div>
         <form onSubmit={handleSave} className="space-y-6">
 
           {/* Business info */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Información del negocio</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Información del negocio</h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -217,7 +223,7 @@ export default function EditTenantPage() {
 
           {/* Branding */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Apariencia</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Apariencia</h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -250,7 +256,7 @@ export default function EditTenantPage() {
 
           {/* Loyalty program */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Programa de lealtad</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Programa de lealtad</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Visitas para recompensa</label>
@@ -268,7 +274,7 @@ export default function EditTenantPage() {
           {/* Locations */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">Sucursales</h2>
+              <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Sucursales</h2>
               <button type="button" onClick={() => setLocations([...locations, { name: '', address: '', latitude: '', longitude: '' }])}
                 className="text-xs text-gray-500 hover:text-gray-900 transition-colors">+ Agregar sucursal</button>
             </div>
@@ -318,7 +324,7 @@ export default function EditTenantPage() {
 
           {/* Subscription & options */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Suscripción y opciones</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Suscripción y opciones</h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Estado de suscripción</label>
@@ -419,7 +425,8 @@ export default function EditTenantPage() {
               Cancelar
             </Link>
             <button type="submit" disabled={saving}
-              className="flex-1 bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50">
+              className="flex-1 text-white rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              style={{ background: '#223979' }}>
               {saving ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>

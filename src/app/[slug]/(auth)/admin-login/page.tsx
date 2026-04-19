@@ -10,6 +10,7 @@ export default function AdminLoginPage() {
   const tenant = useTenant();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,37 +43,119 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-coffee-cream flex flex-col">
-      <div className="loyalty-card text-white px-6 py-12 text-center">
-        <h1 className="font-display text-2xl font-bold">{tenant.name}</h1>
-        <p className="text-coffee-light mt-1">Acceso empleados</p>
-      </div>
+    <main className="relative min-h-screen" style={{ background: 'var(--color-surface)' }}>
+      <div className="px-6 pt-4 pb-[140px] max-w-lg mx-auto">
+        {/* Wordmark header */}
+        <div className="flex items-center justify-between pt-2 pb-1">
+          <div
+            className="uppercase"
+            style={{
+              fontFamily: '"Domus", serif',
+              fontWeight: 400,
+              fontSize: 15,
+              letterSpacing: '0.04em',
+              color: 'var(--color-brand-dark)',
+            }}
+          >
+            {tenant.name}
+          </div>
+          <Link href={`/${slug}`} className="text-xs" style={{ color: 'var(--color-ink-light)' }}>
+            ← Inicio
+          </Link>
+        </div>
 
-      <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
-        <form onSubmit={handleLogin} className="space-y-4">
+        <div className="u-fade-up" style={{ marginTop: 36 }}>
+          <h1
+            className="u-display"
+            style={{
+              fontSize: 38,
+              fontWeight: 600,
+              letterSpacing: '-0.025em',
+              lineHeight: 1.05,
+              margin: 0,
+              color: 'var(--color-ink)',
+              whiteSpace: 'pre-line',
+            }}
+          >
+            {'Panel de\ngestión.'}
+          </h1>
+          <p style={{ fontSize: 14, color: 'var(--color-ink)', opacity: 0.65, margin: '12px 0 0', lineHeight: 1.5, maxWidth: 320 }}>
+            Accede para registrar visitas, consultar clientes y administrar tu programa de lealtad.
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} id="admin-login-form" className="u-fade-up d2" style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label className="block text-sm font-medium text-coffee-dark mb-2">Correo electrónico</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.mx" className="input-field" required autoComplete="email" />
+            <div className="u-eyebrow" style={{ marginBottom: 6 }}>Correo electrónico</div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={`hola@${slug}.mx`}
+              className="u-input"
+              required
+              autoComplete="email"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-coffee-dark mb-2">Contraseña</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" required autoComplete="current-password" />
+            <div className="u-eyebrow" style={{ marginBottom: 6 }}>Contraseña</div>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="u-input"
+                required
+                autoComplete="current-password"
+                style={{ paddingRight: 46 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass((v) => !v)}
+                aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-ink-light)', padding: 4,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div
+              className="rounded-xl p-3 text-sm"
+              style={{ background: 'color-mix(in oklab, var(--color-danger) 12%, white)', color: 'var(--color-danger)' }}
+            >
+              {error}
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
+          <div style={{ textAlign: 'right', marginTop: -6 }}>
+            <span style={{ fontSize: 13, color: 'var(--color-brand)', fontWeight: 500 }}>¿Olvidaste tu contraseña?</span>
+          </div>
         </form>
+      </div>
 
-        <div className="mt-6 text-center">
-          <Link href={`/${slug}`} className="text-sm text-coffee-medium">← Volver al inicio</Link>
+      <div
+        className="fixed bottom-0 left-0 right-0 px-5 pb-7 pt-5"
+        style={{ background: 'linear-gradient(180deg, transparent 0%, var(--color-surface) 28%)' }}
+      >
+        <div className="max-w-lg mx-auto">
+          <button
+            type="submit"
+            form="admin-login-form"
+            disabled={loading}
+            className="u-btn u-btn-primary"
+            style={{ width: '100%', height: 54 }}
+          >
+            {loading ? 'Entrando…' : 'Entrar →'}
+          </button>
         </div>
       </div>
     </main>

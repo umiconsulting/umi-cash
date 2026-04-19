@@ -170,7 +170,23 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
           onChange={(e) => handleInput(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
-          className="w-11 h-13 text-center text-xl font-bold rounded-xl border border-coffee-pale bg-white text-coffee-dark focus:outline-none focus:ring-2 focus:ring-coffee-brand"
+          className="text-center font-bold rounded-[14px] bg-white focus:outline-none"
+          style={{
+            width: 46,
+            height: 56,
+            fontSize: 22,
+            border: '1px solid var(--color-surface-dark)',
+            color: 'var(--color-ink)',
+            fontFamily: '"Domus", serif',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-brand)';
+            e.currentTarget.style.boxShadow = '0 0 0 3px color-mix(in oklab, var(--color-brand) 18%, transparent)';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-surface-dark)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
           autoComplete="one-time-code"
         />
       ))}
@@ -332,40 +348,37 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-coffee-cream flex flex-col">
-        <div className="loyalty-card text-white px-6 py-10 text-center">
-          <div className="max-w-sm mx-auto relative z-10">
-            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <h1 className="font-display text-2xl font-bold">¡Listo, {success.name}!</h1>
-            <p className="text-coffee-light text-sm mt-2">Tu tarjeta está activa. Agrégala a tu teléfono para tenerla siempre a la mano.</p>
-          </div>
+      <main className="min-h-screen flex flex-col" style={{ background: 'var(--color-surface)' }}>
+        <div className="px-6 pt-10 pb-4 max-w-lg mx-auto w-full">
+          <div className="u-eyebrow" style={{ color: 'var(--color-brand)' }}>Bienvenida</div>
+          <h1 className="u-display mt-3" style={{ fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.05, color: 'var(--color-ink)' }}>
+            Tu tarjeta está lista, {success.name}.
+          </h1>
+          <p className="mt-2" style={{ fontSize: 14, color: 'var(--color-ink-light)', maxWidth: 320 }}>
+            Guárdala en tu Wallet para mostrarla en cada visita.
+          </p>
         </div>
 
-        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full space-y-4">
-          <div className="card-surface">
-            <p className="text-xs text-coffee-medium text-center mb-5 font-medium uppercase tracking-wide">Guarda tu tarjeta — un toque, listo</p>
+        <div className="flex-1 px-5 pb-10 max-w-lg mx-auto w-full space-y-4">
+          <div className="u-surface p-5">
+            <div className="u-eyebrow mb-3 text-center">Guarda tu tarjeta</div>
             <WalletAddButtons token={success.token} slug={slug} />
           </div>
 
-          <div className="card-surface space-y-3">
-            <div className="space-y-2 text-sm text-coffee-medium">
-              <div className="flex gap-3 items-start">
-                <span className="text-coffee-brand font-bold flex-shrink-0">✓</span>
-                <p>Tu tarjeta ya está activa. Muéstrasela al barista en tu próxima visita.</p>
+          <div className="flex flex-col gap-4 pt-2">
+            {[
+              { n: '01', t: 'Pide tu café', s: 'Muestra el QR al pagar.' },
+              { n: '02', t: 'Suma sellos', s: 'Cada visita cuenta.' },
+              { n: '03', t: 'Canjea recompensas', s: 'Tu recompensa llega sola.' },
+            ].map((r) => (
+              <div key={r.n} className="flex gap-4 items-start">
+                <div className="u-display" style={{ width: 32, fontSize: 20, color: 'var(--color-brand)', fontWeight: 600 }}>{r.n}</div>
+                <div className="flex-1">
+                  <div className="font-semibold" style={{ fontSize: 14, color: 'var(--color-ink)' }}>{r.t}</div>
+                  <div style={{ fontSize: 12, color: 'var(--color-ink-light)', marginTop: 2 }}>{r.s}</div>
+                </div>
               </div>
-              <div className="flex gap-3 items-start">
-                <span className="text-coffee-brand font-bold flex-shrink-0">✓</span>
-                <p>Después de cada escaneo, la tarjeta se actualiza sola.</p>
-              </div>
-              <div className="flex gap-3 items-start">
-                <span className="text-coffee-brand font-bold flex-shrink-0">✓</span>
-                <p>Al completar tus visitas, ganas la recompensa del mes.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </main>
@@ -375,49 +388,70 @@ export default function RegisterPage() {
   // OTP verification step
   if (step === 'otp') {
     return (
-      <main className="min-h-screen bg-coffee-cream flex flex-col">
-        <div className="loyalty-card text-white px-6 py-12 text-center">
-          <div className="max-w-sm mx-auto relative z-10">
-            <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-3">{tenant.name}</p>
-            <h1 className="font-display text-2xl font-bold">Verifica tu teléfono</h1>
-            <p className="text-coffee-light text-sm mt-1">Enviamos un código de 6 dígitos a</p>
-            <p className="text-white font-medium text-sm mt-1">{getFullPhone()}</p>
+      <main className="min-h-screen flex flex-col" style={{ background: 'var(--color-surface)' }}>
+        <div className="px-6 pt-10 pb-2 max-w-lg mx-auto w-full">
+          <button
+            onClick={() => { setStep('form'); setOtpCode(''); setOtpError(''); }}
+            className="u-eyebrow hover:opacity-80"
+            style={{ color: 'var(--color-ink-light)' }}
+          >
+            ← Paso 1 de 3
+          </button>
+          <div className="u-eyebrow mt-1" style={{ color: 'var(--color-ink-light)' }}>Paso 2 de 3</div>
+          <h2 className="u-display mt-3" style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)' }}>
+            Revisa tu teléfono
+          </h2>
+          <p className="mt-2" style={{ fontSize: 14, color: 'var(--color-ink-light)' }}>
+            Enviamos un código a <span style={{ color: 'var(--color-ink)', fontWeight: 500 }}>{getFullPhone()}</span>.
+          </p>
+
+          <div className="flex gap-1.5 mt-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: 3,
+                  borderRadius: 2,
+                  background: i <= 2 ? 'var(--color-brand)' : 'var(--color-surface-dark)',
+                }}
+              />
+            ))}
           </div>
         </div>
 
-        <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full space-y-6">
-          <div className="space-y-4">
-            <OtpInput value={otpCode} onChange={setOtpCode} />
+        <div className="flex-1 px-6 pt-10 pb-32 max-w-lg mx-auto w-full">
+          <OtpInput value={otpCode} onChange={setOtpCode} />
 
-            {otpError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                <p className="text-red-600 text-sm text-center">{otpError}</p>
-              </div>
-            )}
+          {otpError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mt-4">
+              <p className="text-red-600 text-sm text-center">{otpError}</p>
+            </div>
+          )}
 
-            <button
-              onClick={handleVerifyOtp}
-              disabled={otpLoading || otpCode.length !== 6}
-              className="btn-primary w-full"
-            >
-              {otpLoading ? 'Verificando...' : 'Verificar y crear tarjeta'}
-            </button>
-          </div>
-
-          <div className="text-center space-y-2">
+          <div className="text-center mt-7">
             {resendTimer > 0 ? (
-              <p className="text-xs text-coffee-light">Reenviar código en {resendTimer}s</p>
+              <p style={{ fontSize: 12, color: 'var(--color-ink-light)' }}>Reenviar código en {resendTimer}s</p>
             ) : (
-              <button onClick={handleResend} className="text-xs text-coffee-dark underline font-medium">
+              <button onClick={handleResend} className="underline font-medium" style={{ fontSize: 13, color: 'var(--color-brand)' }}>
                 Reenviar código
               </button>
             )}
+          </div>
+        </div>
 
+        <div
+          className="fixed bottom-0 left-0 right-0 px-5 pb-7 pt-4"
+          style={{ background: 'linear-gradient(180deg, transparent 0%, var(--color-surface) 28%)' }}
+        >
+          <div className="max-w-lg mx-auto">
             <button
-              onClick={() => { setStep('form'); setOtpCode(''); setOtpError(''); }}
-              className="block mx-auto text-xs text-coffee-light underline"
+              onClick={handleVerifyOtp}
+              disabled={otpLoading || otpCode.length !== 6}
+              className="u-btn u-btn-primary w-full"
+              style={{ width: '100%', height: 54 }}
             >
-              ← Cambiar número
+              {otpLoading ? 'Verificando...' : 'Verificar y crear tarjeta'}
             </button>
           </div>
         </div>
@@ -426,35 +460,85 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-coffee-cream flex flex-col">
-      <div className="loyalty-card text-white px-6 py-12 text-center">
-        <div className="max-w-sm mx-auto relative z-10">
-          <p className="text-coffee-pale/50 text-xs tracking-[0.2em] uppercase mb-3">{tenant.name}</p>
-          <h1 className="font-display text-2xl font-bold">Crea tu tarjeta</h1>
-          <p className="text-coffee-light text-sm mt-1">Gratis, en menos de un minuto.</p>
+    <main className="min-h-screen flex flex-col" style={{ background: 'var(--color-surface)' }}>
+      <div className="px-6 pt-10 pb-2 max-w-lg mx-auto w-full">
+        <Link href={`/${slug}`} className="u-eyebrow hover:opacity-80" style={{ color: 'var(--color-ink-light)' }}>
+          ← {tenant.name}
+        </Link>
+        <div className="u-eyebrow mt-1" style={{ color: 'var(--color-ink-light)' }}>Paso 1 de 3</div>
+        <h2 className="u-display mt-3" style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.1, maxWidth: 300, color: 'var(--color-ink)' }}>
+          Vamos a crear tu tarjeta
+        </h2>
+        <p className="mt-2" style={{ fontSize: 14, color: 'var(--color-ink-light)' }}>
+          Tomará menos de un minuto.
+        </p>
+
+        <div className="flex gap-1.5 mt-6">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                height: 3,
+                borderRadius: 2,
+                background: i <= 1 ? 'var(--color-brand)' : 'var(--color-surface-dark)',
+              }}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
-        <form onSubmit={handleSendOtp} className="space-y-4">
+      <div className="flex-1 px-6 pt-8 pb-32 max-w-lg mx-auto w-full">
+        <form id="register-form" onSubmit={handleSendOtp} className="flex flex-col gap-5">
           <div>
-            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Nombre completo</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="María García" className="input-field" required autoComplete="name" />
+            <label className="u-eyebrow" style={{ fontSize: 10 }}>Nombre</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="María García"
+              className="u-input mt-1.5"
+              required
+              autoComplete="name"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Fecha de nacimiento</label>
-            <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="input-field" max={new Date().toISOString().split('T')[0]} required />
+            <label className="u-eyebrow" style={{ fontSize: 10 }}>Cumpleaños</label>
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="u-input mt-1.5"
+              max={new Date().toISOString().split('T')[0]}
+              required
+            />
+            <div className="mt-2 flex items-center gap-2" style={{ fontSize: 12, color: 'var(--color-ink-light)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-brand)' }}>
+                <polyline points="20 12 20 22 4 22 4 12" />
+                <rect x="2" y="7" width="20" height="5" />
+                <line x1="12" y1="22" x2="12" y2="7" />
+                <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+                <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+              </svg>
+              Te daremos un regalo en tu mes de cumpleaños.
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-coffee-dark mb-1.5">Teléfono</label>
-            <div className="flex gap-2">
+            <label className="u-eyebrow" style={{ fontSize: 10 }}>Teléfono</label>
+            <div className="flex gap-2 mt-1.5">
               <div className="relative flex-shrink-0">
                 <select
                   value={dialCode}
                   onChange={(e) => setDialCode(e.target.value)}
-                  className="appearance-none h-full pl-3 pr-7 rounded-xl border border-coffee-pale bg-white text-coffee-dark text-sm focus:outline-none focus:ring-1 focus:ring-coffee-medium cursor-pointer"
+                  className="appearance-none h-[52px] pl-3 pr-7 rounded-[14px] text-sm cursor-pointer"
+                  style={{
+                    border: '1px solid var(--color-surface-dark)',
+                    background: '#fff',
+                    color: 'var(--color-ink)',
+                    outline: 'none',
+                  }}
                   aria-label="Código de país"
                 >
                   {COUNTRY_CODES.map((c) => (
@@ -463,7 +547,7 @@ export default function RegisterPage() {
                     </option>
                   ))}
                 </select>
-                <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-coffee-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: 'var(--color-ink-light)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </div>
@@ -472,7 +556,7 @@ export default function RegisterPage() {
                 value={localPhone}
                 onChange={(e) => setLocalPhone(e.target.value)}
                 placeholder="55 1234 5678"
-                className="input-field flex-1"
+                className="u-input flex-1"
                 autoComplete="tel-national"
                 required
                 inputMode="numeric"
@@ -480,12 +564,18 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" checked={privacyAccepted} onChange={(e) => setPrivacyAccepted(e.target.checked)} className="mt-0.5 w-4 h-4 rounded border-coffee-light text-coffee-dark focus:ring-coffee-medium flex-shrink-0" required />
-            <span className="text-xs text-coffee-medium leading-relaxed">
+          <label className="flex items-start gap-3 cursor-pointer mt-1">
+            <input
+              type="checkbox"
+              checked={privacyAccepted}
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              className="mt-0.5 w-4 h-4 flex-shrink-0"
+              required
+            />
+            <span style={{ fontSize: 12, color: 'var(--color-ink-light)', lineHeight: 1.5 }}>
               He leído y acepto el{' '}
-              <Link href={`/${slug}/aviso-privacidad`} className="text-coffee-dark underline font-medium" target="_blank">Aviso de Privacidad</Link>{' '}y los{' '}
-              <Link href={`/${slug}/terminos`} className="text-coffee-dark underline font-medium" target="_blank">Términos</Link>.
+              <Link href={`/${slug}/aviso-privacidad`} className="underline font-medium" style={{ color: 'var(--color-ink)' }} target="_blank">Aviso de Privacidad</Link>{' '}y los{' '}
+              <Link href={`/${slug}/terminos`} className="underline font-medium" style={{ color: 'var(--color-ink)' }} target="_blank">Términos</Link>.
             </span>
           </label>
 
@@ -494,15 +584,24 @@ export default function RegisterPage() {
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
-
-          <button type="submit" disabled={loading || !name || !birthDate || !localPhone || !privacyAccepted} className="btn-primary w-full">
-            {loading ? 'Enviando código...' : 'Verificar teléfono'}
-          </button>
         </form>
+      </div>
 
-        <p className="text-center text-xs text-coffee-light mt-6">
-          <Link href={`/${slug}`} className="underline">← Volver</Link>
-        </p>
+      <div
+        className="fixed bottom-0 left-0 right-0 px-5 pb-7 pt-4"
+        style={{ background: 'linear-gradient(180deg, transparent 0%, var(--color-surface) 28%)' }}
+      >
+        <div className="max-w-lg mx-auto">
+          <button
+            type="submit"
+            form="register-form"
+            disabled={loading || !name || !birthDate || !localPhone || !privacyAccepted}
+            className="u-btn u-btn-primary w-full"
+            style={{ width: '100%', height: 54 }}
+          >
+            {loading ? 'Enviando código...' : 'Continuar →'}
+          </button>
+        </div>
       </div>
     </main>
   );

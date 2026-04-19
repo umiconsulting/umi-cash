@@ -17,6 +17,12 @@ interface CustomerDetail {
   recentTransactions: { id: string; type: string; amountCentavos: number; description: string | null; createdAt: string }[];
 }
 
+function initialsFrom(name: string | null) {
+  if (!name) return '·';
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
+}
+
 export default function CustomerDetailPage() {
   const { slug, id } = useParams<{ slug: string; id: string }>();
   const router = useRouter();
@@ -87,124 +93,199 @@ export default function CustomerDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-4 max-w-lg mx-auto animate-pulse space-y-4 mt-8">
-        <div className="h-8 bg-coffee-pale rounded-xl w-1/2" />
-        <div className="h-40 bg-coffee-pale rounded-2xl" />
+      <div className="px-5 py-6 max-w-lg mx-auto animate-pulse space-y-4">
+        <div className="h-8 rounded-xl w-1/2" style={{ background: 'var(--color-surface-dark)' }} />
+        <div className="h-40 rounded-2xl" style={{ background: 'var(--color-surface-dark)' }} />
       </div>
     );
   }
 
   if (!customer) {
     return (
-      <div className="p-4 text-center mt-12">
-        <p className="text-coffee-medium">Cliente no encontrado</p>
-        <button onClick={() => router.back()} className="btn-secondary mt-4">← Volver</button>
+      <div className="px-5 py-10 text-center">
+        <p style={{ color: 'var(--color-ink-light)' }}>Cliente no encontrado</p>
+        <button onClick={() => router.back()} className="u-btn u-btn-secondary mt-4">← Volver</button>
       </div>
     );
   }
 
-  return (
-    <div className="p-4 max-w-lg mx-auto pb-8">
-      <button onClick={() => router.back()} className="text-coffee-medium text-sm mt-4 mb-4">← Volver</button>
+  const progressPct = Math.min(100, (customer.visitsThisCycle / customer.visitsRequired) * 100);
 
-      <div className="loyalty-card rounded-2xl p-5 text-white mb-4 relative z-10">
-        <p className="text-coffee-light text-xs uppercase tracking-widest">Cliente</p>
-        <h2 className="font-display text-xl font-bold mt-1">{customer.name || 'Sin nombre'}</h2>
-        <p className="text-coffee-light text-sm">{customer.phone || customer.email || '—'}</p>
-        {customer.device && <p className="text-coffee-pale/40 text-xs mt-0.5">{customer.device}{customer.os ? ` · ${customer.os}` : ''}</p>}
-        {customer.birthDate && <p className="text-coffee-pale/60 text-xs mt-0.5">{new Date(customer.birthDate + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })}</p>}
-        <p className="text-coffee-pale/60 text-xs mt-1">{customer.cardNumber}</p>
-        <div className="flex justify-between mt-4">
-          {tenant.topupEnabled && <div><p className="text-coffee-light text-xs">Saldo</p><p className="text-xl font-bold">{customer.balanceMXN}</p></div>}
-          <div className={tenant.topupEnabled ? 'text-right' : ''}><p className="text-coffee-light text-xs">Visitas</p><p className="text-xl font-bold">{customer.visitsThisCycle}/{customer.visitsRequired}</p></div>
+  return (
+    <div className="px-5 py-6 max-w-lg mx-auto pb-8">
+      <button
+        onClick={() => router.back()}
+        className="u-eyebrow mb-4"
+        style={{ color: 'var(--color-ink-light)' }}
+      >
+        ← Volver
+      </button>
+
+      <div className="u-fade-up flex items-center gap-4 mb-5">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center u-display"
+          style={{ background: 'var(--color-surface-dark)', color: 'var(--color-brand-dark)', fontSize: 20, fontWeight: 600 }}
+        >
+          {initialsFrom(customer.name)}
+        </div>
+        <div className="min-w-0">
+          <h1 className="u-display truncate" style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: 0 }}>
+            {customer.name || 'Sin nombre'}
+          </h1>
+          <p className="text-sm truncate" style={{ color: 'var(--color-ink-light)' }}>
+            {customer.phone || customer.email || '—'}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-ink-light)' }}>
+            {customer.cardNumber}
+            {customer.birthDate && ` · ${new Date(customer.birthDate + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })}`}
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {tenant.topupEnabled && (
-          <div className="card-surface text-center col-span-2 border-coffee-brand/20" style={{ borderColor: 'color-mix(in srgb, var(--color-accent) 25%, transparent)' }}>
-            <p className="text-xs text-coffee-medium mb-0.5 uppercase tracking-wide">Valor de vida (LTV)</p>
-            <p className="text-3xl font-bold text-coffee-dark">{customer.ltvMXN}</p>
-            <p className="text-xs text-coffee-light mt-1">Total gastado en tienda · Recargado: {customer.totalTopupMXN}</p>
-          </div>
-        )}
-        <div className="card-surface text-center"><p className="text-2xl font-bold text-coffee-dark">{customer.totalVisits}</p><p className="text-xs text-coffee-medium">Total visitas</p></div>
-        <div className="card-surface text-center"><p className="text-2xl font-bold text-coffee-dark">{customer.pendingRewards}</p><p className="text-xs text-coffee-medium">Recompensas</p></div>
+      <div className="u-fade-up d1 u-surface p-5 mb-4">
+        <div className="u-eyebrow mb-2">Progreso de visitas</div>
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="u-stat-num" style={{ color: 'var(--color-ink)' }}>
+            {customer.visitsThisCycle}/{customer.visitsRequired}
+          </span>
+          {customer.pendingRewards > 0 && (
+            <span className="u-badge u-badge-accent">{customer.pendingRewards} recompensa{customer.pendingRewards > 1 ? 's' : ''}</span>
+          )}
+        </div>
+        <div className="u-progress-track">
+          <div className="u-progress-fill" style={{ width: `${progressPct}%` }} />
+        </div>
       </div>
 
+      <div className={`u-fade-up d2 grid gap-3 mb-4 ${tenant.topupEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div className="u-surface p-4 text-center">
+          <p className="u-stat-num" style={{ fontSize: 22, color: 'var(--color-ink)' }}>{customer.totalVisits}</p>
+          <p className="u-eyebrow mt-1">Visitas</p>
+        </div>
+        <div className="u-surface p-4 text-center">
+          <p className="u-stat-num" style={{ fontSize: 22, color: 'var(--color-ink)' }}>{customer.pendingRewards}</p>
+          <p className="u-eyebrow mt-1">Premios</p>
+        </div>
+        {tenant.topupEnabled && (
+          <div className="u-surface p-4 text-center">
+            <p className="u-stat-num" style={{ fontSize: 22, color: 'var(--color-brand)' }}>{customer.balanceMXN}</p>
+            <p className="u-eyebrow mt-1">Saldo</p>
+          </div>
+        )}
+      </div>
+
+      {tenant.topupEnabled && (
+        <div className="u-fade-up d3 u-surface p-4 text-center mb-4">
+          <div className="u-eyebrow mb-1">Valor de vida (LTV)</div>
+          <p className="u-display" style={{ fontSize: 28, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
+            {customer.ltvMXN}
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-ink-light)' }}>
+            Total gastado · Recargado: {customer.totalTopupMXN}
+          </p>
+        </div>
+      )}
+
       {message && (
-        <div className={`rounded-xl p-3 mb-4 text-sm font-medium text-center ${messageIsSuccess ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+        <div
+          className="rounded-xl p-3 mb-4 text-sm font-medium text-center"
+          style={{
+            background: messageIsSuccess ? 'var(--color-success-soft)' : 'var(--color-danger-soft)',
+            color: messageIsSuccess ? 'var(--color-success-ink)' : 'var(--color-danger)',
+          }}
+        >
           {message}
         </div>
       )}
 
-      {tenant.topupEnabled && (
-        <div className="card-surface mb-4">
-          <h3 className="font-semibold text-coffee-dark mb-3">Recargar saldo</h3>
-          <form onSubmit={handleTopUp} className="space-y-3">
-            <div className="grid grid-cols-4 gap-2">
-              {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => (
-                <button key={centavos} type="button" onClick={() => setTopupAmount(String(centavos / 100))}
-                  className={`py-2 rounded-xl text-sm font-medium transition-colors ${topupAmount === String(centavos / 100) ? 'bg-coffee-dark text-white' : 'bg-coffee-pale text-coffee-medium'}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input type="number" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} placeholder="Otro monto" className="input-field flex-1" min="1" max="10000" />
-              <button type="submit" disabled={topupLoading || !topupAmount} className="btn-primary">{topupLoading ? '...' : 'Recargar'}</button>
-            </div>
-          </form>
-        </div>
-      )}
-
       {customer.pendingRewards > 0 && (
-        <div className="card-surface border-2 border-coffee-brand/30 mb-4">
-          <h3 className="font-semibold text-coffee-brand mb-2">
+        <div className="u-surface p-5 mb-4" style={{ borderColor: 'var(--color-brand)' }}>
+          <div className="u-eyebrow mb-2" style={{ color: 'var(--color-brand)' }}>Recompensa disponible</div>
+          <p className="u-display mb-3" style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
             {customer.pendingRewards} recompensa{customer.pendingRewards > 1 ? 's' : ''} pendiente{customer.pendingRewards > 1 ? 's' : ''}
-          </h3>
+          </p>
           {confirmRedeem ? (
-            <div className="space-y-2">
-              <p className="text-sm text-coffee-dark text-center">¿Confirmar canjeo para {customer.name}?</p>
+            <div className="space-y-2 mt-3">
+              <p className="text-sm text-center" style={{ color: 'var(--color-ink)' }}>¿Confirmar canjeo para {customer.name}?</p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setConfirmRedeem(false)}
-                  className="flex-1 py-2 rounded-xl text-sm font-medium border border-coffee-pale text-coffee-medium hover:bg-coffee-pale transition-colors"
-                >
+                <button onClick={() => setConfirmRedeem(false)} className="u-btn u-btn-secondary" style={{ flex: 1 }}>
                   Cancelar
                 </button>
                 <button
                   onClick={() => { setConfirmRedeem(false); handleRedeem(); }}
                   disabled={redeemLoading}
-                  className="flex-1 bg-coffee-brand text-white py-2 rounded-xl text-sm font-semibold hover:bg-coffee-brand/90 transition-colors"
+                  className="u-btn u-btn-primary"
+                  style={{ flex: 1 }}
                 >
-                  {redeemLoading ? 'Canjeando...' : 'Sí, canjear'}
+                  {redeemLoading ? 'Canjeando…' : 'Sí, canjear'}
                 </button>
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmRedeem(true)}
-              disabled={redeemLoading}
-              className="bg-coffee-brand text-white px-4 py-2 rounded-xl text-sm font-semibold w-full"
-            >
+            <button onClick={() => setConfirmRedeem(true)} disabled={redeemLoading} className="u-btn u-btn-primary" style={{ width: '100%' }}>
               Canjear recompensa
             </button>
           )}
         </div>
       )}
 
+      {tenant.topupEnabled && (
+        <div className="u-surface p-5 mb-4">
+          <div className="u-eyebrow mb-3">Recargar saldo</div>
+          <form onSubmit={handleTopUp} className="space-y-3">
+            <div className="grid grid-cols-4 gap-2">
+              {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => {
+                const on = topupAmount === String(centavos / 100);
+                return (
+                  <button
+                    key={centavos}
+                    type="button"
+                    onClick={() => setTopupAmount(String(centavos / 100))}
+                    className="py-2 rounded-xl text-sm font-medium transition-colors"
+                    style={{
+                      background: on ? 'var(--color-ink)' : 'var(--color-surface-dark)',
+                      color: on ? '#fff' : 'var(--color-ink-light)',
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+                placeholder="Otro monto"
+                className="u-input flex-1"
+                min="1"
+                max="10000"
+              />
+              <button type="submit" disabled={topupLoading || !topupAmount} className="u-btn u-btn-primary">
+                {topupLoading ? '…' : 'Recargar'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {customer.recentVisits?.length > 0 && (
-        <div className="card-surface mb-4">
-          <h3 className="font-semibold text-coffee-dark mb-3">Últimas visitas</h3>
+        <div className="u-surface p-5 mb-4">
+          <div className="u-eyebrow mb-3">Últimas visitas</div>
           <div className="space-y-2">
             {customer.recentVisits.map((v) => (
               <div key={v.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-xs">✓</span>
-                  <span className="text-coffee-dark">Visita registrada</span>
+                  <span
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                    style={{ background: 'var(--color-success-soft)', color: 'var(--color-success-ink)' }}
+                  >
+                    ✓
+                  </span>
+                  <span style={{ color: 'var(--color-ink)' }}>Visita registrada</span>
                 </div>
-                <span className="text-coffee-medium">{formatDateTimeMX(new Date(v.scannedAt))}</span>
+                <span style={{ color: 'var(--color-ink-light)' }}>{formatDateTimeMX(new Date(v.scannedAt))}</span>
               </div>
             ))}
           </div>
@@ -212,16 +293,19 @@ export default function CustomerDetailPage() {
       )}
 
       {tenant.topupEnabled && customer.recentTransactions?.length > 0 && (
-        <div className="card-surface">
-          <h3 className="font-semibold text-coffee-dark mb-3">Movimientos de saldo</h3>
+        <div className="u-surface p-5">
+          <div className="u-eyebrow mb-3">Movimientos de saldo</div>
           <div className="space-y-2">
             {customer.recentTransactions.map((t) => (
               <div key={t.id} className="flex items-center justify-between text-sm">
                 <div>
-                  <p className="text-coffee-dark">{t.description || 'Movimiento'}</p>
-                  <p className="text-coffee-light text-xs">{formatDateShortMX(new Date(t.createdAt))}</p>
+                  <p style={{ color: 'var(--color-ink)' }}>{t.description || 'Movimiento'}</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink-light)' }}>{formatDateShortMX(new Date(t.createdAt))}</p>
                 </div>
-                <span className={`font-semibold ${t.amountCentavos > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span
+                  className="font-semibold"
+                  style={{ color: t.amountCentavos > 0 ? 'var(--color-success-ink)' : 'var(--color-danger)' }}
+                >
                   {t.amountCentavos > 0 ? '+' : ''}{formatMXN(t.amountCentavos)}
                 </span>
               </div>

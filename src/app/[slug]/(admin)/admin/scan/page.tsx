@@ -334,36 +334,40 @@ export default function ScanPage() {
     : 0;
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-6">Escanear Tarjeta</h1>
+    <div className="px-5 py-5 max-w-lg mx-auto">
+      <div className="u-fade-up mb-5">
+        <div className="u-eyebrow mb-1.5">Escanear</div>
+        <h1 className="u-display" style={{ fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: 0 }}>
+          Apunta al QR del cliente
+        </h1>
+      </div>
 
       {/* ── Step 1: scan input (hidden once preview is loaded) ── */}
       {!preview && !result && (
         <>
           {/* Manual input */}
-          <div className="card-surface mb-4">
-            <p className="text-sm font-semibold text-coffee-dark mb-2">Número de tarjeta:</p>
+          <div className="u-surface p-5 mb-4">
+            <div className="u-eyebrow mb-2">O ingresa manualmente</div>
             <form onSubmit={handleManualSubmit} className="flex gap-2">
               <input
                 type="text"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
                 placeholder="Tarjeta o teléfono"
-                className="input-field flex-1"
+                className="u-input flex-1"
                 autoFocus
                 autoComplete="off"
                 autoCapitalize="characters"
                 disabled={processing}
               />
-              <button type="submit" disabled={!manualInput || processing} className="btn-primary px-4">
-                {processing ? '...' : '→'}
+              <button type="submit" disabled={!manualInput || processing} className="u-btn u-btn-primary px-4">
+                {processing ? '...' : 'Buscar'}
               </button>
             </form>
-            <p className="text-xs text-coffee-light mt-1.5">Ingresa número de tarjeta o teléfono, o escanea el QR.</p>
           </div>
 
           {/* Camera */}
-          <div className="card-surface mb-4">
+          <div className="u-surface p-5 mb-4">
             <div className="relative bg-black rounded-xl overflow-hidden aspect-[4/3] mb-3">
               <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
               {!scanning && (
@@ -400,7 +404,7 @@ export default function ScanPage() {
               )}
             </div>
             {cameraError && <p className="text-amber-700 text-sm text-center mb-3 bg-amber-50 rounded-lg px-3 py-2">{cameraError}</p>}
-            <button onClick={scanning ? stopCamera : startCamera} className={scanning ? 'btn-secondary w-full' : 'btn-primary w-full'}>
+            <button onClick={scanning ? stopCamera : startCamera} className={`u-btn ${scanning ? 'u-btn-secondary' : 'u-btn-primary'}`} style={{ width: '100%' }}>
               {scanning ? 'Detener cámara' : 'Activar cámara'}
             </button>
           </div>
@@ -411,15 +415,26 @@ export default function ScanPage() {
       {preview && !result && (
         <div className="space-y-4 animate-slide-up">
           {/* Customer info card */}
-          <div className="card-surface">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="font-bold text-coffee-dark text-lg leading-tight">
+          <div className="u-surface p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  width: 52, height: 52, borderRadius: 16,
+                  background: 'color-mix(in oklab, var(--color-brand) 15%, white)',
+                  color: 'var(--color-brand-dark)',
+                  fontFamily: '"Domus", serif', fontWeight: 600, fontSize: 20,
+                }}
+              >
+                {(preview.customer.name ?? 'C').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="u-display truncate" style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
                   {preview.customer.name ?? 'Cliente'}
                 </p>
-                <p className="text-xs text-coffee-medium font-mono mt-0.5">{preview.cardNumber}</p>
+                <p className="text-xs font-mono mt-0.5" style={{ color: 'var(--color-ink-light)', letterSpacing: '0.08em' }}>{preview.cardNumber}</p>
               </div>
-              <button onClick={reset} className="text-coffee-light hover:text-coffee-dark p-1">
+              <button onClick={reset} className="p-1" style={{ color: 'var(--color-ink-light)' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -428,37 +443,31 @@ export default function ScanPage() {
 
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-coffee-pale rounded-xl p-3 text-center">
-                <p className="font-bold text-coffee-dark text-lg leading-none">
-                  {preview.card.visitsThisCycle}<span className="text-coffee-medium text-sm font-normal">/{preview.card.visitsRequired}</span>
-                </p>
-                <p className="text-xs text-coffee-medium mt-1">Visitas</p>
-              </div>
-              <div className="bg-coffee-pale rounded-xl p-3 text-center">
-                <p className="font-bold text-coffee-dark text-lg leading-none">{preview.card.pendingRewards}</p>
-                <p className="text-xs text-coffee-medium mt-1">Recompensas</p>
-              </div>
-              <div className="bg-coffee-pale rounded-xl p-3 text-center">
-                <p className="font-bold text-coffee-dark text-lg leading-none">{preview.card.balanceMXN}</p>
-                <p className="text-xs text-coffee-medium mt-1">Saldo</p>
-              </div>
+              {[
+                { label: 'Visitas', value: <>{preview.card.visitsThisCycle}<span style={{ color: 'var(--color-ink-light)', fontSize: 14, fontWeight: 400 }}>/{preview.card.visitsRequired}</span></> },
+                { label: 'Recompensas', value: preview.card.pendingRewards },
+                { label: 'Saldo', value: preview.card.balanceMXN },
+              ].map((s, i) => (
+                <div key={i} className="rounded-xl p-3 text-center" style={{ background: 'var(--color-surface)' }}>
+                  <p className="leading-none" style={{ fontFamily: '"Domus", serif', fontWeight: 600, fontSize: 20, color: 'var(--color-ink)' }}>{s.value}</p>
+                  <p className="u-eyebrow mt-1.5" style={{ fontSize: 9 }}>{s.label}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Visit progress bar */}
-            <div className="w-full bg-coffee-pale rounded-full h-1.5 mb-1">
-              <div
-                className="bg-coffee-brand h-1.5 rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%` }}
-              />
+            {/* Visit progress */}
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="u-eyebrow" style={{ fontSize: 10 }}>Próxima recompensa</span>
+              <span className="text-xs font-semibold" style={{ color: 'var(--color-brand)' }}>{preview.card.visitsThisCycle}/{preview.card.visitsRequired} · {preview.card.rewardName}</span>
             </div>
-            <p className="text-xs text-coffee-medium">
-              {preview.card.visitsRequired - preview.card.visitsThisCycle} visita{preview.card.visitsRequired - preview.card.visitsThisCycle !== 1 ? 's' : ''} para {preview.card.rewardName}
-            </p>
+            <div className="u-progress-track">
+              <div className="u-progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
           </div>
 
           {/* Cobrar saldo form (inline) */}
           {showCharge ? (
-            <div className="card-surface border-2 border-coffee-brand/20 bg-coffee-brand/5">
+            <div className="u-surface p-5 border-2 border-coffee-brand/20 bg-coffee-brand/5">
               <p className="text-sm font-semibold text-coffee-dark mb-3">Cobrar saldo</p>
               <form onSubmit={doCharge} className="space-y-3">
                 <div className="grid grid-cols-4 gap-2">
@@ -481,7 +490,7 @@ export default function ScanPage() {
                   value={chargeAmount}
                   onChange={(e) => setChargeAmount(e.target.value)}
                   placeholder="Otro monto"
-                  className="input-field"
+                  className="u-input"
                   min="0.01"
                   max={preview.card.balanceCentavos / 100}
                   step="0.01"
@@ -495,17 +504,17 @@ export default function ScanPage() {
                   value={chargeNote}
                   onChange={(e) => setChargeNote(e.target.value)}
                   placeholder="Nota (opcional)"
-                  className="input-field"
+                  className="u-input"
                   maxLength={200}
                 />
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => { setShowCharge(false); setChargeAmount(''); }} className="btn-secondary flex-1">
+                  <button type="button" onClick={() => { setShowCharge(false); setChargeAmount(''); }} className="u-btn u-btn-secondary flex-1">
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={!chargeAmount || processing || parseFloat(chargeAmount) <= 0}
-                    className="btn-primary flex-1"
+                    className="u-btn u-btn-primary flex-1"
                   >
                     {processing ? 'Procesando...' : 'Confirmar cobro'}
                   </button>
@@ -515,7 +524,7 @@ export default function ScanPage() {
 
           /* Recargar saldo form (inline) */
           ) : showTopup ? (
-            <div className="card-surface border-2 border-green-200 bg-green-50/50">
+            <div className="u-surface p-5 border-2 border-green-200 bg-green-50/50">
               <p className="text-sm font-semibold text-coffee-dark mb-3">Recargar saldo</p>
               <form onSubmit={doTopup} className="space-y-3">
                 <div className="grid grid-cols-4 gap-2">
@@ -537,7 +546,7 @@ export default function ScanPage() {
                   value={topupAmount}
                   onChange={(e) => setTopupAmount(e.target.value)}
                   placeholder="Otro monto"
-                  className="input-field"
+                  className="u-input"
                   min="1"
                   max="10000"
                   step="0.01"
@@ -551,11 +560,11 @@ export default function ScanPage() {
                   value={topupNote}
                   onChange={(e) => setTopupNote(e.target.value)}
                   placeholder="Nota (opcional)"
-                  className="input-field"
+                  className="u-input"
                   maxLength={200}
                 />
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => { setShowTopup(false); setTopupAmount(''); }} className="btn-secondary flex-1">
+                  <button type="button" onClick={() => { setShowTopup(false); setTopupAmount(''); }} className="u-btn u-btn-secondary flex-1">
                     Cancelar
                   </button>
                   <button
@@ -574,15 +583,32 @@ export default function ScanPage() {
             <div className="space-y-2">
               {/* Birthday reward banner + button */}
               {preview.birthdayReward && (
-                <div className="rounded-xl bg-amber-50 border-2 border-amber-300 p-3.5">
-                  <p className="text-amber-800 font-bold text-sm mb-0.5">REGALO DE CUMPLEANOS</p>
-                  <p className="text-amber-700 text-xs mb-3">{preview.birthdayReward.rewardName} — un solo canje este mes</p>
+                <div
+                  className="rounded-[var(--radius-card)] p-4 flex items-center gap-3"
+                  style={{
+                    background: 'color-mix(in oklab, var(--color-brand) 12%, white)',
+                    border: '1px solid color-mix(in oklab, var(--color-brand) 20%, transparent)',
+                  }}
+                >
+                  <div
+                    className="flex items-center justify-center"
+                    style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--color-brand)', color: '#fff' }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-8H4v8M1 13h22M7 13V8a3 3 0 016 0v5M13 13V8a3 3 0 016 0v5M7 8a2 2 0 110-4c1.5 0 2.5 2 2.5 4M12 8c0-2 1-4 2.5-4a2 2 0 110 4"/>
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div className="u-eyebrow" style={{ color: 'var(--color-brand-dark)', fontSize: 10 }}>Regalo de cumpleaños</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2, color: 'var(--color-brand-dark)' }}>{preview.birthdayReward.rewardName}</div>
+                  </div>
                   <button
                     onClick={doBirthdayRedeem}
                     disabled={processing}
-                    className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-900 font-bold text-sm transition-colors disabled:opacity-50"
+                    className="u-btn u-btn-primary"
+                    style={{ height: 40, padding: '0 14px', fontSize: 13 }}
                   >
-                    {processing ? 'Procesando...' : 'Canjear regalo'}
+                    {processing ? '...' : 'Canjear'}
                   </button>
                 </div>
               )}
@@ -668,7 +694,7 @@ export default function ScanPage() {
               </button>
 
               {processing && (
-                <p className="text-center text-sm text-coffee-medium animate-pulse pt-1">Procesando...</p>
+                <p className="text-center text-sm animate-pulse pt-1" style={{ color: 'var(--color-ink-light)' }}>Procesando...</p>
               )}
             </div>
           )}
@@ -677,21 +703,33 @@ export default function ScanPage() {
 
       {/* ── Step 3: result ── */}
       {result && (
-        <div className={`card-surface border-2 animate-slide-up ${result.success ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50'}`}>
-          <div className="text-center">
-            <div className={`w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center ${result.success ? 'bg-green-500' : 'bg-red-500'}`}>
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                {result.success
-                  ? <polyline points="20 6 9 17 4 12" />
-                  : <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>}
-              </svg>
+        <div className="u-fade-up space-y-4">
+          <div className={`u-result-hero ${result.success ? 'ok' : 'err'}`}>
+            <div className="flex items-center gap-3">
+              <div
+                className="flex items-center justify-center"
+                style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(255,255,255,0.18)' }}
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  {result.success
+                    ? <polyline points="20 6 9 17 4 12" />
+                    : <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>}
+                </svg>
+              </div>
+              <div className="u-eyebrow" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 10 }}>
+                {result.success ? 'Éxito' : 'Error'}
+              </div>
             </div>
-            <p className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>{result.message}</p>
-            {result.detail && <p className="text-sm text-gray-600 mt-1">{result.detail}</p>}
-            <button onClick={reset} className="mt-4 w-full py-2 rounded-xl text-sm font-semibold bg-coffee-dark text-white hover:bg-coffee-medium transition-colors">
-              Siguiente cliente
-            </button>
+            <div className="u-display" style={{ fontSize: 28, fontWeight: 600, marginTop: 16, letterSpacing: '-0.015em', lineHeight: 1.1 }}>
+              {result.message}
+            </div>
+            {result.detail && (
+              <div style={{ marginTop: 8, fontSize: 14, opacity: 0.9, lineHeight: 1.5 }}>{result.detail}</div>
+            )}
           </div>
+          <button onClick={reset} className="u-btn u-btn-primary" style={{ width: '100%' }}>
+            Siguiente cliente
+          </button>
         </div>
       )}
     </div>

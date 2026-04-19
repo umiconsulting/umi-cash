@@ -20,8 +20,11 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Domus', '"Playfair Display"', 'Georgia', 'serif'],
+        body: ['Domus', 'system-ui', 'sans-serif'],
+        sans: ['Domus', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        decorative: ['Rye', '"Playfair Display"', 'serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

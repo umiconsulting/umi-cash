@@ -6,20 +6,23 @@ export default function GiftCardsPage() {
   const { slug } = useParams<{ slug: string }>();
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <div className="flex items-center justify-between mt-4 mb-6">
-        <h1 className="font-display text-2xl font-bold text-coffee-dark">Tarjetas de Regalo</h1>
+    <div className="px-5 py-6 max-w-lg mx-auto">
+      <div className="u-fade-up mb-6">
+        <div className="u-eyebrow mb-2">Próximamente</div>
+        <h1 className="u-display" style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: 0 }}>
+          Tarjetas de regalo
+        </h1>
       </div>
 
-      <div className="card-surface border-2 border-amber-300 bg-amber-50 mb-6">
-        <div className="text-center py-4">
-          <p className="text-2xl mb-2">🚧</p>
-          <p className="font-semibold text-amber-800">Próximamente</p>
-          <p className="text-sm text-amber-700 mt-1">Esta función estará disponible pronto. Te notificaremos cuando esté lista.</p>
-        </div>
+      <div className="u-fade-up d1 u-surface p-6 text-center">
+        <div className="u-eyebrow mb-2" style={{ color: 'var(--color-brand)' }}>En desarrollo</div>
+        <p className="u-display" style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', margin: 0 }}>
+          Función disponible muy pronto
+        </p>
+        <p className="text-sm mt-2" style={{ color: 'var(--color-ink-light)' }}>
+          Te avisaremos en cuanto esté lista para vender y canjear tarjetas.
+        </p>
       </div>
-
-      {/* Feature content will be restored when gift cards are ready */}
     </div>
   );
 }

@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Domus';
+  src: url('/fonts/Domus-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Domus';
+  src: url('/fonts/Domus-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Domus';
+  src: url('/fonts/Domus-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Domus';
+  src: url('/fonts/Domus-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     /* Default to El Gran Ribera — overridden per-tenant in [slug]/layout.tsx */
@@ -12,44 +41,85 @@
     --color-accent:       #B5605A;
     --color-surface:      #FAF4EC;
     --color-surface-dark: #EAE0D3;
+
+    /* Semantic status — not tenant-tinted */
+    --color-success:      #5B7A4C;
+    --color-success-ink:  #2E4F1F;
+    --color-danger:       #A8463F;
+    --color-warning:      #B5812A;
+
+    /* Radii */
+    --radius-card:  20px;
+    --radius-xl:    16px;
+    --radius-lg:    12px;
+    --radius-pill:  9999px;
   }
 
   body {
     @apply bg-coffee-cream text-coffee-dark font-body;
     -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
   }
 
   h1, h2, h3 {
     @apply font-display;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer components {
+  /* Legacy classes — aliased to new .u-* design system for backward compat */
   .btn-primary {
-    @apply bg-coffee-brand text-white px-6 py-3 rounded-xl font-semibold
-           hover:bg-coffee-medium transition-colors active:scale-95 transform
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 52px; padding: 0 20px; border-radius: 14px;
+    font-family: 'Domus', system-ui, sans-serif; font-weight: 550; font-size: 16px;
+    letter-spacing: -0.01em; border: none; cursor: pointer;
+    background: var(--color-brand); color: #fff;
+    transition: transform .15s ease, background .15s ease, opacity .15s ease;
   }
+  .btn-primary:hover:not(:disabled) { background: var(--color-brand-dark); }
+  .btn-primary:active:not(:disabled) { transform: scale(.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-secondary {
-    @apply border-2 border-coffee-dark text-coffee-dark px-6 py-3 rounded-xl
-           font-semibold hover:bg-coffee-pale transition-colors active:scale-95 transform
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 52px; padding: 0 20px; border-radius: 14px;
+    font-family: 'Domus', system-ui, sans-serif; font-weight: 550; font-size: 16px;
+    letter-spacing: -0.01em; cursor: pointer;
+    background: transparent; color: var(--color-ink);
+    border: 1px solid var(--color-surface-dark);
+    transition: transform .15s ease, background .15s ease, opacity .15s ease;
   }
+  .btn-secondary:active:not(:disabled) { transform: scale(.97); }
+  .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-danger {
-    @apply bg-red-600 text-white px-6 py-3 rounded-xl font-semibold
-           hover:bg-red-700 transition-colors active:scale-95 transform;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 52px; padding: 0 20px; border-radius: 14px;
+    font-family: 'Domus', system-ui, sans-serif; font-weight: 550; font-size: 16px;
+    border: none; cursor: pointer;
+    background: var(--color-danger); color: #fff;
+    transition: transform .15s ease, opacity .15s ease;
   }
+  .btn-danger:active:not(:disabled) { transform: scale(.97); }
 
   .card-surface {
-    @apply bg-white rounded-2xl shadow-sm border border-coffee-pale p-6;
+    background: #fff;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-surface-dark);
+    padding: 20px;
   }
 
   .input-field {
-    @apply w-full rounded-xl border-coffee-pale bg-white px-4 py-3 text-coffee-dark
-           placeholder-coffee-light focus:border-coffee-medium focus:ring-coffee-medium
-           focus:ring-1 transition-colors;
+    width: 100%; height: 52px; padding: 0 16px;
+    border-radius: 14px; border: 1px solid var(--color-surface-dark);
+    background: #fff; color: var(--color-ink);
+    font-family: 'Domus', system-ui, sans-serif; font-size: 16px; outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .input-field:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 18%, transparent);
   }
 
   .badge-gold {
@@ -170,7 +240,180 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-sheet-up,
   .animate-slide-up,
-  .animate-fade-in {
+  .animate-fade-in,
+  .fade-up {
     animation: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Redesign (v2) — additive component classes used by src/components/ui.
+   Mirrors the prototype in /App onboarding/lib/umi.css.
+   Older pages keep using .btn-primary/.card-surface/.input-field.
+   ───────────────────────────────────────────────────────────── */
+
+/* Default body font — Domus is the Umi brand face for the whole app.
+   Tenants can still override --font-display per-tenant if they want a decorative heading. */
+body { font-family: 'Domus', system-ui, -apple-system, sans-serif; }
+
+/* Typography helpers */
+.u-display      { font-family: 'Domus', 'Playfair Display', Georgia, serif; letter-spacing: -0.01em; }
+.u-mono         { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+.u-decorative   { font-family: 'Rye', 'Smokum', 'Playfair Display', serif; font-weight: 400; }
+.u-eyebrow      { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-ink-light); }
+
+/* Buttons */
+.u-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 52px; padding: 0 20px; border-radius: 14px;
+  font-family: 'Domus', system-ui, sans-serif; font-weight: 550; font-size: 16px;
+  letter-spacing: -0.01em; border: none; cursor: pointer;
+  transition: transform .15s ease, background .15s ease, opacity .15s ease;
+}
+.u-btn:active:not(:disabled) { transform: scale(.97); }
+.u-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.u-btn-primary { background: var(--color-brand); color: #fff; }
+.u-btn-primary:hover:not(:disabled) { background: var(--color-brand-dark); }
+.u-btn-secondary { background: transparent; color: var(--color-ink); border: 1px solid var(--color-surface-dark); }
+.u-btn-ghost { background: transparent; color: var(--color-brand); }
+.u-btn-danger { background: var(--color-danger); color: #fff; }
+
+/* Inputs */
+.u-input {
+  width: 100%; height: 52px; padding: 0 16px;
+  border-radius: 14px; border: 1px solid var(--color-surface-dark);
+  background: #fff; color: var(--color-ink);
+  font-family: 'Domus', system-ui, sans-serif; font-size: 16px; outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.u-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 18%, transparent);
+}
+
+/* Surfaces */
+.u-surface {
+  background: #fff;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-surface-dark);
+}
+
+/* Badges */
+.u-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.u-badge-accent { background: color-mix(in oklab, var(--color-brand) 15%, white); color: var(--color-brand-dark); }
+.u-badge-brand  { background: var(--color-brand); color: #fff; }
+.u-badge-quiet  { background: var(--color-surface-dark); color: var(--color-ink); }
+
+/* Stat number */
+.u-stat-num {
+  font-family: 'Domus', 'Playfair Display', Georgia, serif;
+  font-size: 44px; font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1;
+}
+
+/* Mobile screen shell (fits a full viewport) */
+.u-screen {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.u-screen-scroll { flex: 1; overflow-y: auto; padding: 16px 20px 120px; }
+.u-screen-fixed-bottom {
+  position: sticky; bottom: 0; left: 0; right: 0;
+  padding: 16px 20px calc(env(safe-area-inset-bottom) + 16px);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-surface-dark);
+}
+
+/* Topbar */
+.u-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 10px;
+}
+.u-topbar-title {
+  font-family: 'Domus', 'Playfair Display', Georgia, serif;
+  font-size: 22px; font-weight: 600;
+  color: var(--color-ink); letter-spacing: -0.01em;
+}
+.u-icon-btn {
+  width: 40px; height: 40px; border-radius: 14px;
+  background: #fff; border: 1px solid var(--color-surface-dark);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--color-ink); cursor: pointer;
+}
+
+/* Progress track (linear) */
+.u-progress-track {
+  height: 6px; border-radius: 9999px;
+  background: var(--color-surface-dark); overflow: hidden;
+}
+.u-progress-fill {
+  height: 100%; border-radius: inherit;
+  background: var(--color-brand);
+  transition: width .5s cubic-bezier(.2,.7,.2,1);
+}
+
+/* Stamp dot (for scan preview) */
+.u-stamp-dot {
+  aspect-ratio: 1; border-radius: 50%;
+  border: 1.5px dashed color-mix(in oklab, var(--color-ink-light) 55%, transparent);
+  background: transparent;
+}
+.u-stamp-dot.filled {
+  border-style: solid;
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+}
+
+/* Hero CTA — dark brand card */
+.u-hero-cta {
+  width: 100%; text-align: left;
+  border: none; cursor: pointer;
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 14px;
+  background: var(--color-brand); color: #fff;
+  border-radius: var(--radius-card);
+  transition: transform .15s ease, opacity .15s ease;
+}
+.u-hero-cta:active { transform: scale(.98); }
+.u-hero-cta-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: rgba(255,255,255,0.18);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; flex-shrink: 0;
+}
+
+/* Result hero (success/error) */
+.u-result-hero {
+  border-radius: var(--radius-card);
+  padding: 22px;
+  color: #fff;
+}
+.u-result-hero.ok  { background: linear-gradient(135deg, var(--color-success), color-mix(in oklab, var(--color-success) 70%, black)); }
+.u-result-hero.err { background: linear-gradient(135deg, var(--color-danger),  color-mix(in oklab, var(--color-danger)  70%, black)); }
+
+/* Pill toggle (filter chips) */
+.u-chip {
+  padding: 6px 12px; border-radius: 9999px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  white-space: nowrap; cursor: pointer; border: 1px solid transparent;
+  background: #fff; color: var(--color-ink-light);
+  border-color: var(--color-surface-dark);
+  transition: background .15s ease, color .15s ease;
+}
+.u-chip.active { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
+
+/* Fade-up on mount */
+@keyframes u-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.u-fade-up    { animation: u-fade-up .5s cubic-bezier(.2,.7,.2,1) both; }
+.u-fade-up.d1 { animation-delay: .05s; }
+.u-fade-up.d2 { animation-delay: .12s; }
+.u-fade-up.d3 { animation-delay: .2s; }
+.u-fade-up.d4 { animation-delay: .28s; }

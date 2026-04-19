@@ -235,20 +235,25 @@ export default function TopUpPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-6">Recargar Saldo</h1>
+    <div className="px-5 py-6 max-w-lg mx-auto">
+      <div className="u-fade-up mb-6">
+        <div className="u-eyebrow mb-2">Movimiento de saldo</div>
+        <h1 className="u-display" style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: 0 }}>
+          Recargar saldo
+        </h1>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="card-surface">
-          <label className="block text-sm font-semibold text-coffee-dark mb-2">Cliente</label>
+        <div className="u-surface p-5">
+          <div className="u-eyebrow mb-3">Cliente</div>
 
           {selectedCustomer ? (
-            <div className="flex items-center justify-between bg-coffee-pale rounded-xl px-3 py-2.5">
+            <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: 'var(--color-surface-dark)' }}>
               <div>
-                <p className="font-semibold text-coffee-dark text-sm">{selectedCustomer.name ?? 'Sin nombre'}</p>
-                <p className="text-xs text-coffee-medium">{selectedCustomer.phone ?? selectedCustomer.email} · {selectedCustomer.cardNumber} · {selectedCustomer.balanceMXN}</p>
+                <p className="font-semibold text-sm" style={{ color: 'var(--color-ink)' }}>{selectedCustomer.name ?? 'Sin nombre'}</p>
+                <p className="text-xs" style={{ color: 'var(--color-ink-light)' }}>{selectedCustomer.phone ?? selectedCustomer.email} · {selectedCustomer.cardNumber} · {selectedCustomer.balanceMXN}</p>
               </div>
-              <button type="button" onClick={clearCustomer} className="text-coffee-light hover:text-red-500 ml-3 flex-shrink-0">
+              <button type="button" onClick={clearCustomer} className="ml-3 flex-shrink-0" style={{ color: 'var(--color-ink-light)' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -263,16 +268,16 @@ export default function TopUpPage() {
                     <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
                     {scanning && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-44 h-44 border-2 border-coffee-light rounded-xl opacity-70">
-                          <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-coffee-light rounded-tl-lg" />
-                          <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-coffee-light rounded-tr-lg" />
-                          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-coffee-light rounded-bl-lg" />
-                          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-coffee-light rounded-br-lg" />
+                        <div className="w-44 h-44 border-2 rounded-xl opacity-80" style={{ borderColor: 'rgba(255,255,255,0.8)' }}>
+                          <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 rounded-tl-lg" style={{ borderColor: 'rgba(255,255,255,0.9)' }} />
+                          <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 rounded-tr-lg" style={{ borderColor: 'rgba(255,255,255,0.9)' }} />
+                          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 rounded-bl-lg" style={{ borderColor: 'rgba(255,255,255,0.9)' }} />
+                          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 rounded-br-lg" style={{ borderColor: 'rgba(255,255,255,0.9)' }} />
                         </div>
                       </div>
                     )}
                     {scanProcessing && (
-                      <div className="absolute inset-0 bg-coffee-dark/60 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
                         <div className="text-white text-center">
                           <svg className="w-8 h-8 mx-auto mb-2 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
@@ -283,19 +288,22 @@ export default function TopUpPage() {
                       </div>
                     )}
                   </div>
-                  {cameraError && <p className="text-amber-700 text-sm text-center mb-2 bg-amber-50 rounded-lg px-3 py-2">{cameraError}</p>}
+                  {cameraError && (
+                    <p className="text-sm text-center mb-2 rounded-lg px-3 py-2" style={{ color: 'var(--color-danger)', background: 'var(--color-danger-soft)' }}>{cameraError}</p>
+                  )}
                   <div className="flex gap-2">
-                    <button type="button" onClick={scanning ? stopCamera : startCamera} className={`flex-1 ${scanning ? 'btn-secondary' : 'btn-primary'}`}>
+                    <button type="button" onClick={scanning ? stopCamera : startCamera} className={`u-btn ${scanning ? 'u-btn-secondary' : 'u-btn-primary'}`} style={{ flex: 1 }}>
                       {scanning ? 'Detener cámara' : 'Activar cámara'}
                     </button>
-                    <button type="button" onClick={stopCamera} className="btn-secondary px-4">Cancelar</button>
+                    <button type="button" onClick={stopCamera} className="u-btn u-btn-secondary px-4">Cancelar</button>
                   </div>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={() => { setShowCamera(true); setTimeout(startCamera, 100); }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-coffee-pale text-coffee-medium hover:border-coffee-brand hover:text-coffee-brand transition-colors mb-3 text-sm font-medium"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed transition-colors mb-3 text-sm font-medium"
+                  style={{ borderColor: 'var(--color-surface-dark)', color: 'var(--color-ink-light)' }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
@@ -312,25 +320,25 @@ export default function TopUpPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar por nombre, teléfono o tarjeta..."
-                  className="input-field flex-1"
+                  className="u-input flex-1"
                   autoFocus={!showCamera}
                 />
-                <button type="submit" disabled={!search.trim() || searchLoading} className="btn-secondary px-4 flex-shrink-0">
+                <button type="submit" disabled={!search.trim() || searchLoading} className="u-btn u-btn-secondary px-4 flex-shrink-0">
                   {searchLoading ? '...' : 'Buscar'}
                 </button>
               </form>
 
               {searchResults.length > 0 && (
-                <div className="border border-coffee-pale rounded-xl overflow-hidden divide-y divide-coffee-pale">
+                <div className="rounded-xl overflow-hidden divide-y" style={{ border: '1px solid var(--color-surface-dark)', borderColor: 'var(--color-surface-dark)' }}>
                   {searchResults.map((c) => (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => selectCustomer(c)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-coffee-pale transition-colors"
+                      className="w-full text-left px-3 py-2.5 transition-colors"
                     >
-                      <p className="font-medium text-coffee-dark text-sm">{c.name ?? 'Sin nombre'}</p>
-                      <p className="text-xs text-coffee-medium">{c.phone ?? c.email} · {c.cardNumber} · {c.balanceMXN}</p>
+                      <p className="font-medium text-sm" style={{ color: 'var(--color-ink)' }}>{c.name ?? 'Sin nombre'}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-ink-light)' }}>{c.phone ?? c.email} · {c.cardNumber} · {c.balanceMXN}</p>
                     </button>
                   ))}
                 </div>
@@ -339,40 +347,56 @@ export default function TopUpPage() {
           )}
         </div>
 
-        <div className="card-surface">
-          <label className="block text-sm font-semibold text-coffee-dark mb-3">Monto (MXN)</label>
-          <div className="grid grid-cols-4 gap-2 mb-3">
-            {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => (
-              <button key={centavos} type="button" onClick={() => selectAmount(centavos)}
-                className={`py-2 rounded-xl text-sm font-medium transition-colors ${
-                  amount === String(centavos / 100) ? 'bg-coffee-dark text-white' : 'bg-coffee-pale text-coffee-medium hover:bg-coffee-light/30'
-                }`}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Otro monto, ej: 350" className="input-field" min="1" max="10000" step="0.01" required />
-          {amount && !isNaN(parseFloat(amount)) && (
-            <p className="text-sm text-coffee-medium mt-2">= {formatMXN(Math.round(parseFloat(amount) * 100))}</p>
+        <div className="u-surface p-5">
+          <div className="u-eyebrow mb-3">Monto (MXN)</div>
+          {amount && !isNaN(parseFloat(amount)) ? (
+            <p className="u-display mb-3" style={{ fontSize: 48, fontWeight: 600, letterSpacing: '-0.03em', color: 'var(--color-ink)', margin: 0 }}>
+              {formatMXN(Math.round(parseFloat(amount) * 100))}
+            </p>
+          ) : (
+            <p className="u-display mb-3" style={{ fontSize: 48, fontWeight: 600, letterSpacing: '-0.03em', color: 'var(--color-ink-light)', margin: 0, opacity: 0.4 }}>
+              $0.00
+            </p>
           )}
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            {COMMON_TOPUP_AMOUNTS.map(({ label, centavos }) => {
+              const on = amount === String(centavos / 100);
+              return (
+                <button
+                  key={centavos}
+                  type="button"
+                  onClick={() => selectAmount(centavos)}
+                  className="py-2 rounded-xl text-sm font-medium transition-colors"
+                  style={{
+                    background: on ? 'var(--color-ink)' : 'var(--color-surface-dark)',
+                    color: on ? '#fff' : 'var(--color-ink-light)',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Otro monto, ej: 350" className="u-input" min="1" max="10000" step="0.01" required />
         </div>
 
-        <div className="card-surface">
-          <label className="block text-sm font-semibold text-coffee-dark mb-2">Nota (opcional)</label>
-          <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Recarga en tienda" className="input-field" maxLength={200} />
+        <div className="u-surface p-5">
+          <div className="u-eyebrow mb-2">Nota (opcional)</div>
+          <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Recarga en tienda" className="u-input" maxLength={200} />
         </div>
 
         {result && (
-          <div className={`card-surface border-2 text-center ${result.success ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50'}`}>
-            <p className={`font-semibold ${result.success ? 'text-green-800' : 'text-red-800'}`}>{result.message}</p>
+          <div className={`u-result-hero ${result.success ? 'ok' : 'err'}`}>
+            <div className="u-eyebrow" style={{ color: 'rgba(255,255,255,0.85)' }}>{result.success ? 'Recarga exitosa' : 'No se pudo recargar'}</div>
+            <p className="u-display mt-1" style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>{result.message}</p>
             {result.success && result.newBalanceMXN && (
-              <p className="text-coffee-dark mt-2">Nuevo saldo: <span className="font-bold text-lg">{result.newBalanceMXN}</span></p>
+              <p className="text-sm mt-2" style={{ color: 'rgba(255,255,255,0.9)' }}>Nuevo saldo: <span className="font-semibold">{result.newBalanceMXN}</span></p>
             )}
-            {result.customer && <p className="text-sm text-gray-600 mt-1">Cliente: {result.customer}</p>}
+            {result.customer && <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.8)' }}>Cliente: {result.customer}</p>}
           </div>
         )}
 
-        <button type="submit" disabled={loading || !cardId || !amount} className="btn-primary w-full">
+        <button type="submit" disabled={loading || !cardId || !amount} className="u-btn u-btn-primary w-full">
           {loading ? 'Procesando...' : 'Recargar saldo'}
         </button>
       </form>

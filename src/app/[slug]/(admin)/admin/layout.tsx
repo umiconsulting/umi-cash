@@ -214,28 +214,57 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!role) {
     return (
-      <div className="min-h-screen bg-coffee-cream flex items-center justify-center">
-        <div className="text-coffee-medium">Verificando acceso...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-surface)' }}>
+        <div style={{ color: 'var(--color-ink-light)' }}>Verificando acceso...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-coffee-cream">
-      <header className="bg-coffee-dark text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+    <div className="min-h-screen" style={{ background: 'var(--color-surface)' }}>
+      <header
+        className="px-5 py-3 flex items-center justify-between sticky top-0 z-50"
+        style={{
+          background: 'var(--color-surface)',
+          borderBottom: '1px solid var(--color-surface-dark)',
+        }}
+      >
         <div className="flex items-center gap-2">
-          <span className="font-semibold tracking-tight">{tenant.name}</span>
-          <span className="text-coffee-light text-xs">
-            {role === 'ADMIN' ? '· Admin' : '· Personal'}
+          <span
+            className="uppercase"
+            style={{
+              fontFamily: '"Domus", serif',
+              fontWeight: 400,
+              fontSize: 14,
+              letterSpacing: '0.04em',
+              color: 'var(--color-brand-dark)',
+            }}
+          >
+            {tenant.name}
+          </span>
+          <span
+            className="uppercase"
+            style={{
+              fontSize: 9,
+              letterSpacing: '0.14em',
+              fontWeight: 600,
+              color: 'var(--color-ink-light)',
+            }}
+          >
+            · {role === 'ADMIN' ? 'Admin' : 'Personal'}
           </span>
         </div>
-        <button onClick={handleLogout} className="text-coffee-light text-sm hover:text-white">
+        <button
+          onClick={handleLogout}
+          className="text-sm hover:opacity-80"
+          style={{ color: 'var(--color-ink-light)' }}
+        >
           Salir
         </button>
       </header>
 
       {suspended && (
-        <div className="bg-red-600 text-white px-4 py-3 text-sm text-center">
+        <div className="px-4 py-3 text-sm text-center" style={{ background: 'var(--color-danger)', color: '#fff' }}>
           <strong>Cuenta suspendida.</strong> Contacta a Umi Cash para reactivar tu acceso: <a href="mailto:hola@umiconsulting.co" className="underline">hola@umiconsulting.co</a>
         </div>
       )}
@@ -244,7 +273,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Bottom nav */}
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-coffee-pale z-50"
+        className="fixed bottom-0 left-0 right-0 z-50"
+        style={{ background: '#fff', borderTop: '1px solid var(--color-surface-dark)' }}
         aria-label="Navegación principal"
       >
         <div className="flex">
@@ -255,8 +285,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={item.href}
                 href={item.href}
                 className={`flex-1 flex flex-col items-center py-2.5 px-1 text-xs transition-colors active:scale-95 touch-manipulation ${
-                  isActive ? 'nav-active font-semibold' : 'text-coffee-light hover:text-coffee-medium'
+                  isActive ? 'nav-active font-semibold' : ''
                 }`}
+                style={!isActive ? { color: 'var(--color-ink-light)' } : undefined}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <item.Icon active={isActive} />
@@ -269,8 +300,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               onClick={() => setMoreOpen(o => !o)}
               className={`flex-1 flex flex-col items-center py-2.5 px-1 text-xs transition-colors active:scale-95 touch-manipulation ${
-                isMoreActive || moreOpen ? 'nav-active font-semibold' : 'text-coffee-light hover:text-coffee-medium'
+                isMoreActive || moreOpen ? 'nav-active font-semibold' : ''
               }`}
+              style={!(isMoreActive || moreOpen) ? { color: 'var(--color-ink-light)' } : undefined}
               aria-label="Más opciones"
               aria-expanded={moreOpen}
               aria-haspopup="dialog"
@@ -298,11 +330,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           role="dialog"
           aria-modal="true"
           aria-label="Navegación adicional"
-          className="fixed bottom-[56px] left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl animate-sheet-up"
+          className="fixed bottom-[56px] left-0 right-0 z-50 rounded-t-2xl shadow-2xl animate-sheet-up"
+          style={{ background: '#fff' }}
         >
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-1" aria-hidden="true">
-            <div className="w-10 h-1 rounded-full bg-coffee-pale" />
+            <div className="w-10 h-1 rounded-full" style={{ background: 'var(--color-surface-dark)' }} />
           </div>
 
           <div className="px-2 pb-6 pt-2">
@@ -314,10 +347,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
                   className={`flex items-center gap-4 px-4 py-3.5 rounded-xl min-h-[56px] transition-colors active:scale-[0.98] touch-manipulation ${
-                    isActive
-                      ? 'nav-active font-semibold bg-coffee-cream'
-                      : 'text-coffee-dark hover:bg-coffee-cream'
+                    isActive ? 'nav-active font-semibold' : ''
                   }`}
+                  style={{ background: isActive ? 'var(--color-surface)' : undefined, color: isActive ? undefined : 'var(--color-ink)' }}
                   aria-current={isActive ? 'page' : undefined}
                 >
                   <item.Icon active={isActive} />

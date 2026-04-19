@@ -45,81 +45,52 @@ interface AnalyticsData {
   profitability: Profitability;
 }
 
-function KpiCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
+type Range = 7 | 30 | 90 | 365;
+
+function Stat({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
   return (
-    <div className="bg-white rounded-2xl p-4">
-      <p className="text-xs text-coffee-medium leading-tight mb-1.5">{label}</p>
-      <p className={`text-2xl font-bold ${accent ? 'text-coffee-brand' : 'text-coffee-dark'}`}>{value}</p>
-      {sub && <p className="text-xs text-coffee-medium mt-0.5">{sub}</p>}
+    <div className="u-surface p-4">
+      <p className="u-stat-num" style={{ fontSize: 26, color: accent ? 'var(--color-brand)' : 'var(--color-ink)' }}>{value}</p>
+      <p className="u-eyebrow mt-1.5">{label}</p>
+      {sub && <p className="text-xs mt-1" style={{ color: 'var(--color-ink-light)' }}>{sub}</p>}
     </div>
   );
 }
 
-function LoadingKpi() {
+function LoadingStat() {
   return (
-    <div className="bg-white rounded-2xl p-4">
-      <div className="h-3 bg-coffee-pale rounded animate-pulse w-2/3 mb-2" />
-      <div className="h-7 bg-coffee-pale rounded animate-pulse w-1/2" />
+    <div className="u-surface p-4">
+      <div className="h-7 rounded animate-pulse w-1/2" style={{ background: 'var(--color-surface-dark)' }} />
+      <div className="h-3 rounded animate-pulse w-2/3 mt-2" style={{ background: 'var(--color-surface-dark)' }} />
     </div>
   );
 }
 
-function SkeletonBlock() {
-  return (
-    <div className="space-y-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="h-6 bg-coffee-pale rounded animate-pulse" />
-      ))}
-    </div>
-  );
+function initialsFrom(name: string) {
+  return name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '·';
 }
 
-/** Vertical bar chart optimized for mobile — shows last 7 days prominently */
-function VisitChart({ data, color }: { data: { label: string; sublabel: string; count: number }[]; color: string }) {
-  const maxCount = Math.max(...data.map((d) => d.count), 1);
-
+function TrendChart({ values }: { values: number[] }) {
+  const max = Math.max(...values, 1);
   return (
-    <div className="flex items-end gap-1" style={{ height: '140px' }}>
-      {data.map((d, i) => {
-        const heightPct = Math.max((d.count / maxCount) * 100, d.count > 0 ? 4 : 0);
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 120 }}>
+      {values.map((v, i) => {
+        const h = Math.max((v / max) * 100, v > 0 ? 4 : 0);
+        const isLast = i === values.length - 1;
         return (
-          <div key={i} className="flex-1 flex flex-col items-center justify-end h-full min-w-0">
-            {d.count > 0 && (
-              <span className="text-[10px] font-semibold text-coffee-dark mb-1">{d.count}</span>
-            )}
-            <div
-              className="w-full rounded-t-md transition-all duration-300"
-              style={{ height: `${heightPct}%`, backgroundColor: color, minWidth: '4px' }}
-            />
-            <span className="text-[10px] text-coffee-medium mt-1.5 leading-none">{d.sublabel}</span>
-            <span className="text-[9px] text-coffee-light leading-none">{d.label}</span>
-          </div>
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              height: `${h}%`,
+              background: isLast
+                ? 'var(--color-brand)'
+                : 'color-mix(in oklab, var(--color-brand) 22%, var(--color-surface-dark))',
+              borderRadius: 2,
+            }}
+          />
         );
       })}
-    </div>
-  );
-}
-
-/** Horizontal bar chart — best for mobile, easy to read labels and values */
-function HorizontalBarChart({ data, color }: { data: { label: string; count: number }[]; color: string }) {
-  const maxCount = Math.max(...data.map((d) => d.count), 1);
-
-  return (
-    <div className="space-y-2">
-      {data.map((d, i) => (
-        <div key={i}>
-          <div className="flex justify-between text-xs mb-0.5">
-            <span className="text-coffee-medium">{d.label}</span>
-            <span className="font-semibold text-coffee-dark">{d.count}</span>
-          </div>
-          <div className="w-full bg-coffee-pale/50 rounded-full h-2">
-            <div
-              className="h-2 rounded-full transition-all duration-500"
-              style={{ width: `${Math.max((d.count / maxCount) * 100, d.count > 0 ? 4 : 0)}%`, backgroundColor: color }}
-            />
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
@@ -130,6 +101,7 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [range, setRange] = useState<Range>(30);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -147,102 +119,136 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const MONTH_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const trendValues = (data?.visitsByDay ?? []).slice(-range).map((v) => v.count);
+  const visitsTotal = trendValues.reduce((s, v) => s + v, 0);
 
-  // Show last 14 days for the visit chart (fits well on mobile)
-  const recentVisits = (data?.visitsByDay ?? []).slice(-14).map((v) => {
-    const d = new Date(v.date + 'T00:00:00');
-    return { label: `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`, sublabel: DAY_NAMES[d.getDay()], count: v.count };
-  });
+  const prevTrend = (data?.visitsByDay ?? []).slice(-range * 2, -range).map((v) => v.count);
+  const prevTotal = prevTrend.reduce((s, v) => s + v, 0);
+  const delta = prevTotal > 0 ? Math.round(((visitsTotal - prevTotal) / prevTotal) * 100) : null;
 
-  // Weeks chart data
-  const weeksData = (data?.newCustomersByWeek ?? []).map((w) => ({ label: w.week, count: w.count }));
-
-  const brandColor = tenant.primaryColor;
-
-  // Summary stats for the visits
-  const totalVisits30d = (data?.visitsByDay ?? []).reduce((sum, v) => sum + v.count, 0);
-  const totalVisits7d = (data?.visitsByDay ?? []).slice(-7).reduce((sum, v) => sum + v.count, 0);
+  const rangeLabel: Record<Range, string> = { 7: '7d', 30: '30d', 90: '90d', 365: 'Año' };
 
   return (
-    <div className="p-4 max-w-lg mx-auto pb-24">
-      <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-6">Analíticas</h1>
+    <div className="px-5 py-6 max-w-lg mx-auto pb-24">
+      <div className="u-fade-up mb-5">
+        <div className="u-eyebrow mb-2">Métricas del negocio</div>
+        <h1 className="u-display" style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--color-ink)', margin: 0 }}>
+          Analíticas
+        </h1>
+      </div>
 
       {error && (
-        <div className="bg-red-50 text-red-700 rounded-xl p-3 mb-4 text-sm">{error}</div>
+        <div
+          className="rounded-xl p-3 mb-4 text-sm"
+          style={{ background: 'var(--color-danger-soft)', color: 'var(--color-danger)' }}
+        >
+          {error}
+        </div>
       )}
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      {/* Range chips */}
+      <div className="u-fade-up flex gap-1.5 mb-5">
+        {([7, 30, 90, 365] as Range[]).map((r) => (
+          <button
+            key={r}
+            onClick={() => setRange(r)}
+            className={`u-chip ${range === r ? 'active' : ''}`}
+            style={{ flex: 1, justifyContent: 'center', padding: '10px 0' }}
+          >
+            {rangeLabel[r]}
+          </button>
+        ))}
+      </div>
+
+      {/* KPI 2×2 */}
+      <div className="u-fade-up d1 grid grid-cols-2 gap-3 mb-4">
         {loading ? (
-          <><LoadingKpi /><LoadingKpi /><LoadingKpi /><LoadingKpi /></>
+          <><LoadingStat /><LoadingStat /><LoadingStat /><LoadingStat /></>
         ) : (
           <>
-            <KpiCard label="Visitas (30 días)" value={totalVisits30d} sub={`${totalVisits7d} esta semana`} />
-            <KpiCard label="Tasa de retención" value={`${data?.retentionRate ?? 0}%`} sub={`${data?.avgVisitsPerCustomer ?? 0} vis/cliente`} />
-            {tenant.topupEnabled && <KpiCard label="Saldo en circulación" value={data?.totalBalance ?? '$0.00'} />}
-            <KpiCard label="Recompensas (mes)" value={data?.rewardsRedeemedThisMonth ?? 0} sub={tenant.topupEnabled && data?.topupsThisMonth ? `${data.topupsThisMonth} recargado` : undefined} />
+            <Stat
+              label="Visitas"
+              value={visitsTotal}
+              sub={delta !== null ? `${delta > 0 ? '+' : ''}${delta}% vs. ant.` : undefined}
+            />
+            <Stat
+              label="Retención"
+              value={`${data?.retentionRate ?? 0}%`}
+              sub={`${data?.avgVisitsPerCustomer ?? 0} vis/cliente`}
+              accent
+            />
+            <Stat label="Canjes (mes)" value={data?.rewardsRedeemedThisMonth ?? 0} />
+            {tenant.topupEnabled ? (
+              <Stat label="Recargas (mes)" value={data?.topupsThisMonth ?? '$0'} sub={`Saldo: ${data?.totalBalance ?? '$0'}`} />
+            ) : (
+              <Stat label="Nuevos (sem)" value={(data?.newCustomersByWeek ?? []).slice(-1)[0]?.count ?? 0} />
+            )}
           </>
         )}
       </div>
 
-      {/* Visitas por día — last 14 days */}
-      <div className="card-surface mb-4">
-        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-4">
-          Visitas — últimos 14 días
-        </p>
-        {loading ? <SkeletonBlock /> : <VisitChart data={recentVisits} color={brandColor} />}
-      </div>
-
-      {/* Nuevos clientes por semana — horizontal bars */}
-      <div className="card-surface mb-4">
-        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-4">
-          Nuevos clientes por semana
-        </p>
-        {loading ? <SkeletonBlock /> : weeksData.length === 0 ? (
-          <p className="text-sm text-coffee-medium text-center py-4">Sin datos aún</p>
+      {/* Trend chart */}
+      <div className="u-fade-up d2 u-surface p-5 mb-5">
+        <div className="flex items-baseline justify-between mb-3">
+          <div className="u-eyebrow">Visitas · {rangeLabel[range]}</div>
+          {delta !== null && (
+            <div className="text-xs font-semibold" style={{ color: delta >= 0 ? 'var(--color-brand)' : 'var(--color-danger)' }}>
+              {delta > 0 ? '+' : ''}{delta}%
+            </div>
+          )}
+        </div>
+        {loading ? (
+          <div className="h-[120px] rounded animate-pulse" style={{ background: 'var(--color-surface-dark)' }} />
+        ) : trendValues.length === 0 ? (
+          <p className="text-sm text-center py-6" style={{ color: 'var(--color-ink-light)' }}>Sin datos aún</p>
         ) : (
-          <HorizontalBarChart data={weeksData} color={brandColor} />
+          <TrendChart values={trendValues} />
         )}
       </div>
 
-      {/* Rentabilidad del programa */}
-      <div className="card-surface mb-4">
-        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-3">
-          Rentabilidad del programa
-        </p>
+      {/* Profitability */}
+      <div className="u-fade-up d3 u-surface p-5 mb-5">
+        <div className="u-eyebrow mb-3">Rentabilidad del programa</div>
         {loading ? (
-          <SkeletonBlock />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-6 rounded animate-pulse" style={{ background: 'var(--color-surface-dark)' }} />
+            ))}
+          </div>
         ) : !data?.profitability.rewardCostConfigured ? (
-          <div className="text-center py-3">
-            <p className="text-sm text-coffee-medium">Configura el costo del regalo en</p>
-            <a href={`/${slug}/admin/rewards`} className="text-sm font-medium text-coffee-brand underline">Recompensas</a>
-            <p className="text-sm text-coffee-medium mt-1">para ver la rentabilidad.</p>
+          <div className="text-center py-3 text-sm" style={{ color: 'var(--color-ink-light)' }}>
+            Configura el costo del regalo en{' '}
+            <Link href={`/${slug}/admin/rewards`} className="underline font-medium" style={{ color: 'var(--color-brand)' }}>
+              Recompensas
+            </Link>{' '}
+            para ver la rentabilidad.
           </div>
         ) : (
           <div className="space-y-2.5">
             <div className="flex justify-between text-sm">
-              <span className="text-coffee-medium">Ticket promedio</span>
-              <span className="font-semibold text-coffee-dark">{data.profitability.avgTicketMXN}</span>
+              <span style={{ color: 'var(--color-ink-light)' }}>Ticket promedio</span>
+              <span className="font-semibold" style={{ color: 'var(--color-ink)' }}>{data.profitability.avgTicketMXN}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-coffee-medium">Ingresos/ciclo ({data.profitability.visitsRequired} vis.)</span>
-              <span className="font-semibold text-coffee-dark">{data.profitability.revenuePerCycleMXN}</span>
+              <span style={{ color: 'var(--color-ink-light)' }}>Ingresos/ciclo ({data.profitability.visitsRequired} vis.)</span>
+              <span className="font-semibold" style={{ color: 'var(--color-ink)' }}>{data.profitability.revenuePerCycleMXN}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-coffee-medium">Costo del regalo</span>
-              <span className="font-semibold text-red-600">-{data.profitability.rewardCostMXN}</span>
+              <span style={{ color: 'var(--color-ink-light)' }}>Costo del regalo</span>
+              <span className="font-semibold" style={{ color: 'var(--color-danger)' }}>-{data.profitability.rewardCostMXN}</span>
             </div>
-            <div className="h-px bg-coffee-pale" />
+            <div className="h-px" style={{ background: 'var(--color-surface-dark)' }} />
             <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold text-coffee-dark">Margen por ciclo</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--color-ink)' }}>Margen por ciclo</span>
               <div className="text-right">
-                <span className={`font-bold text-lg ${(data.profitability.marginPercent ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span
+                  className="u-stat-num"
+                  style={{ fontSize: 20, color: (data.profitability.marginPercent ?? 0) >= 0 ? 'var(--color-success-ink)' : 'var(--color-danger)' }}
+                >
                   {data.profitability.marginPerCycleMXN}
                 </span>
                 {data.profitability.marginPercent !== null && (
-                  <p className="text-xs text-coffee-medium">{data.profitability.marginPercent}%</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink-light)' }}>{data.profitability.marginPercent}%</p>
                 )}
               </div>
             </div>
@@ -250,50 +256,66 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {/* Top 10 clientes */}
-      <div className="card-surface">
-        <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold mb-3">
-          Top 10 clientes
-        </p>
-        {loading ? (
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-12 bg-coffee-pale rounded-xl animate-pulse" />
-            ))}
-          </div>
-        ) : (data?.topCustomers ?? []).length === 0 ? (
-          <p className="text-sm text-coffee-medium text-center py-4">Sin datos aún</p>
-        ) : (
-          <div className="space-y-1">
-            {(data?.topCustomers ?? []).map((c, i) => (
+      {/* Top customers */}
+      <div className="u-fade-up d3">
+        <div className="u-eyebrow mb-2.5">Clientes top</div>
+        <div className="u-surface" style={{ padding: '4px 0' }}>
+          {loading ? (
+            <div className="space-y-2 p-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-10 rounded-xl animate-pulse" style={{ background: 'var(--color-surface-dark)' }} />
+              ))}
+            </div>
+          ) : (data?.topCustomers ?? []).length === 0 ? (
+            <p className="text-sm text-center py-6" style={{ color: 'var(--color-ink-light)' }}>Sin datos aún</p>
+          ) : (
+            (data?.topCustomers ?? []).slice(0, 10).map((c, i) => (
               <Link
                 key={c.id}
                 href={`/${slug}/admin/customers/${c.id}`}
-                className="flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-coffee-pale transition-colors"
+                className="flex items-center gap-3"
+                style={{
+                  padding: '12px 16px',
+                  borderTop: i ? '1px solid var(--color-surface-dark)' : 'none',
+                }}
               >
-                <span
-                  className="flex items-center justify-center text-xs font-bold flex-shrink-0 rounded-full"
+                <div
+                  className="u-display"
                   style={{
-                    width: '26px',
-                    height: '26px',
-                    backgroundColor: i === 0 ? '#C9993B' : i === 1 ? '#9E9E9E' : i === 2 ? '#A0673A' : '#EAE0D3',
-                    color: i < 3 ? 'white' : '#6B5C52',
+                    width: 24,
+                    textAlign: 'center',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: i === 0 ? 'var(--color-brand)' : 'var(--color-ink-light)',
                   }}
                 >
                   {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-coffee-dark truncate">{c.name || 'Sin nombre'}</p>
-                  <p className="text-xs text-coffee-medium">{c.cardNumber}</p>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-bold text-coffee-dark">{c.totalVisits} vis.</p>
-                  <p className="text-xs text-coffee-medium">{c.balanceMXN}</p>
+                <div
+                  className="u-display flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'var(--color-accent, var(--color-surface-dark))',
+                    color: 'var(--color-brand-dark)',
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  {initialsFrom(c.name || '·')}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--color-ink)' }}>{c.name || 'Sin nombre'}</p>
+                  <p className="text-xs" style={{ color: 'var(--color-ink-light)' }}>{c.cardNumber}</p>
+                </div>
+                <div className="text-sm font-semibold flex-shrink-0" style={{ color: 'var(--color-brand)' }}>
+                  {c.totalVisits}
                 </div>
               </Link>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

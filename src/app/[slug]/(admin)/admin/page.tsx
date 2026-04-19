@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTenant } from '@/context/TenantContext';
+import { Surface, Eyebrow, KPICard } from '@/components/ui';
 
 interface DashboardData {
   totalCustomers: number;
@@ -68,71 +69,106 @@ export default function AdminDashboard() {
 
   const fmt = (n: number | undefined) => (loading ? '...' : String(n ?? 0));
 
+  const today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' });
+
   return (
-    <div className="p-4 max-w-lg mx-auto">
-      <h1 className="font-display text-2xl font-bold text-coffee-dark mt-4 mb-6">Panel de control</h1>
+    <div className="px-5 py-5 max-w-lg mx-auto">
+      <div className="u-fade-up mb-5">
+        <div className="u-eyebrow mb-1.5">Resumen de hoy · {today}</div>
+        <h1 className="u-display" style={{ fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.05, color: 'var(--color-ink)', margin: 0 }}>
+          Panel de control
+        </h1>
+      </div>
+
+      {/* Hero CTA — Escanear */}
+      <Link href={`/${slug}/admin/scan`} className="u-fade-up d1 u-hero-cta mb-4">
+        <div className="u-hero-cta-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+        </div>
+        <div style={{ flex: 1, color: '#fff' }}>
+          <div className="u-eyebrow" style={{ color: 'rgba(255,255,255,0.75)' }}>Hoy</div>
+          <div className="u-display" style={{ fontSize: 20, fontWeight: 600, marginTop: 2 }}>Escanear cliente</div>
+        </div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </Link>
 
       {/* Today's metrics */}
-      <div className={`grid ${tenant.topupEnabled ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mb-6`}>
-        <div className="card-surface text-center">
-          <p className="text-2xl font-bold text-coffee-dark">{fmt(data?.visitsToday)}</p>
-          <p className="text-xs text-coffee-medium mt-0.5">Visitas hoy</p>
-        </div>
+      <div className={`u-fade-up d2 grid ${tenant.topupEnabled ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mb-4`}>
+        <KPICard label="Visitas hoy" value={fmt(data?.visitsToday)} />
         {tenant.topupEnabled && (
-          <div className="card-surface text-center">
-            <p className="text-2xl font-bold text-coffee-dark">{loading ? '...' : (data?.topupsTodayMXN ?? '$0.00')}</p>
-            <p className="text-xs text-coffee-medium mt-0.5">Recargado hoy</p>
-          </div>
+          <KPICard label="Recargado hoy" value={loading ? '...' : (data?.topupsTodayMXN ?? '$0.00')} />
         )}
-        <div className="card-surface text-center">
-          <p className={`text-2xl font-bold ${data?.pendingRewards ? 'text-coffee-brand' : 'text-coffee-dark'}`}>
-            {fmt(data?.pendingRewards)}
-          </p>
-          <p className="text-xs text-coffee-medium mt-0.5">Por canjear</p>
-        </div>
+        <KPICard
+          label="Por canjear"
+          value={
+            <span style={{ color: data?.pendingRewards ? 'var(--color-brand)' : undefined }}>
+              {fmt(data?.pendingRewards)}
+            </span>
+          }
+        />
       </div>
 
       {/* Feature grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <Link href={`/${slug}/admin/scan`} className="card-surface hover:shadow-md transition-shadow">
-          <p className="font-semibold text-coffee-dark">Escanear QR</p>
-          <p className="text-xs text-coffee-medium mt-1">Registrar visita</p>
-        </Link>
+      <div className="u-fade-up d3 grid grid-cols-2 gap-3 mb-4">
         {tenant.topupEnabled && (
-          <Link href={`/${slug}/admin/topup`} className="card-surface hover:shadow-md transition-shadow">
-            <p className="font-semibold text-coffee-dark">Recargar saldo</p>
-            <p className="text-xs text-coffee-medium mt-1">Agregar saldo regalo</p>
-          </Link>
+          <DashCard href={`/${slug}/admin/topup`} title="Recargar saldo" sub="Agregar saldo regalo" />
         )}
-        <Link href={`/${slug}/admin/customers`} className="card-surface hover:shadow-md transition-shadow">
-          <p className="font-semibold text-coffee-dark">Clientes</p>
-          <p className="text-xs text-coffee-medium mt-1">
-            {loading ? '...' : `${data?.totalCustomers ?? 0} registrados`}
-          </p>
-        </Link>
-        <Link href={`/${slug}/admin/rewards`} className="card-surface hover:shadow-md transition-shadow">
-          <p className="font-semibold text-coffee-dark">Recompensas</p>
-          <p className="text-xs text-coffee-medium mt-1">Configurar</p>
-        </Link>
+        <DashCard
+          href={`/${slug}/admin/customers`}
+          title="Clientes"
+          sub={loading ? '...' : `${data?.totalCustomers ?? 0} registrados`}
+        />
+        <DashCard href={`/${slug}/admin/rewards`} title="Recompensas" sub="Configurar" />
       </div>
 
       {data?.activeReward && (
-        <div className="card-surface mb-4">
+        <Surface className="p-4 mb-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-coffee-medium uppercase tracking-wide font-semibold">Recompensa activa</p>
-              <p className="font-bold text-coffee-dark mt-1">{data.activeReward.rewardName}</p>
-              <p className="text-sm text-coffee-medium">Cada {data.activeReward.visitsRequired} visitas</p>
+              <Eyebrow>Recompensa activa</Eyebrow>
+              <div className="font-semibold mt-1" style={{ color: 'var(--color-ink)' }}>
+                {data.activeReward.rewardName}
+              </div>
+              <div className="text-sm" style={{ color: 'var(--color-ink-light)' }}>
+                Cada {data.activeReward.visitsRequired} visitas
+              </div>
             </div>
-            <Link href={`/${slug}/admin/rewards`} className="text-sm text-coffee-medium underline">Cambiar</Link>
+            <Link
+              href={`/${slug}/admin/rewards`}
+              className="text-sm underline"
+              style={{ color: 'var(--color-ink-light)' }}
+            >
+              Cambiar
+            </Link>
           </div>
-        </div>
+        </Surface>
       )}
 
-      <div className="bg-coffee-pale rounded-xl p-4 text-sm text-coffee-medium">
-        <p className="font-semibold text-coffee-dark mb-1">Para registrar una visita</p>
+      <div
+        className="rounded-xl p-4 text-sm"
+        style={{ background: 'var(--color-surface-dark)', color: 'var(--color-ink-light)' }}
+      >
+        <div className="font-semibold mb-1" style={{ color: 'var(--color-ink)' }}>
+          Para registrar una visita
+        </div>
         <p>Ve a <strong>Escanear QR</strong> y pídele al cliente que muestre su código desde el teléfono.</p>
       </div>
     </div>
+  );
+}
+
+function DashCard({ href, title, sub }: { href: string; title: string; sub: string }) {
+  return (
+    <Link
+      href={href}
+      className="block rounded-[var(--radius-card)] p-4 border transition-shadow hover:shadow-md"
+      style={{ background: '#fff', borderColor: 'var(--color-surface-dark)' }}
+    >
+      <div className="font-semibold" style={{ color: 'var(--color-ink)' }}>{title}</div>
+      <div className="text-xs mt-1" style={{ color: 'var(--color-ink-light)' }}>{sub}</div>
+    </Link>
   );
 }

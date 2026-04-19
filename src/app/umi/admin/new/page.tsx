@@ -69,22 +69,26 @@ export default function NewTenantPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <main className="min-h-screen" style={{ background: '#F5F7FC' }}>
+      <header className="px-6 py-4" style={{ background: '#fff', borderBottom: '1px solid #D4DFEF' }}>
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/umi/admin" className="text-gray-400 hover:text-gray-700 text-sm transition-colors">
-            ← Master Admin
-          </Link>
-          <span className="text-gray-200">/</span>
-          <p className="font-semibold text-gray-900">Nueva cafetería</p>
+          <Link href="/umi/admin" className="text-sm" style={{ color: '#5A6378' }}>← Master Admin</Link>
+          <span style={{ color: '#D4DFEF' }}>/</span>
+          <p className="font-semibold" style={{ color: '#223979' }}>Nueva cafetería</p>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="u-fade-up mb-6">
+          <div className="u-eyebrow mb-2" style={{ color: '#7692CB' }}>Onboarding</div>
+          <h1 className="u-display" style={{ fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', color: '#223979', margin: 0 }}>
+            Nueva cafetería
+          </h1>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Business info */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Información del negocio</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Información del negocio</h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -142,7 +146,7 @@ export default function NewTenantPage() {
 
           {/* Loyalty config */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Programa de lealtad</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Programa de lealtad</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Visitas para recompensa</label>
@@ -158,7 +162,7 @@ export default function NewTenantPage() {
           {/* Locations */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">Sucursales</h2>
+              <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Sucursales</h2>
               <button type="button" onClick={() => setLocations([...locations, { name: '', address: '', latitude: '', longitude: '' }])}
                 className="text-xs text-gray-500 hover:text-gray-900 transition-colors">+ Agregar sucursal</button>
             </div>
@@ -201,7 +205,7 @@ export default function NewTenantPage() {
 
           {/* Admin account */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Cuenta de administrador</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Cuenta de administrador</h2>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Email del admin</label>
               <input type="email" value={form.adminEmail} onChange={field('adminEmail')} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" placeholder="admin@negocio.mx" required />
@@ -215,7 +219,7 @@ export default function NewTenantPage() {
 
           {/* Trial period */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Período de prueba</h2>
+            <h2 className="u-display" style={{ fontSize: 18, fontWeight: 600, color: '#1A1F33', margin: 0 }}>Período de prueba</h2>
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -249,7 +253,7 @@ export default function NewTenantPage() {
             <Link href="/umi/admin" className="flex-1 text-center border border-gray-200 text-gray-600 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors">
               Cancelar
             </Link>
-            <button type="submit" disabled={saving} className="flex-1 bg-gray-900 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-700 transition-colors disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex-1 text-white rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50" style={{ background: '#223979' }}>
               {saving ? 'Creando...' : 'Crear cafetería'}
             </button>
           </div>
