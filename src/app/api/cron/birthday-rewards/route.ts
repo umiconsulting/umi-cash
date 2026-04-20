@@ -4,6 +4,8 @@ import { sendApplePushUpdate } from '@/lib/push-apple';
 import { updateGoogleWalletObject } from '@/lib/pass-google';
 import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
 import { DEFAULT_CUSTOMER_NAME } from '@/lib/constants';
+import { DEFAULT_TZ } from '@/lib/timezone';
+import { toZonedTime } from 'date-fns-tz';
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -18,8 +20,7 @@ export async function GET(req: NextRequest) {
   let issued = 0;
 
   for (const tenant of tenants) {
-    const tz = tenant.timezone || 'America/Mexico_City';
-    const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+    const localNow = toZonedTime(new Date(), tenant.timezone || DEFAULT_TZ);
     const month = localNow.getMonth() + 1; // 1–12
     const year = localNow.getFullYear();
 

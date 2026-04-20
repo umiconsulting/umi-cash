@@ -9,6 +9,7 @@ import { DEFAULT_CUSTOMER_NAME, SCAN_ACTIONS } from '@/lib/constants';
 import { sendApplePushUpdate } from '@/lib/push-apple';
 import { updateGoogleWalletObject } from '@/lib/pass-google';
 import { getTenant, requireActiveSubscription } from '@/lib/tenant';
+import { tenantHour, tenantWeekday, tenantStartOfDay } from '@/lib/timezone';
 import { sendRewardEarnedEmail } from '@/lib/email';
 
 const ScanSchema = z.object({
@@ -75,10 +76,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     }
 
     // Warn on out-of-hours scans based on tenant per-day business hours
-    const tz = tenant.timezone || 'America/Mexico_City';
-    const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
-    const localHour = localNow.getHours();
-    const localDay = String(localNow.getDay()); // 0=Sun, 6=Sat
+    const tz = tenant.timezone;
+    const localHour = tenantHour(tz);
+    const localDay = String(tenantWeekday(tz));
     const hours = tenant.businessHours as Record<string, [number, number] | null> | null;
     let isAfterHours = false;
     if (hours) {
@@ -96,16 +96,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
     // 1 visit per card per calendar day in tenant timezone
     if (action === SCAN_ACTIONS.VISIT) {
-      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD
-      const startOfDay = new Date(`${todayStr}T00:00:00`);
-      // Convert local midnight to UTC by offsetting
-      const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
-      const utcNow = new Date();
-      const offsetMs = utcNow.getTime() - localNow.getTime();
-      const startOfDayUTC = new Date(startOfDay.getTime() + offsetMs);
-
       const recentVisit = await prisma.visit.findFirst({
-        where: { cardId: card.id, scannedAt: { gte: startOfDayUTC } },
+        where: { cardId: card.id, scannedAt: { gte: tenantStartOfDay(tz) } },
       });
       if (recentVisit) {
         return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from './prisma';
+import { tenantWeekday } from './timezone';
 
 /** Returns the promoMessage only if the promotion is currently active based on schedule */
 export function getActivePromo(tenant: {
@@ -7,6 +8,7 @@ export function getActivePromo(tenant: {
   promoStartsAt: Date | null;
   promoEndsAt: Date | null;
   promoDays: string | null;
+  timezone?: string | null;
 }): string | null {
   if (!tenant.promoMessage) return null;
   const now = new Date();
@@ -14,7 +16,7 @@ export function getActivePromo(tenant: {
   if (tenant.promoEndsAt && now > tenant.promoEndsAt) return null;
   if (tenant.promoDays) {
     const allowedDays = tenant.promoDays.split(',').map(Number);
-    if (!allowedDays.includes(now.getDay())) return null;
+    if (!allowedDays.includes(tenantWeekday(tenant.timezone, now))) return null;
   }
   return tenant.promoMessage;
 }

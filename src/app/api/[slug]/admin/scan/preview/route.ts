@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getActiveRewardConfig, rewardConfigDefaults } from '@/lib/prisma-helpers';
 import { formatMXN } from '@/lib/currency';
 import { getTenant, requireActiveSubscription } from '@/lib/tenant';
+import { tenantStartOfDay } from '@/lib/timezone';
 
 const PreviewSchema = z.object({
   qrPayload: z.string().min(1),
@@ -77,15 +78,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     const { visitsRequired, rewardName } = rewardConfigDefaults(rewardConfig);
 
     // Check if already visited today (calendar day in tenant timezone)
-    const tz = tenant.timezone || 'America/Mexico_City';
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
-    const startOfDay = new Date(`${todayStr}T00:00:00`);
-    const localNow = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
-    const offsetMs = new Date().getTime() - localNow.getTime();
-    const startOfDayUTC = new Date(startOfDay.getTime() + offsetMs);
-
     const recentVisit = await prisma.visit.findFirst({
-      where: { cardId: card.id, scannedAt: { gte: startOfDayUTC } },
+      where: { cardId: card.id, scannedAt: { gte: tenantStartOfDay(tenant.timezone) } },
       orderBy: { scannedAt: 'desc' },
     });
 
