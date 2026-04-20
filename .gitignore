@@ -22,11 +22,14 @@
 # database
 prisma/*.db
 prisma/*.db-journal
+prisma/prisma/*.db
+prisma/prisma/*.db-journal
 
 # Apple Wallet certificates - NEVER commit private keys
-passes/apple/certificates/*.pem
-passes/apple/certificates/*.p8
-passes/apple/certificates/*.p12
+passes/apple/**/*.pem
+passes/apple/**/*.p8
+passes/apple/**/*.p12
+passes/apple/**/*.key
 
 # debug
 npm-debug.log*
