@@ -85,11 +85,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
       },
     });
 
-    // If promo message changed, bump cards and push to all wallets
+    // If visible pass content changed, bump cards and push to all wallets
     const promoChanged = data.promoMessage !== undefined && data.promoMessage !== (tenant.promoMessage ?? '');
-    console.log('[settings] promoChanged:', promoChanged, 'new:', data.promoMessage, 'old:', tenant.promoMessage);
+    const passStyleChanged = data.passStyle !== undefined && data.passStyle !== tenant.passStyle;
+    const visibleChange = promoChanged || passStyleChanged;
+    console.log('[settings] visibleChange:', visibleChange, 'promo:', promoChanged, 'passStyle:', passStyleChanged);
 
-    if (promoChanged) {
+    if (visibleChange) {
       const bumped = await prisma.loyaltyCard.updateMany({
         where: { tenantId: tenant.id, applePassSerial: { not: null } },
         data: { updatedAt: new Date() },

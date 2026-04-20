@@ -10,6 +10,7 @@ interface TenantSettings {
   secondaryColor: string | null;
   logoUrl: string | null;
   stripImageUrl: string | null;
+  passStyle: 'default' | 'stamps';
   promoMessage: string | null;
   promoStartsAt: string | null;
   promoEndsAt: string | null;
@@ -35,6 +36,7 @@ export default function SettingsPage() {
     secondaryColor: '',
     logoUrl: '',
     stripImageUrl: '',
+    passStyle: 'default' as 'default' | 'stamps',
     promoMessage: '',
     promoStartsAt: '',
     promoEndsAt: '',
@@ -60,6 +62,7 @@ export default function SettingsPage() {
       secondaryColor: data.secondaryColor ?? '',
       logoUrl: data.logoUrl ?? '',
       stripImageUrl: data.stripImageUrl ?? '',
+      passStyle: data.passStyle ?? 'default',
       promoMessage: data.promoMessage ?? '',
       promoStartsAt: data.promoStartsAt ? data.promoStartsAt.slice(0, 16) : '',
       promoEndsAt: data.promoEndsAt ? data.promoEndsAt.slice(0, 16) : '',
@@ -171,6 +174,28 @@ export default function SettingsPage() {
               className="u-input"
               placeholder="/logos/mi-strip.png o https://..."
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-coffee-dark mb-1.5">Estilo de la tarjeta de wallet</label>
+            <p className="text-xs text-coffee-medium mb-2">Al cambiar, se enviará una actualización a todos los clientes.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: 'default', label: 'Sellos', hint: 'Miembro + ●○○○' },
+                { value: 'stamps', label: 'Visitas faltantes', hint: 'N visitas para…' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, passStyle: opt.value })}
+                  className={`u-chip ${form.passStyle === opt.value ? 'active' : ''}`}
+                  style={{ flexDirection: 'column', padding: '10px 8px', alignItems: 'flex-start', gap: 2 }}
+                >
+                  <span style={{ fontWeight: 600 }}>{opt.label}</span>
+                  <span className="text-xs" style={{ color: 'var(--color-ink-light)' }}>{opt.hint}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
